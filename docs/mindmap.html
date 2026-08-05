@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大山里的音乐课 · 产品思维导图</title>
+<style>
+  :root {
+    --bg: #0a0e1f;
+    --bg2: #101531;
+    --card: #161d3d;
+    --line: #2a3560;
+    --gold: #ffc964;
+    --pink: #ff7eb3;
+    --green: #7ee081;
+    --blue: #6db3ff;
+    --purple: #b48cff;
+    --ink: #eef2ff;
+    --muted: #93a0c8;
+    --red: #ff8a7a;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    background: radial-gradient(1200px 800px at 20% 0%, var(--bg2), var(--bg));
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 32px 20px 80px;
+  }
+  header { text-align:center; margin-bottom: 30px; }
+  h1 { font-size: 2rem; letter-spacing: .08em; margin-bottom: 6px;
+       background: linear-gradient(90deg, var(--gold), var(--pink));
+       -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { color: var(--muted); font-size: .95rem; }
+  .badge-row { margin-top: 14px; display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
+  .badge { background: rgba(255,255,255,.05); border:1px solid var(--line);
+           border-radius: 999px; padding: 6px 14px; font-size: .8rem; color: var(--muted); }
+
+  .map { max-width: 1200px; margin: 0 auto; display: grid; gap: 18px;
+         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .branch { background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+            padding: 18px 20px; transition: transform .15s, box-shadow .15s; }
+  .branch:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+  .branch.one { border-left: 4px solid var(--gold); }
+  .branch.two { border-left: 4px solid var(--green); }
+  .branch.three { border-left: 4px solid var(--purple); }
+  .branch.four { border-left: 4px solid var(--blue); }
+  .branch.five { border-left: 4px solid var(--pink); }
+  .branch.six { border-left: 4px solid var(--red); }
+
+  .b-head { display:flex; align-items:center; gap:10px; margin-bottom: 12px; }
+  .b-icon { font-size: 1.6rem; }
+  .b-title { font-size: 1.15rem; font-weight: 700; letter-spacing:.04em; }
+  .b-tag { font-size: .7rem; color: var(--muted); border:1px solid var(--line);
+           border-radius: 6px; padding: 2px 8px; }
+
+  .b-list { display:flex; flex-direction:column; gap: 8px; }
+  .node { background: rgba(255,255,255,.035); border-radius: 10px; padding: 9px 12px;
+          font-size: .9rem; line-height: 1.5; }
+  .node .k { color: var(--gold); font-weight: 600; }
+  .node .k.g { color: var(--green); }
+  .node .k.b { color: var(--blue); }
+  .node .k.p { color: var(--purple); }
+  .node .k.r { color: var(--red); }
+  .node small { color: var(--muted); display:block; font-size: .78rem; }
+
+  .done { color: var(--green); font-weight:700; }
+  .later { color: var(--red); }
+  .center { text-align: center; margin-top: 26px; }
+  .pill { display:inline-block; background: linear-gradient(90deg, rgba(255,201,100,.15), rgba(255,126,179,.15));
+          border:1px solid rgba(255,201,100,.4); border-radius: 999px; padding: 12px 24px;
+          font-size: 1rem; max-width: 700px; line-height:1.7; }
+  footer { text-align:center; color: var(--muted); margin-top: 40px; font-size:.8rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎵 大山里的音乐课 · 产品思维导图</h1>
+  <div class="sub">给没有音乐老师的乡村孩子 · 一个 AI 陪伴式音乐启蒙</div>
+  <div class="badge-row">
+    <span class="badge">🏆 小有可为 AI 向善挑战赛</span>
+    <span class="badge">📅 初赛 8/13</span>
+    <span class="badge">🎓 教育心理学指导</span>
+    <span class="badge">🤖 A2A 双 Agent 协作</span>
+  </div>
+</header>
+
+<div class="map">
+
+  <!-- 定位 -->
+  <section class="branch one">
+    <div class="b-head"><span class="b-icon">🎯</span><span class="b-title">定位</span><span class="b-tag">一句话</span></div>
+    <div class="b-list">
+      <div class="node">先 <span class="k">爱听爱唱</span> → 再 <span class="k">看懂乐谱</span> → 最后 <span class="k g">玩出旋律</span></div>
+      <div class="node"><small>核心：不是教乐理，是让孩子愿意打开、愿意坚持、感受到音乐的美好</small></div>
+    </div>
+  </section>
+
+  <!-- L0 -->
+  <section class="branch two">
+    <div class="b-head"><span class="b-icon">🌱</span><span class="b-title">L0 听觉启蒙</span><span class="b-tag done">初赛核心 · 必做</span></div>
+    <div class="b-list">
+      <div class="node"><span class="k g">① 听音找朋友</span> 听一个音 → 找到对应小鸟<small>音高辨识 · 即时反馈</small></div>
+      <div class="node"><span class="k g">② 节奏拍打</span> 跟着鼓点拍屏幕<small>感受时值长短：走走·停</small></div>
+      <div class="node"><span class="k g">③ 高低音对比</span> 小鸟飞高/飞低 → 点选<small>音高感知训练</small></div>
+      <div class="node"><small>🎓 听觉先行原则：先听/唱/动，后读谱</small></div>
+    </div>
+  </section>
+
+  <!-- L1 -->
+  <section class="branch three">
+    <div class="b-head"><span class="b-icon">📚</span><span class="b-title">L1 乐理进阶</span><span class="b-tag">叔叔专业大纲</span></div>
+    <div class="b-list">
+      <div class="node"><span class="k p">初赛范围</span> 音符 12345671 · 时值（四分/二分/全音符）· 简单旋律</div>
+      <div class="node"><span class="k b">中期</span> 八分 → 十六分（组合）→ 附点音符 → 综合练习</div>
+      <div class="node"><span class="k r">后期</span> 音程 → 三和弦/级数 → 七和弦/九和弦/挂留</div>
+      <div class="node"><small>🧑🏫 来源：邹翔叔叔（专业吉他老师·乐理通）</small></div>
+    </div>
+  </section>
+
+  <!-- L2 -->
+  <section class="branch four">
+    <div class="b-head"><span class="b-icon">🎨</span><span class="b-title">L2 创造表达</span><span class="b-tag">愿景激励</span></div>
+    <div class="b-list">
+      <div class="node"><span class="k g">初赛 · 音乐人格</span> 选/点唱旋律 → 显示小鸟/小溪/星星型<small>愿景：学下去你也能编出这样的歌</small></div>
+      <div class="node"><span class="k r">决赛 · 哼唱生成</span> 哼唱识别 → 生成对应旋律 → 编曲体验</div>
+    </div>
+  </section>
+
+  <!-- AI 小山灵 -->
+  <section class="branch five">
+    <div class="b-head"><span class="b-icon">🤖</span><span class="b-title">AI 小山灵</span><span class="b-tag">三层介入</span></div>
+    <div class="b-list">
+      <div class="node"><span class="k g">L1 引导反馈</span> 对了"太棒了 🎉" · 错了"再试一次 💪" · 积分系统</div>
+      <div class="node"><span class="k b">L2 陪伴参与</span> 全程在场 · 记录进步 · 鼓励坚持</div>
+      <div class="node"><span class="k r">L3 纠音识别</span> <small>技术难点：浏览器单麦克风无法定位声源、嘈杂环境识别崩 → 保留家庭/线下场景</small></div>
+    </div>
+  </section>
+
+  <!-- UI 与安全 -->
+  <section class="branch six">
+    <div class="b-head"><span class="b-icon">🛡️</span><span class="b-title">UI 与安全</span><span class="b-tag">公益硬约束</span></div>
+    <div class="b-list">
+      <div class="node">深色星空 + 发光音符（复用乐理小达人视觉语言）</div>
+      <div class="node">大图标 · 大字 · 低认知负担</div>
+      <div class="node"><span class="k g">无账号 + 零个人信息收集</span><small>儿童合规 · 隐私安全 · 纯前端低配可跑</small></div>
+    </div>
+  </section>
+
+  <!-- 双 Agent -->
+  <section class="branch one">
+    <div class="b-head"><span class="b-icon">🤝</span><span class="b-title">双 Agent 协作</span><span class="b-tag">A2A 协议</span></div>
+    <div class="b-list">
+      <div class="node"><span class="k b">接口契约先行</span> MusicCore / VoiceCore 先定接口 → 各自实现 → merge 粘合</div>
+      <div class="node"><span class="k p">module-audio</span> 你：听觉 / 乐理 / 引导 / 积分</div>
+      <div class="node"><span class="k p">module-voice</span> 队友：语音 / 旋律 / 视觉 / 动画</div>
+      <div class="node"><small>共享：A2A-ROUTING · PROGRESS.md · DECISION-LOG</small></div>
+    </div>
+  </section>
+
+</div>
+
+<div class="center">
+  <div class="pill">
+    🎯 <b>8/13 初赛闭环</b>：L0 三关 + AI 引导反馈 + 积分 + 3 分钟演示视频<br>
+    <span style="opacity:.85">L1 前 1-2 阶 · L2 音乐人格降级版 · 双 Agent 并行开工</span>
+  </div>
+</div>
+
+<footer>
+  大山里的音乐课 · 产品思维导图 v1 · 2026-08-05 · 教育心理学 × 叔叔专业大纲 × AI Agent 协作
+</footer>
+
+</body>
+</html>
