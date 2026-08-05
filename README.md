@@ -20,10 +20,11 @@
 
 ## 文档
 
-- 🗺️ [**产品思维导图（可视化 · 直接打开）**](https://sunwindy91.github.io/music-village/docs/思维导图.html) ← 浏览器直接看
+- 🗺️ [**产品思维导图（可视化 · 直接打开）**](https://sunwindy91.github.io/music-village/docs/mindmap.html) ← 浏览器直接看
 - [产品思维导图（Markdown）](docs/产品思维导图.md)
 - [初赛方向材料](docs/初赛方向材料.md)
 - [接口契约（双 Agent 协作宪法）](docs/接口契约-INTERFACE-CONTRACT.md)
+- [📊 协作进度（Progress）](docs/PROGRESS.md)
 
 > 🌐 GitHub Pages 入口：https://sunwindy91.github.io/music-village/
 
