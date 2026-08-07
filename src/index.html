@@ -99,6 +99,7 @@
   .legend .dot { width:12px; height:12px; border-radius:50%; display:inline-block; }
 
   /* ================= 关卡视图 ================= */
+  .back-row { display:flex; justify-content:flex-start; margin-bottom:8px; }
   .level-nav { display:flex; gap:8px; justify-content:center; margin:2px 0 10px; flex-wrap:wrap; }
   .nav-chip { background:rgba(255,255,255,.85); border:2px solid var(--line); color:var(--ink-soft);
     border-radius:999px; padding:7px 16px; font-size:.84rem; cursor:pointer; font-weight:600;
@@ -155,13 +156,11 @@
     40%{opacity:1; transform:translateY(-10px) scale(1.25);}
     100%{opacity:0; transform:translateY(-26px) scale(.8);} }
 
-  /* 点选关卡：hover 只发光不加位移（保证可点稳定 + 儿童"发光=可点"直觉） */
+  /* 点选关卡：hover 只发光+轻微放大（绝不动画位移/旋转，保证稳定可点） */
   .choice-bird { font-size:32px; text-anchor:middle; cursor:pointer; }
   .choice-bird.hoverable:hover text:first-of-type {
-    filter: drop-shadow(0 0 6px rgba(255,209,102,1));
-    animation: birdWiggle .4s ease; }
-  @keyframes birdWiggle { 0%,100%{transform:rotate(0);} 30%{transform:rotate(-6deg);}
-    60%{transform:rotate(5deg);} }
+    filter: drop-shadow(0 0 6px rgba(255,209,102,1)) drop-shadow(0 0 14px rgba(255,209,102,.6));
+    transition: filter .15s ease; }
   .choice-bird.correct { animation: correctBounce .6s ease; }
   .choice-bird.wrong { animation: shake .4s ease; opacity:.5; }
   @keyframes correctBounce { 0%{transform:scale(1);} 40%{transform:scale(1.4) rotate(8deg);}
@@ -255,6 +254,9 @@
 
   <!-- ===== 关卡视图 ===== -->
   <section id="levelView" class="hidden">
+    <div class="back-row">
+      <button class="btn soft" onclick="App.goHome()">← 返回地图</button>
+    </div>
     <div class="level-nav" id="levelNav"></div>
     <div class="level-head">
       <div class="ltitle" id="levelTitle">—</div>
