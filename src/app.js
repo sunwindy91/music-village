@@ -140,6 +140,8 @@
     currentLevel = lv;
     $('mapView').classList.add('hidden');
     $('levelView').classList.remove('hidden');
+    // 舞台按地图差异化（森林风 / 五线谱风）
+    $('stage').className = 'stage ' + (currentMap.id === 'sound-valley' ? 'stage-forest' : 'stage-scale');
     $('levelTitle').textContent = lv.icon + ' ' + lv.title;
     $('levelSub').textContent = currentMap.name + ' · ' +
       (lv.type === 'observe' ? '👀 先看看' : lv.type === 'point' ? '🎯 帮小鸟回家' : lv.type === 'sort' ? '📶 排排队' : lv.type);
