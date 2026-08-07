@@ -324,6 +324,12 @@
       <button class="btn soft" onclick="App.replayNote()">🔁 再听一次</button>
     </div>
 
+    <!-- 通关衔接（下一关 / 回地图） -->
+    <div class="controls hidden" id="nextControls">
+      <button class="btn primary" id="nextBtn" onclick="App.nextLevel()">👉 下一关</button>
+      <button class="btn soft" onclick="App.goHome()">🗺️ 回地图</button>
+    </div>
+
     <!-- 开发者模式面板（默认隐藏） -->
     <div class="dev-panel hidden" id="devPanel">
       <h4>🔧 开发者模式 · 关卡规格（乐理三件套）</h4>

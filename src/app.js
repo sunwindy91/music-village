@@ -83,11 +83,14 @@
       const m = window.MAPS.find(function (mm) { return mm.id === p.id; });
       if (!m) return;
       const cls = m.status === 'open' ? 'open' : (m.levels.length && isLevelDone(m.levels[0].id) ? 'done' : 'locked');
+      const doneCount = m.levels.filter(function (l) { return isLevelDone(l.id); }).length;
+      const totalCount = m.levels.length;
+      const prog = totalCount ? (doneCount === totalCount ? '✓ 全通' : '⭐' + doneCount + '/' + totalCount) : '';
       s += '<g id="place-' + p.id + '" data-place="' + p.id + '" class="place ' + cls + '">' +
         '<circle class="p-base" cx="' + p.x + '" cy="' + p.y + '" r="34"/>' +
         '<text class="p-emoji" x="' + p.x + '" y="' + (p.y - 2) + '">' + p.emoji + '</text>' +
         '<text class="p-name" x="' + p.x + '" y="' + (p.y + 52) + '">' + p.name + '</text>' +
-        '<text class="p-stage" x="' + p.x + '" y="' + (p.y + 68) + '">' + p.stage + '</text>' +
+        '<text class="p-stage" x="' + p.x + '" y="' + (p.y + 68) + '">' + (prog || p.stage) + '</text>' +
         (m.status === 'open' ? '<text x="' + (p.x + 26) + '" y="' + (p.y - 26) + '" font-size="15">▶</text>' : '') +
         '</g>';
     });
@@ -160,6 +163,7 @@
     $('roundHud').classList.add('hidden');
     $('devPanel').classList.add('hidden');
     $('devToggle').classList.remove('active');
+    $('nextControls').classList.add('hidden');
 
     if (lv.type === 'point' || lv.type === 'sort' || lv.type === 'highlow' || lv.type === 'tap') {
       $('observeControls').classList.add('hidden');
@@ -188,6 +192,24 @@
     $('mapView').classList.remove('hidden');
     spiritSay('回来啦！想去哪座山看看呀？');
     refreshCrumb();
+  }
+
+  // —— 通关衔接：下一关 / 全部完成回地图 ——
+  function showNext() {
+    const next = currentMap && currentMap.levels[levelIdx + 1];
+    $('observeControls').classList.add('hidden');
+    $('pointControls').classList.add('hidden');
+    $('nextControls').classList.remove('hidden');
+    $('nextBtn').textContent = next ? '👉 下一关：' + next.icon + ' ' + next.title : '🎉 全通关！回地图看看';
+    spiritSay(next ? '真棒！要不要去试试下一关？' : '这张地图全通关啦！回地图看看别的山吧～');
+  }
+
+  function nextLevel() {
+    if (currentMap && levelIdx + 1 < currentMap.levels.length) {
+      switchLevel(levelIdx + 1);
+    } else {
+      goHome();
+    }
   }
 
   // ================= 五线谱（观察） =================
@@ -317,6 +339,7 @@
     playing = false;
     $('playBtn').textContent = '▶ 再看一遍';
     $('playBtn').classList.remove('disabled');
+    showNext();
   }
 
   function popNote(x, y) {
@@ -488,6 +511,7 @@
       toast('⭐ +30 · 🏅 听音小帮手');
     }
     $('pointStartBtn').textContent = '🎵 再来一轮';
+    showNext();
   }
 
   function replayNote() {
@@ -608,6 +632,7 @@
       toast('⭐ +30 · 🏅 排队小达人');
     }
     $('pointStartBtn').textContent = '🐦 再排一次';
+    showNext();
   }
 
   // ================= highlow 玩法（谁更高 · L0 听觉启蒙）=================
@@ -727,6 +752,7 @@
       toast('⭐ +30 · 🏅 听音小能手');
     }
     $('pointStartBtn').textContent = '🎵 再来一轮';
+    showNext();
   }
 
   // ================= tap 玩法（小鼓手 · 节奏/休止）=================
@@ -850,6 +876,7 @@
       toast('⭐ +30 · 🏅 小鼓手');
     }
     $('pointStartBtn').textContent = '🥁 再来一次';
+    showNext();
   }
 
   // ================= 山灵对话（打字机 + SVG 表情）=================
@@ -909,6 +936,7 @@
     startPoint: startPoint,
     replayNote: replayNote,
     toggleDev: toggleDev,
+    nextLevel: nextLevel,
   };
 
   renderTrailMap();
