@@ -150,6 +150,8 @@ wrangler pages deploy "src" --project-name=music-village-app --branch=main
 
 ## 9. 当前状态（2026-08-07 v0.2）
 
-- ✅ 山路寻宝地图 + 3 关卡（观察/配对/排序）+ 山灵角色 + 音效
-- ⬜ L0 声音山谷三关（初赛）· sing 跟唱（决赛）· boss 石碑 · AI 对话
+- ✅ 山路寻宝地图 + 6 关卡（observe/point/sort/highlow/tap）+ 山灵角色 + 音效
+  - L0 声音山谷：谁更高 · 小鼓手 · 听音找朋友
+  - 音阶山谷：看小鸟飞 · 点小鸟回家 · 排排队
+- ⬜ sing 跟唱（决赛）· boss 石碑 · AI 对话
 - 文档：`docs/产品设计文档_PM版.md`（完整 PM 流程）、`docs/PROGRESS.md`（进度）
