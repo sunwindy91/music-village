@@ -353,9 +353,10 @@
     pt.birds = notes.map(function (midi, i) {
       const x = x0 + i * gap;
       const y = window.NOTE_Y[midi];
+      const emoji = (lv.friends && lv.friends[i]) || '🐦';
       s += '<g class="choice-bird hoverable" id="cb' + i + '" data-note="' + midi + '">' +
         '<circle cx="' + x + '" cy="' + (y - 12) + '" r="22" fill="transparent" style="cursor:pointer"/>' +
-        '<text x="' + x + '" y="' + (y - 12) + '" font-size="32" text-anchor="middle">🐦</text>' +
+        '<text x="' + x + '" y="' + (y - 12) + '" font-size="32" text-anchor="middle">' + emoji + '</text>' +
         '<text x="' + x + '" y="' + (y + 30) + '" font-size="12" text-anchor="middle" fill="var(--ink-soft)" style="opacity:.6">' +
         (window.NOTE_NAME[midi] || midi) + '</text></g>';
       return { x: x, y: y, midi: midi, idx: i };
