@@ -115,7 +115,27 @@
     if (!m.levels.length) { spiritSay('🔧 这里的关卡还在设计呢，先去别的山看看吧～'); return; }
     currentMap = m;
     levelIdx = 0;
-    loadLevel();
+    showMemory(m);
+  }
+
+  // —— 记忆叙事：进入地图先看一段晓声的记忆（章节故事感）——
+  function showMemory(m) {
+    const mem = m.memory || [];
+    $('memoryView').classList.remove('hidden');
+    $('memoryMapName').textContent = '📍 ' + m.name + ' · 晓声的记忆';
+    let idx = 0;
+    $('memoryText').textContent = mem[0] || '……';
+    $('memoryBtn').textContent = mem.length > 1 ? '继续 ▸' : '开始回忆 ✨';
+    $('memoryBtn').onclick = function () {
+      idx++;
+      if (idx < mem.length) {
+        $('memoryText').textContent = mem[idx];
+        $('memoryBtn').textContent = (idx === mem.length - 1) ? '开始回忆 ✨' : '继续 ▸';
+      } else {
+        $('memoryView').classList.add('hidden');
+        loadLevel();
+      }
+    };
   }
 
   function switchLevel(i) {
@@ -187,6 +207,7 @@
   function goHome() {
     if (window.MusicCore) window.MusicCore.stopAll();
     playing = false;
+    $('memoryView').classList.add('hidden');
     currentMap = null;
     currentLevel = null;
     $('levelView').classList.add('hidden');
@@ -980,6 +1001,7 @@
   function showMap() {
     $('storyView').classList.add('hidden');
     $('mapView').classList.remove('hidden');
+    $('memoryView').classList.add('hidden');
     renderTrailMap();
     setGrow();
     spiritSay('你好呀，我是晓声！五段记忆在等着我们，一起去寻找吧！');
