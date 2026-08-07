@@ -158,6 +158,7 @@
 
     renderLevelNav();
     refreshCrumb();
+    setGrow();
 
     $('listenRow').classList.add('hidden');
     $('roundHud').classList.add('hidden');
@@ -190,8 +191,9 @@
     currentLevel = null;
     $('levelView').classList.add('hidden');
     $('mapView').classList.remove('hidden');
-    spiritSay('回来啦！想去哪座山看看呀？');
+    spiritSay('回来啦！想去哪段记忆看看呀？');
     refreshCrumb();
+    setGrow();
   }
 
   // —— 通关衔接：下一关 / 全部完成回地图 ——
@@ -333,6 +335,7 @@
       markLevelDone(lv.id);
       addScore(20);
       awardMedal('👀 观察员');
+      setGrow();
       toast('⭐ +20 · 🏅 观察员');
     }
 
@@ -508,6 +511,7 @@
       markLevelDone(lv.id);
       addScore(30);
       awardMedal('👂 听音小帮手');
+      setGrow();
       toast('⭐ +30 · 🏅 听音小帮手');
     }
     $('pointStartBtn').textContent = '🎵 再来一轮';
@@ -629,6 +633,7 @@
       markLevelDone(lv.id);
       addScore(30);
       awardMedal('📶 排队小达人');
+      setGrow();
       toast('⭐ +30 · 🏅 排队小达人');
     }
     $('pointStartBtn').textContent = '🐦 再排一次';
@@ -749,6 +754,7 @@
       markLevelDone(lv.id);
       addScore(30);
       awardMedal('🎧 听音小能手');
+      setGrow();
       toast('⭐ +30 · 🏅 听音小能手');
     }
     $('pointStartBtn').textContent = '🎵 再来一轮';
@@ -873,6 +879,7 @@
       markLevelDone(lv.id);
       addScore(30);
       awardMedal('🥁 小鼓手');
+      setGrow();
       toast('⭐ +30 · 🏅 小鼓手');
     }
     $('pointStartBtn').textContent = '🥁 再来一次';
@@ -881,6 +888,7 @@
 
   // ================= 山灵对话（打字机 + SVG 表情）=================
   function spiritSay(text) {
+    text = String(text || '').replace(/山灵/g, '晓声');
     clearInterval(spiritTimer);
     const el = $('spiritText');
     el.textContent = '';
@@ -928,6 +936,67 @@
     $('devToggle').classList.toggle('active', !p.classList.contains('hidden'));
   }
 
+// ================= 开场故事（晓声旅程入口） =================
+  const STORY = [
+    '大山里，住着一只透明的小鹿。',
+    '她叫晓声——因为她的心里，装着世界上所有的声音。',
+    '可是有一天，一场"静默"悄悄来了，',
+    '晓声忘了怎么唱歌，连自己是谁都记不清了。',
+    '她只记得：有五个地方，藏着她的五段记忆。',
+    '声音山谷、音阶山谷、节奏小路、和弦花园、旋律草原……',
+    '只要找回五段记忆，她就能重新唱歌，长出光做的翅膀。',
+    '你愿意，陪晓声一起去找回它们吗？',
+  ];
+  let storyIdx = 0;
+
+  function initStory() {
+    refreshCrumb();
+    let seen = false;
+    try { seen = localStorage.getItem('mv_story_v1') === '1'; } catch (e) {}
+    if (seen) { showMap(); return; }
+    storyIdx = 0;
+    $('storyView').classList.remove('hidden');
+    $('storyText').textContent = STORY[0];
+    $('storyNext').textContent = '继续 ▸';
+  }
+
+  function storyNext() {
+    storyIdx++;
+    if (storyIdx < STORY.length) {
+      $('storyText').textContent = STORY[storyIdx];
+      if (storyIdx === STORY.length - 1) $('storyNext').textContent = '我愿意！一起出发 ✨';
+    } else {
+      finishStory();
+    }
+  }
+
+  function skipStory() { finishStory(); }
+
+  function finishStory() {
+    try { localStorage.setItem('mv_story_v1', '1'); } catch (e) {}
+    showMap();
+  }
+
+  function showMap() {
+    $('storyView').classList.add('hidden');
+    $('mapView').classList.remove('hidden');
+    renderTrailMap();
+    setGrow();
+    spiritSay('你好呀，我是晓声！五段记忆在等着我们，一起去寻找吧！');
+  }
+
+  // —— 晓声成长可视化：找回的记忆越多，越明亮、光晕越强 ——
+  function setGrow() {
+    let done = 0;
+    window.MAPS.forEach(function (m) {
+      m.levels.forEach(function (l) { if (isLevelDone(l.id)) done++; });
+    });
+    const g = Math.min(6, done);
+    const el = $('spirit');
+    for (let i = 0; i <= 6; i++) el.classList.remove('grow-' + i);
+    el.classList.add('grow-' + g);
+  }
+
   // ================= 初始化 =================
   window.App = {
     goHome: goHome,
@@ -937,9 +1006,9 @@
     replayNote: replayNote,
     toggleDev: toggleDev,
     nextLevel: nextLevel,
+    storyNext: storyNext,
+    skipStory: skipStory,
   };
 
-  renderTrailMap();
-  refreshCrumb();
-  spiritSay('你好呀，我是山灵！大山的音乐被封印了，和我一起去寻宝吧！');
+  initStory();
 })();
