@@ -1,16 +1,317 @@
-/**
- * ============================================================
- *  config.js · 全局配置（山灵 AI 开关）
- * ============================================================
- *  初赛：纯前端，AI 默认关闭，山灵用本地规则引导（稳定可靠）。
- *  决赛：配好 endpoint + token 后置 enabled:true，
- *        山灵对话自动走大模型（通义/DeepSeek，经 proxy 转发）。
- * ============================================================
- */
-window.SPIRIT_AI = {
-  enabled: false,          // 初赛保持 false
-  endpoint: '',            // AI proxy 地址，如 'https://xxx.example.com/api/spirit'
-  token: '',
-  maxTokens: 80,
-  system: '你是"山灵"，陪小朋友学音乐的温柔伙伴。说话要短、要鼓励、用小朋友听得懂的话。',
-};
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>音乐寻宝 · 大山里的音乐课</title>
+<style>
+  /* ================= 设计系统（Token）================= */
+  :root {
+    /* 自然色板：大山清晨 */
+    --sky-top: #aee1ff;        /* 天空（高） */
+    --sky-mid: #cdeeff;        /* 天空（中） */
+    --sky-bottom: #fff3dc;     /* 晨光（地平线） */
+    --forest: #3e7d5e;         /* 森林绿·主色 */
+    --forest-deep: #2d6349;    /* 深林绿 */
+    --leaf: #7fc48d;           /* 叶子绿 */
+    --leaf-light: #b7e0b0;     /* 浅叶 */
+    --sun: #ffd166;            /* 阳光金 */
+    --sun-soft: #ffe8b0;
+    --clay: #c98a5e;           /* 泥土棕 */
+    --berry: #e76f8a;          /* 草莓粉·奖励 */
+    --sky-blue: #6fb7e8;       /* 溪水蓝 */
+    --ink: #37423b;            /* 主文字（暖深灰） */
+    --ink-soft: #6d7a70;       /* 次文字 */
+    --card: #ffffff;           /* 卡片白 */
+    --line: #e3ece2;           /* 柔和描边 */
+    --shadow: 0 10px 28px rgba(56,94,74,.14);
+    --radius: 24px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; }
+  body {
+    font-family: "Baloo 2", "Comic Sans MS", "Microsoft YaHei", system-ui, sans-serif;
+    color: var(--ink); min-height:100vh; overflow-x:hidden;
+    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-bottom) 100%);
+  }
+
+  /* ================= 天空层 ================= */
+  .sky { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .sun { position:absolute; top:5%; right:8%; width:88px; height:88px; border-radius:50%;
+    background: radial-gradient(circle, #fff8d9 0%, var(--sun) 55%, rgba(255,209,102,0) 72%);
+    filter: drop-shadow(0 0 24px rgba(255,209,102,.7)); animation: sunGlow 6s ease-in-out infinite; }
+  @keyframes sunGlow { 0%,100%{transform:scale(1);} 50%{transform:scale(1.06);} }
+  .cloud { position:absolute; background: rgba(255,255,255,.92); border-radius:999px;
+    filter: blur(1px); animation: drift linear infinite; }
+  .cloud::before,.cloud::after { content:""; position:absolute; background:inherit; border-radius:50%; }
+  .cloud.c1 { width:110px; height:34px; top:12%; left:-130px; animation-duration:70s; }
+  .cloud.c1::before { width:46px; height:46px; top:-20px; left:16px; }
+  .cloud.c1::after  { width:34px; height:34px; top:-12px; left:56px; }
+  .cloud.c2 { width:84px; height:28px; top:26%; left:-100px; animation-duration:95s; animation-delay:8s; opacity:.8; }
+  .cloud.c2::before { width:36px; height:36px; top:-16px; left:12px; }
+  .cloud.c2::after  { width:26px; height:26px; top:-8px; left:44px; }
+  @keyframes drift { from{transform:translateX(0);} to{transform:translateX(130vw);} }
+
+  /* 山峦剪影（SVG 固定） */
+  .mountains { position:absolute; left:0; right:0; bottom:0; width:100%; height:52vh; }
+
+  /* ================= 布局 ================= */
+  .app { position:relative; z-index:2; max-width:1020px; margin:0 auto; padding:18px 16px 70px; }
+
+  /* 顶栏 */
+  .topbar { display:flex; align-items:center; gap:10px; margin-bottom:14px;
+    background: rgba(255,255,255,.72); backdrop-filter: blur(6px);
+    border:1px solid rgba(255,255,255,.8); border-radius: 999px; padding:8px 14px;
+    box-shadow: var(--shadow); }
+  .logo { font-size:1.5rem; filter: drop-shadow(0 2px 3px rgba(0,0,0,.15)); }
+  .topbar h1 { font-size:1.12rem; font-weight:700; letter-spacing:.02em; color:var(--forest-deep); }
+  .crumb { font-size:.78rem; color:var(--ink-soft); margin-left:auto; white-space:nowrap; }
+  .icon-btn { background:var(--card); border:1px solid var(--line); color:var(--ink-soft);
+    border-radius:999px; padding:6px 12px; font-size:.82rem; cursor:pointer;
+    transition:transform .15s, box-shadow .15s; display:flex; align-items:center; gap:4px; }
+  .icon-btn:hover { transform:translateY(-1px); box-shadow:var(--shadow); }
+  .icon-btn.active { color:var(--forest); border-color:var(--leaf); }
+
+  /* ================= 地图总览：山路寻宝 ================= */
+  .map-panel { background: rgba(255,255,255,.78); backdrop-filter: blur(4px);
+    border:1px solid rgba(255,255,255,.9); border-radius:28px; padding:18px;
+    box-shadow: var(--shadow); }
+  .map-title { text-align:center; font-size:1.25rem; font-weight:800; color:var(--forest-deep);
+    margin-bottom:2px; letter-spacing:.03em; }
+  .map-sub { text-align:center; font-size:.86rem; color:var(--ink-soft); margin-bottom:10px; }
+  .trail-map { width:100%; height:auto; display:block; }
+  .place { cursor:pointer; transition:transform .18s ease; }
+  .place:hover { transform:scale(1.12); }
+  .place circle.p-base { stroke:#fff; stroke-width:4; }
+  .place .p-emoji { font-size:26px; text-anchor:middle; dominant-baseline:central; }
+  .place .p-name { font-size:15px; font-weight:800; text-anchor:middle; }
+  .place .p-stage { font-size:11px; text-anchor:middle; fill:var(--ink-soft); }
+  .place.locked { opacity:.55; cursor:default; }
+  .place.locked:hover { transform:none; cursor:default; }
+  .place.done .p-base { fill:var(--leaf-light); }
+  .place.open .p-base { fill:var(--sun-soft); stroke:var(--sun); }
+  .road { fill:none; stroke:#d8c8a8; stroke-width:14; stroke-linecap:round;
+    stroke-dasharray:1 12; opacity:.9; }
+  .road-shadow { fill:none; stroke:rgba(120,100,70,.12); stroke-width:18;
+    stroke-linecap:round; stroke-dasharray:1 12; }
+  .legend { display:flex; justify-content:center; gap:18px; margin-top:6px; flex-wrap:wrap; }
+  .legend span { font-size:.78rem; color:var(--ink-soft); display:flex; align-items:center; gap:5px; }
+  .legend .dot { width:12px; height:12px; border-radius:50%; display:inline-block; }
+
+  /* ================= 关卡视图 ================= */
+  .level-nav { display:flex; gap:8px; justify-content:center; margin:2px 0 10px; flex-wrap:wrap; }
+  .nav-chip { background:rgba(255,255,255,.85); border:2px solid var(--line); color:var(--ink-soft);
+    border-radius:999px; padding:7px 16px; font-size:.84rem; cursor:pointer; font-weight:600;
+    transition:all .15s; }
+  .nav-chip:hover { transform:translateY(-2px); }
+  .nav-chip.active { border-color:var(--forest); color:var(--forest-deep); background:#f0f8ee; }
+  .nav-chip.done { border-color:var(--leaf); color:var(--forest); }
+  .nav-chip.done::after { content:" ✓"; }
+
+  .level-head { text-align:center; margin:2px 0 10px; }
+  .level-head .ltitle { font-size:1.35rem; font-weight:800; color:var(--forest-deep); }
+  .level-head .lsub { font-size:.84rem; color:var(--ink-soft); margin-top:2px; }
+
+  /* 山灵对话 */
+  .spirit-wrap { display:flex; align-items:flex-end; gap:10px; margin:10px 0 6px; }
+  .spirit-avatar { width:62px; height:62px; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #fff8dd, #ffe9a8);
+    border:3px solid #fff; box-shadow: var(--shadow); display:flex; align-items:center;
+    justify-content:center; font-size:2.1rem; flex-shrink:0; animation: bob 3.4s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
+  .spirit-avatar.talk { animation: talk 0.5s ease-in-out; }
+  @keyframes talk { 0%,100%{transform:scale(1);} 30%{transform:scale(1.12) rotate(-4deg);}
+    60%{transform:scale(1.08) rotate(4deg);} }
+  .spirit-avatar.celebrate { animation: celebrate 0.7s ease; }
+  @keyframes celebrate { 0%{transform:scale(1) rotate(0);} 40%{transform:scale(1.35) rotate(-12deg);}
+    70%{transform:scale(1.2) rotate(8deg);} 100%{transform:scale(1);} }
+  .bubble { background:#fff; border-radius: 20px 20px 20px 6px; padding:12px 16px;
+    box-shadow: var(--shadow); font-size:.96rem; line-height:1.65; flex:1;
+    border:1px solid #f2efe2; min-height:58px; }
+  .bubble .who { color:var(--forest); font-weight:800; margin-right:6px; }
+
+  /* 五线谱舞台（自然风） */
+  .stage { background: rgba(255,255,255,.9); border-radius:28px; padding:14px 14px 8px;
+    box-shadow: var(--shadow); margin:6px 0 10px; border:1px solid #f2efe2; }
+  .stage svg { width:100%; height:auto; display:block; }
+  .staff-line { stroke:#c8b48e; stroke-width:2; stroke-linecap:round; }
+  .note-dot { opacity:0; transition:opacity .25s; }
+  .note-dot.lit { opacity:1; }
+  .note-name { font-size:11px; fill:var(--ink-soft); text-anchor:middle; opacity:0; transition:opacity .2s; }
+  .note-name.lit { opacity:1; fill:var(--forest); font-weight:700; }
+  .bird { font-size:27px; text-anchor:middle; opacity:0; transition:opacity .2s;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,.2)); }
+  .bird.show { opacity:1; }
+  .pop-note { font-size:19px; text-anchor:middle; opacity:0; }
+  .pop-note.show { animation: pop .75s ease forwards; }
+  @keyframes pop { 0%{opacity:0; transform:translateY(6px) scale(.5);}
+    40%{opacity:1; transform:translateY(-10px) scale(1.25);}
+    100%{opacity:0; transform:translateY(-26px) scale(.8);} }
+
+  /* 点选关卡：hover 只发光不加位移（保证可点稳定 + 儿童"发光=可点"直觉） */
+  .choice-bird { font-size:32px; text-anchor:middle; cursor:pointer; }
+  .choice-bird.hoverable:hover text:first-of-type {
+    filter: drop-shadow(0 0 6px rgba(255,209,102,1));
+    animation: birdWiggle .4s ease; }
+  @keyframes birdWiggle { 0%,100%{transform:rotate(0);} 30%{transform:rotate(-6deg);}
+    60%{transform:rotate(5deg);} }
+  .choice-bird.correct { animation: correctBounce .6s ease; }
+  .choice-bird.wrong { animation: shake .4s ease; opacity:.5; }
+  @keyframes correctBounce { 0%{transform:scale(1);} 40%{transform:scale(1.4) rotate(8deg);}
+    70%{transform:scale(.95);} 100%{transform:scale(1);} }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);}
+    50%{transform:translateX(5px);} 75%{transform:translateX(-3px);} }
+
+  .listen-row { text-align:center; margin:8px 0 2px; }
+  .listen-badge { background:#fff; border:2px solid var(--sun); color:var(--forest-deep);
+    border-radius:999px; padding:7px 18px; font-size:.9rem; font-weight:700;
+    display:inline-flex; align-items:center; gap:6px; animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,209,102,.4);}
+    50%{box-shadow:0 0 0 10px rgba(255,209,102,0);} }
+  .round-hud { display:flex; justify-content:center; gap:16px; margin:6px 0;
+    font-size:.9rem; color:var(--ink-soft); }
+  .round-hud b { color:var(--forest); }
+
+  /* 控制按钮（大圆角·立体） */
+  .controls { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:8px 0; }
+  .btn { border:none; border-radius:999px; padding:13px 26px; font-size:1rem; font-weight:800;
+    cursor:pointer; color:#fff; transition:transform .12s, box-shadow .12s;
+    box-shadow: 0 6px 0 rgba(0,0,0,.12); }
+  .btn:active { transform:translateY(3px); box-shadow:0 3px 0 rgba(0,0,0,.12); }
+  .btn.primary { background:linear-gradient(180deg, #8fd09a, var(--forest)); }
+  .btn.berry { background:linear-gradient(180deg, #f39ab0, var(--berry)); }
+  .btn.soft { background:linear-gradient(180deg, #ffffff, #eef5ec); color:var(--forest-deep);
+    border:2px solid var(--leaf); box-shadow:0 5px 0 rgba(0,0,0,.06); padding:10px 18px; font-size:.9rem; }
+
+  /* 开发者模式面板（默认隐藏·孩子界面干净） */
+  .dev-panel { background:rgba(255,255,255,.92); border:2px dashed var(--clay);
+    border-radius:20px; padding:14px; margin:12px 0; font-size:.82rem; }
+  .dev-panel h4 { color:var(--clay); margin-bottom:8px; font-size:.9rem; }
+  .dev-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:8px; }
+  .dev-grid .k { background:#faf8ef; border-radius:12px; padding:8px 10px; }
+  .dev-grid .k b { display:block; color:var(--forest); font-size:.75rem; margin-bottom:3px; }
+  .dev-grid .k span { color:var(--ink-soft); line-height:1.5; }
+
+  .hidden { display:none !important; }
+  .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+    background:#fff; border:3px solid var(--sun); color:var(--forest-deep);
+    border-radius:999px; padding:12px 24px; font-size:.95rem; font-weight:700; z-index:9;
+    opacity:0; transition:opacity .3s; pointer-events:none; box-shadow:var(--shadow);
+    white-space:nowrap; }
+  .toast.show { opacity:1; }
+  footer { text-align:center; color:var(--ink-soft); font-size:.76rem; margin-top:26px;
+    text-shadow:0 1px 0 rgba(255,255,255,.6); }
+</style>
+</head>
+<body>
+<!-- 天空层 -->
+<div class="sky">
+  <div class="sun"></div>
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <svg class="mountains" viewBox="0 0 1440 500" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <path d="M0 380 L180 210 L330 330 L520 160 L700 340 L900 190 L1100 330 L1300 200 L1440 340 L1440 500 L0 500 Z" fill="#b9d8cf" opacity=".7"/>
+    <path d="M0 460 L240 300 L430 420 L660 260 L880 430 L1080 290 L1320 430 L1440 370 L1440 500 L0 500 Z" fill="#8cc3a4"/>
+    <path d="M0 500 L0 430 L160 380 L300 450 L520 360 L700 470 L900 390 L1120 470 L1300 400 L1440 450 L1440 500 Z" fill="#5e9c7c"/>
+    <path d="M0 500 L0 460 Q360 420 720 460 T1440 455 L1440 500 Z" fill="#7fc48d"/>
+    <g fill="#5e9c7c" opacity=".6">
+      <path d="M120 500 q4 -18 8 -24 q4 6 8 24 Z"/>
+      <path d="M480 500 q4 -18 8 -24 q4 6 8 24 Z"/>
+      <path d="M900 500 q4 -18 8 -24 q4 6 8 24 Z"/>
+      <path d="M1200 500 q4 -18 8 -24 q4 6 8 24 Z"/>
+    </g>
+  </svg>
+</div>
+
+<div class="app">
+  <!-- 顶栏 -->
+  <div class="topbar">
+    <span class="logo">🏔️</span>
+    <h1>音乐寻宝</h1>
+    <span class="crumb" id="crumb">大山地图</span>
+    <button class="icon-btn" id="devToggle" onclick="App.toggleDev()">⚙️</button>
+  </div>
+
+  <!-- ===== 地图总览（山路寻宝） ===== -->
+  <section id="mapView">
+    <div class="map-panel">
+      <div class="map-title">🗺️ 大山音乐寻宝</div>
+      <div class="map-sub">和山灵一起，从山脚走向山顶，让大山重新唱歌吧！</div>
+      <svg class="trail-map" id="trailSvg" viewBox="0 0 900 560"></svg>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--sun-soft);border:2px solid var(--sun)"></span> 可以出发</span>
+        <span><span class="dot" style="background:var(--leaf-light)"></span> 已探索</span>
+        <span><span class="dot" style="background:#eee"></span> 还没开启</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 关卡视图 ===== -->
+  <section id="levelView" class="hidden">
+    <div class="level-nav" id="levelNav"></div>
+    <div class="level-head">
+      <div class="ltitle" id="levelTitle">—</div>
+      <div class="lsub" id="levelSub">—</div>
+    </div>
+
+    <!-- 山灵对话 -->
+    <div class="spirit-wrap">
+      <div class="spirit-avatar" id="spirit">✨</div>
+      <div class="bubble"><span class="who" id="spiritWho">山灵</span><span id="spiritText">你好呀，我是山灵！</span></div>
+    </div>
+
+    <!-- point HUD -->
+    <div class="listen-row hidden" id="listenRow">
+      <span class="listen-badge" id="listenBadge">🎵 正在听音…</span>
+    </div>
+    <div class="round-hud hidden" id="roundHud">
+      <span>第 <b id="roundNow">1</b>/<span id="roundTotal">5</span> 题</span>
+      <span>答对 <b id="roundOk">0</b> 只</span>
+      <span>连击 <b id="roundCombo">0</b></span>
+    </div>
+
+    <!-- 五线谱舞台 -->
+    <div class="stage" id="stage">
+      <svg id="staffSvg" viewBox="0 0 800 240" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+    <!-- 观察模式控制 -->
+    <div class="controls" id="observeControls">
+      <button class="btn primary" id="playBtn" onclick="App.playLevel()">▶ 播放</button>
+      <button class="btn soft" onclick="App.setSpeed(0)">🐢 慢</button>
+      <button class="btn soft" onclick="App.setSpeed(1)">🐾 中</button>
+      <button class="btn soft" onclick="App.setSpeed(2)">🐇 快</button>
+    </div>
+
+    <!-- 配对模式控制 -->
+    <div class="controls hidden" id="pointControls">
+      <button class="btn berry" id="pointStartBtn" onclick="App.startPoint()">🎵 听音开始</button>
+      <button class="btn soft" onclick="App.replayNote()">🔁 再听一次</button>
+    </div>
+
+    <!-- 开发者模式面板（默认隐藏） -->
+    <div class="dev-panel hidden" id="devPanel">
+      <h4>🔧 开发者模式 · 关卡规格（乐理三件套）</h4>
+      <div class="dev-grid">
+        <div class="k"><b>🎯 乐理概念</b><span id="kitConcept">—</span></div>
+        <div class="k"><b>🧠 心智模型</b><span id="kitModel">—</span></div>
+        <div class="k"><b>🕹️ 游戏动作</b><span id="kitAction">—</span></div>
+        <div class="k"><b>⚖️ 判定规则</b><span id="kitJudge">—</span></div>
+        <div class="k"><b>💬 反馈协议</b><span id="kitFeedback">—</span></div>
+        <div class="k"><b>🎯 本关目标</b><span id="kitGoal">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>音乐寻宝 v0.2 · 大山里的音乐课 · 山灵陪伴</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 契约加载顺序：audio → voice → 配置 → 应用 -->
+<script src="modules/audio/music-core.js"></script>
+<script src="modules/voice/voice-core.js"></script>
+<script src="shared/levels.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

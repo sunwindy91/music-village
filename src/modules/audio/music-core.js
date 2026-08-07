@@ -5,11 +5,10 @@
  *  接口契约 v1.0 实现：
  *   - playNote(midi, duration?)      播放单音
  *   - playMelody([{midi,dur}])       播放旋律
+ *   - playChord(rootMidi, type)      和弦
  *   - stopAll()                      停止所有声音
+ *   - sfx.correct/wrong/win/stone/click  游戏音效
  *   - getScore() / resetScore()      积分
- *   - startLevel(levelId, opts)      启动关卡
- *   - playGuidance(script)           引导序列
- *   - 事件 → VoiceCore.onLevelEvent()
  * ============================================================
  */
 (function () {
@@ -54,7 +53,7 @@
     osc.connect(g); g.connect(master);
     osc.start(t0); osc.stop(t0 + dur + 0.05);
     active.add(osc);
-    osc.onended = () => active.delete(osc);
+    osc.onended = function () { active.delete(osc); };
   }
 
   const MusicCore = {
@@ -87,7 +86,6 @@
 
     startLevel: function (levelId, opts) {
       opts = opts || {};
-      // 通知 VoiceCore（队友模块存在则调用）
       if (window.VoiceCore && window.VoiceCore.onLevelEvent) {
         window.VoiceCore.onLevelEvent({ type: 'level_start', payload: { levelId: levelId } });
       }
@@ -106,6 +104,35 @@
     // 供关卡渲染器使用的音频辅助
     _tone: tone,
     _ensureCtx: ensureCtx,
+
+    // —— 游戏音效（孩子化·温柔）——
+    sfx: {
+      click: function () { tone(660, 0, 0.08, 0.25); },
+      correct: function () {
+        tone(midiToFreq(64), 0, 0.18, 0.4);
+        tone(midiToFreq(67), 0.12, 0.18, 0.4);
+        tone(midiToFreq(72), 0.24, 0.3, 0.42);
+      },
+      wrong: function () {
+        tone(midiToFreq(55), 0, 0.2, 0.3);
+        tone(midiToFreq(52), 0.16, 0.26, 0.3);
+      },
+      win: function () {
+        const seq = [[60, 0], [60, 0], [67, 0], [67, 0], [69, 0], [69, 0], [67, 0.55],
+                     [65, 0], [65, 0], [64, 0], [64, 0], [62, 0], [62, 0], [60, 0.6]];
+        let t = 0;
+        seq.forEach(function (n) {
+          tone(midiToFreq(n[0]), t, 0.3, 0.42);
+          t += n[1] + 0.18;
+        });
+      },
+      stone: function () {
+        tone(midiToFreq(60), 0, 0.9, 0.3);
+        tone(midiToFreq(64), 0.1, 0.9, 0.3);
+        tone(midiToFreq(67), 0.2, 1.0, 0.32);
+        tone(midiToFreq(72), 0.3, 1.2, 0.28);
+      },
+    },
   };
 
   window.MusicCore = MusicCore;

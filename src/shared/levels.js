@@ -23,7 +23,6 @@
  */
 
 // midi 音高 → 五线谱 y 坐标（SVG 用，y 越小越高）
-// 半音在五线谱上不是等距的：位置由"线/间"决定，每位置 15px
 const NOTE_Y = {
   60: 180, // C4  下加一线
   62: 165, // D4  下加一间
@@ -44,9 +43,8 @@ const NOTE_NAME = {
 };
 
 // 音高 → 颜色（彩虹梯度：低音冷色蓝 → 高音暖色金橙）
-// 视觉上强化"高=上"：越高越暖越亮
 function noteColor(midi) {
-  const hue = 210 - (midi - 60) * 12;   // 60→210(蓝)  70→90(绿黄)  76→18(橙红)
+  const hue = 210 - (midi - 60) * 12;
   return 'hsl(' + hue + ', 85%, 65%)';
 }
 
@@ -59,9 +57,8 @@ const MAPS = [
     name: '声音山谷',
     stage: 'L0 · 听觉启蒙',
     icon: '🏞️',
-    color: '#7ee081',
     desc: '先听、先唱、先动',
-    status: 'locked',          // locked | open
+    status: 'locked',
     lockedHint: '初赛核心（听音找朋友 / 节奏拍打 / 高低音对比）开发中',
     levels: [],
   },
@@ -70,9 +67,8 @@ const MAPS = [
     name: '音阶山谷',
     stage: '阶段二 · 音阶/音准',
     icon: '⛰️',
-    color: '#ffc964',
     desc: '让音符鸟重新歌唱',
-    status: 'open',            // 原型开放
+    status: 'open',
     levels: [
       {
         id: 'bird-fly',
@@ -85,8 +81,8 @@ const MAPS = [
         judge: '观察模式，无判定（零压力）',
         feedback: '每落点发光 + 唱音 + 轨迹连线',
         goal: '看完一遍，记住"位置越高音越高"',
-        notes: [60, 62, 64, 67, 69, 72, 76],   // do re mi sol la do' mi'
-        speed: [0.8, 1.2, 1.8],                 // 慢/中/快（秒/落点）
+        notes: [60, 62, 64, 67, 69, 72, 76],
+        speed: [0.8, 1.2, 1.8],
         guidance: [
           '山灵：看，五线谱的天空！音符鸟要从左边飞到右边～',
           '它落到越高的地方，唱出来的音就越高哦',
@@ -103,11 +99,11 @@ const MAPS = [
         model: '听音 → 联系五线谱位置 → 音高辨识',
         action: '听山灵唱的音，点对应的音符鸟',
         judge: '点对得10分；点相邻位置提示"很接近"；连对触发连击',
-        feedback: '对→欢呼+发光+加分；错→再听一次+重播示范；3错→山灵示范',
+        feedback: '对→欢呼+发光+加分；错→再听一次+高/低提示；3错→山灵示范',
         goal: '帮 3 只小鸟找到家（共5题）',
-        notes: [60, 62, 64, 67, 69],   // 候选音：do re mi sol la
-        rounds: 5,                      // 出题数
-        passCount: 3,                   // 通关所需答对数
+        notes: [60, 62, 64, 67, 69],
+        rounds: 5,
+        passCount: 3,
         guidance: [
           '山灵：小鸟们迷路了，它们住在五线谱上',
           '我会唱一个音，你点那只"唱得一样高"的小鸟',
@@ -115,7 +111,25 @@ const MAPS = [
           '点对了小鸟就能回家啦！开始吧～',
         ],
       },
-      // 后续关卡（sort/sing/boss）按此模板添加
+      {
+        id: 'scale-order',
+        type: 'sort',
+        title: '排排队',
+        icon: '📶',
+        concept: '音阶 = 音从低到高排成一队',
+        model: '低→高的排列（音阶级进）',
+        action: '从最低的小鸟开始，一只一只往上点',
+        judge: '点对→入队+上行音；点错→提示先点更低的',
+        feedback: '对→发光+上行音阶；错→小鸟摇一摇+引导',
+        goal: '让 5 只小鸟从低到高排好队',
+        notes: [60, 64, 67, 69, 72],
+        guidance: [
+          '山灵：小鸟们想按"从低到高"排成一队',
+          '先找唱得最低的那只，再一点一点往上点',
+          '记住：低音在下，高音在上哦',
+        ],
+      },
+      // 后续关卡（sing/boss）按此模板添加
     ],
   },
   {
@@ -123,7 +137,6 @@ const MAPS = [
     name: '节奏小路',
     stage: '阶段二 · 时值/节拍',
     icon: '🛤️',
-    color: '#6db3ff',
     desc: '走走停停，拍出节奏',
     status: 'locked',
     lockedHint: '模板就绪：鼓点 + 时值距离',
@@ -134,7 +147,6 @@ const MAPS = [
     name: '和弦花园',
     stage: '阶段二 · 三和弦',
     icon: '🌸',
-    color: '#b48cff',
     desc: '三种颜色合体 = 彩虹',
     status: 'locked',
     lockedHint: '模板就绪：收集三音点亮石碑',
@@ -145,7 +157,6 @@ const MAPS = [
     name: '旋律草原',
     stage: '阶段二 · 简单旋律',
     icon: '🌾',
-    color: '#ff7eb3',
     desc: '指挥音符鸟画出旋律',
     status: 'locked',
     lockedHint: '模板就绪：飞行轨迹创作',

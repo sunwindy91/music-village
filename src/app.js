@@ -1,9 +1,9 @@
 /**
  * ============================================================
- *  app.js · 应用入口（合并点）
+ *  app.js v0.2 · 大山主题版（合并点）
  * ============================================================
- *  职责：地图总览渲染 / 关卡加载 / 看小鸟飞动画 / 山灵引导
- *  依赖：window.MAPS, window.NOTE_Y, window.NOTE_NAME, window.MusicCore, window.VoiceCore
+ *  山路寻宝地图 / 3 关卡（观察·配对·排序）/ 山灵表情 / 音效 /
+ *  逼近式引导 / 开发者模式 / 孩子化反馈
  * ============================================================
  */
 (function () {
@@ -17,68 +17,99 @@
   let levelIdx = 0;
   let speedIdx = 1;
   let playing = false;
-  let guidanceIdx = 0;
+  let spiritTimer = null;
 
-  // —— 积分 / 勋章（localStorage 本地存储，无账号零收集）——
+  // —— 进度（localStorage 本地存储，无账号零收集）——
   const SAVE_KEY = 'mv_progress_v1';
   let save = { score: 0, medals: [], doneLevels: {} };
   try { save = Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch (e) {}
-
   function persist() { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }
-  function addScore(n) {
-    save.score += n;
-    $('scoreVal').textContent = save.score;
-    persist();
-  }
+  function addScore(n) { save.score += n; persist(); refreshCrumb(); }
   function awardMedal(name) {
     if (save.medals.indexOf(name) === -1) save.medals.push(name);
-    persist();
-    $('medalPill').textContent = '🏅 ' + save.medals.join(' ');
-    $('medalPill').classList.remove('empty');
-  }
-  function renderProgressUI() {
-    $('scoreVal').textContent = save.score;
-    if (save.medals.length) {
-      $('medalPill').textContent = '🏅 ' + save.medals.join(' ');
-      $('medalPill').classList.remove('empty');
-    }
+    persist(); refreshCrumb();
   }
   function markLevelDone(id) { save.doneLevels[id] = true; persist(); }
   function isLevelDone(id) { return !!save.doneLevels[id]; }
+  function refreshCrumb() {
+    const m = currentMap ? currentMap.name : '大山地图';
+    const s = '⭐' + save.score + (save.medals.length ? ' · 🏅' + save.medals.length : '');
+    $('crumb').textContent = m + ' · ' + s;
+  }
 
-  // ---------------- 地图总览 ----------------
-  function renderMaps() {
-    const grid = $('mapGrid');
-    grid.innerHTML = '';
-    window.MAPS.forEach(function (m) {
-      const card = document.createElement('div');
-      card.className = 'map-card ' + (m.status === 'open' ? 'open' : 'locked');
+  // 鼓励语池（孩子化·随机积极反馈）
+  const PRAISE = ['太棒了！', '你好厉害！', '对啦！', '真聪明！', '哇，答对啦！', '好样的！'];
+  const CHEER = ['加油！再来一个～', '你越来越棒啦！', '马上就好啦！', '坚持住，快成功啦！'];
 
-      const levelInfo = m.levels.length
-        ? '<div class="mlevels">🎮 ' + m.levels.map(function (l) { return l.title; }).join(' · ') + '</div>'
-        : '';
+  // ================= 山路寻宝地图 =================
+  function renderTrailMap() {
+    const svg = $('trailSvg');
+    const places = [
+      { id: 'sound-valley', name: '声音山谷', stage: '听·唱·动', emoji: '🏞️', x: 170, y: 470 },
+      { id: 'scale-valley', name: '音阶山谷', stage: '音高·音阶', emoji: '⛰️', x: 340, y: 372 },
+      { id: 'rhythm-path', name: '节奏小路', stage: '时值·节拍', emoji: '🛤️', x: 510, y: 300 },
+      { id: 'chord-garden', name: '和弦花园', stage: '三和弦', emoji: '🌸', x: 665, y: 208 },
+      { id: 'melody-meadow', name: '旋律草原', stage: '小旋律', emoji: '🌾', x: 800, y: 120 },
+    ];
 
-      card.innerHTML =
-        '<div class="row"><span class="micon">' + m.icon + '</span>' +
-        '<span class="mname">' + m.name + '</span>' +
-        '<span class="mstage">' + m.stage + '</span></div>' +
-        '<div class="mdesc">' + m.desc + '</div>' +
-        levelInfo +
-        '<div class="mstatus ' + (m.status === 'open' ? 'open-t' : 'lock-t') + '">' +
-        (m.status === 'open' ? '▶ 可探索' : '🔒 ' + (m.lockedHint || '即将开启')) + '</div>';
+    let s = '';
+    const roadD = 'M 170 500 C 240 470 280 430 340 372 C 420 320 450 330 510 300 C 580 265 610 245 665 208 C 720 170 760 145 800 120';
+    s += '<path class="road-shadow" d="' + roadD + '"/>';
+    s += '<path class="road" d="' + roadD + '"/>';
+    // 起点小屋
+    s += '<g><circle cx="150" cy="515" r="16" fill="#c98a5e" stroke="#fff" stroke-width="3"/><text x="150" y="520" font-size="16" text-anchor="middle">🏡</text></g>';
 
-      if (m.status === 'open') {
-        card.addEventListener('click', function () { enterMap(m); });
-      } else {
-        card.addEventListener('click', function () { toast(m.lockedHint || '这一片还在封印中…'); });
-      }
-      grid.appendChild(card);
+    // 自然装饰：树 / 溪流 / 花 / 山顶云
+    s += '<g opacity=".9">' +
+      '<circle cx="80" cy="430" r="24" fill="#5e9c7c"/><circle cx="70" cy="425" r="14" fill="#7fc48d"/>' +
+      '<rect x="76" y="448" width="8" height="20" rx="3" fill="#c98a5e"/>' +
+      '<circle cx="60" cy="462" r="16" fill="#5e9c7c"/><rect x="57" y="474" width="7" height="16" rx="3" fill="#c98a5e"/>' +
+      '<circle cx="820" cy="350" r="20" fill="#5e9c7c"/><rect x="817" y="366" width="7" height="16" rx="3" fill="#c98a5e"/>' +
+      '</g>';
+    s += '<path d="M 60 500 Q 100 512 170 496 Q 230 486 300 498" stroke="#6fb7e8" stroke-width="7" fill="none" stroke-linecap="round" opacity=".45"/>';
+    s += '<g fill="#ffd166" opacity=".85">' +
+      '<circle cx="260" cy="452" r="4"/><circle cx="270" cy="458" r="3"/>' +
+      '<circle cx="620" cy="470" r="4"/><circle cx="750" cy="430" r="3.4"/>' +
+      '<circle cx="700" cy="470" r="3"/></g>' +
+      '<g fill="#e76f8a" opacity=".8">' +
+      '<circle cx="290" cy="466" r="3.2"/><circle cx="660" cy="452" r="3.4"/>' +
+      '<circle cx="780" cy="415" r="3"/></g>';
+    s += '<g opacity=".85"><ellipse cx="800" cy="88" rx="34" ry="12" fill="#fff"/>' +
+      '<ellipse cx="788" cy="82" rx="18" ry="11" fill="#fff"/>' +
+      '<ellipse cx="814" cy="84" rx="16" ry="9" fill="#fff"/></g>';
+
+    // 地点
+    places.forEach(function (p) {
+      const m = window.MAPS.find(function (mm) { return mm.id === p.id; });
+      if (!m) return;
+      const cls = m.status === 'open' ? 'open' : (m.levels.length && isLevelDone(m.levels[0].id) ? 'done' : 'locked');
+      s += '<g id="place-' + p.id + '" data-place="' + p.id + '" class="place ' + cls + '">' +
+        '<circle class="p-base" cx="' + p.x + '" cy="' + p.y + '" r="34"/>' +
+        '<text class="p-emoji" x="' + p.x + '" y="' + (p.y - 2) + '">' + p.emoji + '</text>' +
+        '<text class="p-name" x="' + p.x + '" y="' + (p.y + 52) + '">' + p.name + '</text>' +
+        '<text class="p-stage" x="' + p.x + '" y="' + (p.y + 68) + '">' + p.stage + '</text>' +
+        (m.status === 'open' ? '<text x="' + (p.x + 26) + '" y="' + (p.y - 26) + '" font-size="15">▶</text>' : '') +
+        '</g>';
+    });
+    svg.innerHTML = s;
+
+    svg.querySelectorAll('.place.open').forEach(function (g) {
+      g.addEventListener('click', function () {
+        const m = window.MAPS.find(function (mm) { return mm.id === g.dataset.place; });
+        if (m) enterMap(m);
+      });
+    });
+    svg.querySelectorAll('.place.locked').forEach(function (g) {
+      g.addEventListener('click', function () {
+        const m = window.MAPS.find(function (mm) { return mm.id === g.dataset.place; });
+        spiritSay(m && m.lockedHint ? '🔒 ' + m.lockedHint : '🔒 这片地方还没开启哦');
+      });
     });
   }
 
-  // ---------------- 进入地图 / 关卡 ----------------
+  // ================= 关卡导航 =================
   function enterMap(m) {
-    if (!m.levels.length) { toast('这张地图的关卡还在设计中…'); return; }
+    if (!m.levels.length) { spiritSay('🔧 这里的关卡还在设计呢，先去别的山看看吧～'); return; }
     currentMap = m;
     levelIdx = 0;
     loadLevel();
@@ -109,14 +140,10 @@
     currentLevel = lv;
     $('mapView').classList.add('hidden');
     $('levelView').classList.remove('hidden');
-    $('backBtn').classList.remove('hidden');
-    $('crumb').textContent = currentMap.name + ' · ' + lv.title;
-
     $('levelTitle').textContent = lv.icon + ' ' + lv.title;
-    $('levelSub').textContent = currentMap.name + ' · ' + (lv.type === 'observe' ? '观察' : lv.type === 'point' ? '配对' : lv.type) + ' 关卡';
-    $('levelConcept').textContent = '🎼 ' + lv.concept;
+    $('levelSub').textContent = currentMap.name + ' · ' +
+      (lv.type === 'observe' ? '👀 先看看' : lv.type === 'point' ? '🎯 帮小鸟回家' : lv.type === 'sort' ? '📶 排排队' : lv.type);
 
-    // 三件套
     $('kitConcept').textContent = lv.concept;
     $('kitModel').textContent = lv.model;
     $('kitAction').textContent = lv.action;
@@ -124,23 +151,26 @@
     $('kitFeedback').textContent = lv.feedback;
     $('kitGoal').textContent = lv.goal;
 
-    guidanceIdx = 0;
-    spiritSay(lv.guidance[0]);
-
     renderLevelNav();
+    refreshCrumb();
 
-    // 按类型渲染舞台
     $('listenRow').classList.add('hidden');
     $('roundHud').classList.add('hidden');
-    if (lv.type === 'point') {
+    $('devPanel').classList.add('hidden');
+    $('devToggle').classList.remove('active');
+
+    if (lv.type === 'point' || lv.type === 'sort') {
       $('observeControls').classList.add('hidden');
       $('pointControls').classList.remove('hidden');
-      drawPointLevel(lv);
+      $('pointStartBtn').textContent = lv.type === 'sort' ? '🐦 开始排队' : '🎵 听音开始';
+      if (lv.type === 'sort') drawSortLevel(lv); else drawPointLevel(lv);
+      spiritSay(lv.guidance[0]);
     } else {
       $('observeControls').classList.remove('hidden');
       $('pointControls').classList.add('hidden');
       drawStaff(lv);
       renderNotes(lv);
+      spiritSay(lv.guidance[0]);
     }
   }
 
@@ -151,24 +181,19 @@
     currentLevel = null;
     $('levelView').classList.add('hidden');
     $('mapView').classList.remove('hidden');
-    $('backBtn').classList.add('hidden');
-    $('crumb').textContent = '地图总览';
-    spiritSay('你好呀，我是山灵！选一张地图开始冒险吧～');
+    spiritSay('回来啦！想去哪座山看看呀？');
+    refreshCrumb();
   }
 
-  // ---------------- 五线谱 ----------------
+  // ================= 五线谱（观察） =================
   function drawStaff(lv) {
     const svg = $('staffSvg');
-    const lineY = [150, 120, 90, 60, 30]; // E4 G4 B4 D5 F5
+    const lineY = [150, 120, 90, 60, 30];
     let s = '';
-    // 小节线
-    s += '<line class="staff-line" x1="100" y1="30" x2="100" y2="150" style="stroke:rgba(147,160,200,.18)"/>';
-    s += '<line class="staff-line" x1="740" y1="30" x2="740" y2="150" style="stroke:rgba(147,160,200,.18)"/>';
     lineY.forEach(function (y) {
       s += '<line class="staff-line" x1="40" y1="' + y + '" x2="760" y2="' + y + '"/>';
     });
-    // 高音谱号
-    s += '<text x="52" y="100" font-size="52" fill="rgba(238,242,255,.75)" text-anchor="middle" font-family="serif">𝄞</text>';
+    s += '<text x="52" y="100" font-size="52" fill="rgba(55,66,59,.5)" text-anchor="middle" font-family="serif">𝄞</text>';
     svg.innerHTML = s;
   }
 
@@ -183,34 +208,23 @@
       return { x: x0 + i * gap, y: window.NOTE_Y[n], midi: n, i: i };
     });
 
-    // 彩色轨迹（每段用目标音符颜色）
     for (let i = 0; i < pts.length - 1; i++) {
       trail += '<line x1="' + pts[i].x + '" y1="' + pts[i].y + '" x2="' + pts[i + 1].x +
         '" y2="' + pts[i + 1].y + '" stroke="' + window.noteColor(pts[i + 1].midi) +
-        '" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="6 5" opacity=".5"/>';
+        '" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 5" opacity=".55"/>';
     }
 
     pts.forEach(function (p) {
-      const c = window.noteColor(p.midi);
       dots += '<circle class="note-dot" id="dot' + p.i + '" cx="' + p.x + '" cy="' + p.y +
-        '" r="11" fill="' + c + '" style="opacity:0"/>';
+        '" r="11" fill="' + window.noteColor(p.midi) + '" style="opacity:0"/>';
       names += '<text class="note-name" id="nm' + p.i + '" x="' + p.x + '" y="' + (p.y + 34) + '">' +
         (window.NOTE_NAME[p.midi] || p.midi) + '</text>';
     });
 
-    // 小鸟
     const b0 = pts[0];
-    const bird = '<text class="bird" id="birdEl" x="' + b0.x + '" y="' + (b0.y - 14) + '">🐤</text>';
-
+    const bird = '<text class="bird" id="birdEl" x="' + b0.x + '" y="' + (b0.y - 14) + '">🐦</text>';
     svg.insertAdjacentHTML('beforeend', trail + dots + names + bird);
     svg.__pts = pts;
-  }
-
-  // ---------------- 播放（看小鸟飞 · 平滑动画） ----------------
-  function setSpeed(i) {
-    speedIdx = i;
-    const btns = document.querySelectorAll('#observeControls .btn.small');
-    btns.forEach(function (b, idx) { b.classList.toggle('active', idx === i); });
   }
 
   function animateBird(fromX, fromY, toX, toY, dur) {
@@ -221,12 +235,18 @@
         const p = Math.min(1, (now - t0) / (dur * 1000));
         const ease = 1 - Math.pow(1 - p, 3);
         bird.setAttribute('x', fromX + (toX - fromX) * ease);
-        // 小幅上下浮动（飞翔感）
         bird.setAttribute('y', fromY + (toY - fromY) * ease - 14 + Math.sin(p * Math.PI * 3) * 3);
-        if (p < 1) requestAnimationFrame(step);
-        else resolve();
+        if (p < 1) requestAnimationFrame(step); else resolve();
       }
       requestAnimationFrame(step);
+    });
+  }
+
+  function setSpeed(i) {
+    speedIdx = i;
+    document.querySelectorAll('#observeControls .btn.soft').forEach(function (b, idx) {
+      b.style.borderColor = idx === i ? 'var(--forest)' : '';
+      b.style.color = idx === i ? 'var(--forest-deep)' : '';
     });
   }
 
@@ -236,6 +256,7 @@
     if (!lv || lv.type !== 'observe') return;
     playing = true;
     $('playBtn').textContent = '⏳ 播放中…';
+    $('playBtn').classList.add('disabled');
 
     if (window.MusicCore) window.MusicCore._ensureCtx();
     window.MusicCore.startLevel(lv.id, {});
@@ -250,128 +271,124 @@
       const n = $('nm' + p.i); if (n) n.classList.remove('lit');
     });
     birdEl.classList.add('show');
-
-    spiritSay('仔细看哦～');
-
-    // 小鸟回到起点
     birdEl.setAttribute('x', pts[0].x);
     birdEl.setAttribute('y', pts[0].y - 14);
+
+    spiritSay('仔细看哦～');
 
     for (let i = 0; i < pts.length; i++) {
       const p = pts[i];
       const prev = i > 0 ? pts[i - 1] : pts[0];
-
-      // 飞向落点
       await animateBird(prev.x, prev.y - 14, p.x, p.y - 14, base * 0.55);
 
-      // 落点亮起（彩虹色）+ 唱音 + 音符名
       const d = $('dot' + p.i);
-      if (d) { d.style.opacity = 1; d.style.filter = 'drop-shadow(0 0 10px ' + window.noteColor(p.midi) + ')'; }
+      if (d) {
+        d.style.opacity = 1;
+        d.style.filter = 'drop-shadow(0 0 8px ' + window.noteColor(p.midi) + ')';
+      }
       const n = $('nm' + p.i); if (n) n.classList.add('lit');
-
-      // 弹出小音符
       popNote(p.x, p.y - 30);
-
       window.MusicCore.playNote(p.midi, base * 0.8);
-      if (window.VoiceCore) window.VoiceCore.showCharacter('sing');
+      spiritAvatar('talk');
       await sleep(base * 500);
     }
 
-    // 庆祝：全部点亮 + 山灵庆祝
     pts.forEach(function (p) {
       const d = $('dot' + p.i);
-      if (d) { d.style.opacity = 1; d.style.filter = 'drop-shadow(0 0 12px ' + window.noteColor(p.midi) + ')'; }
+      if (d) { d.style.opacity = 1; d.style.filter = 'drop-shadow(0 0 9px ' + window.noteColor(p.midi) + ')'; }
     });
-    if (window.VoiceCore) {
-      window.VoiceCore.showCharacter('celebrate');
-      window.VoiceCore.playAnimation('celebrate');
-    }
+    spiritAvatar('celebrate');
+    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.stone();
     spiritSay('看见了吗？落点越高，音就越高！这就是"音高"～');
     toast('🎉 观察完成！记住：高 = 上面，低 = 下面');
+
     if (!isLevelDone(lv.id)) {
       markLevelDone(lv.id);
       addScore(20);
       awardMedal('👀 观察员');
+      toast('⭐ +20 · 🏅 观察员');
     }
+
     playing = false;
     $('playBtn').textContent = '▶ 再看一遍';
+    $('playBtn').classList.remove('disabled');
   }
 
   function popNote(x, y) {
     const svg = $('staffSvg');
     const el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     el.textContent = '🎵';
-    el.setAttribute('x', x);
-    el.setAttribute('y', y);
-    el.setAttribute('font-size', '18');
-    el.setAttribute('text-anchor', 'middle');
+    el.setAttribute('x', x); el.setAttribute('y', y);
+    el.setAttribute('font-size', '19'); el.setAttribute('text-anchor', 'middle');
     el.classList.add('pop-note');
     svg.appendChild(el);
     requestAnimationFrame(function () { el.classList.add('show'); });
     setTimeout(function () { el.remove(); }, 900);
   }
 
-  // ---------------- point 玩法（点小鸟回家） ----------------
-  let pt = { round: 0, ok: 0, combo: 0, target: null, locked: false, birds: [] };
+  // ================= point 玩法（点小鸟回家）=================
+  let pt = { round: 0, ok: 0, combo: 0, target: null, locked: false, misses: 0, birds: [] };
 
   function drawPointLevel(lv) {
     const svg = $('staffSvg');
     svg.innerHTML = '';
-    // 五线谱底
     const lineY = [150, 120, 90, 60, 30];
     let s = '';
     lineY.forEach(function (y) {
       s += '<line class="staff-line" x1="40" y1="' + y + '" x2="760" y2="' + y + '"/>';
     });
-    s += '<text x="52" y="100" font-size="52" fill="rgba(238,242,255,.75)" text-anchor="middle" font-family="serif">𝄞</text>';
+    s += '<text x="52" y="100" font-size="52" fill="rgba(55,66,59,.5)" text-anchor="middle" font-family="serif">𝄞</text>';
 
-    // 5 只候选小鸟：随机打乱音高，均匀分布 x
     const notes = lv.notes.slice();
     for (let i = notes.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [notes[i], notes[j]] = [notes[j], notes[i]];
     }
     const n = notes.length;
-    const x0 = 140, gap = (760 - 280) / (n - 1);
+    const x0 = 150, gap = (760 - 300) / (n - 1);
+
     pt.birds = notes.map(function (midi, i) {
       const x = x0 + i * gap;
       const y = window.NOTE_Y[midi];
-      s += '<text class="choice-bird" id="cb' + i + '" x="' + x + '" y="' + (y - 16) +
-        '" data-note="' + midi + '" data-idx="' + i + '">🐦</text>';
-      // 显示音名小标签
-      s += '<text class="note-name" id="cbn' + i + '" x="' + x + '" y="' + (y + 30) +
-        '" style="opacity:.5">' + (window.NOTE_NAME[midi] || midi) + '</text>';
+      s += '<g class="choice-bird hoverable" id="cb' + i + '" data-note="' + midi + '">' +
+        '<circle cx="' + x + '" cy="' + (y - 12) + '" r="22" fill="transparent" style="cursor:pointer"/>' +
+        '<text x="' + x + '" y="' + (y - 12) + '" font-size="32" text-anchor="middle">🐦</text>' +
+        '<text x="' + x + '" y="' + (y + 30) + '" font-size="12" text-anchor="middle" fill="var(--ink-soft)" style="opacity:.6">' +
+        (window.NOTE_NAME[midi] || midi) + '</text></g>';
       return { x: x, y: y, midi: midi, idx: i };
     });
     svg.innerHTML += s;
 
-    // 点击委托（SVG 上）
     svg.onclick = function (ev) {
       const t = ev.target;
-      if (t && t.classList && t.classList.contains('choice-bird')) {
-        handleBirdClick(parseInt(t.dataset.note, 10), t);
+      if (t && t.parentNode && t.parentNode.classList && t.parentNode.classList.contains('choice-bird')) {
+        const g = t.parentNode;
+        handleBirdClick(parseInt(g.dataset.note, 10), g);
       }
     };
   }
 
   function resetPointUI() {
-    pt.round = 0; pt.ok = 0; pt.combo = 0; pt.locked = false;
-    $('roundNow').textContent = '1';
-    $('roundOk').textContent = '0';
-    $('roundCombo').textContent = '0';
+    pt.round = 0; pt.ok = 0; pt.combo = 0; pt.locked = false; pt.misses = 0;
+    $('roundNow').textContent = '1'; $('roundOk').textContent = '0'; $('roundCombo').textContent = '0';
   }
 
   function startPoint() {
     const lv = currentLevel;
-    if (!lv || lv.type !== 'point') return;
+    if (!lv) return;
+    if (lv.type === 'sort') { startSort(); return; }
+    if (lv.type !== 'point') return;
     if (window.MusicCore) window.MusicCore._ensureCtx();
+    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.click();
     resetPointUI();
     $('roundHud').classList.remove('hidden');
     $('listenRow').classList.remove('hidden');
-    // 重置小鸟样式
+    $('segQ').style.display = '';
+    $('okLabel').textContent = '答对';
+    $('segCombo').style.display = '';
     pt.birds.forEach(function (b) {
-      const el = $('cb' + b.idx);
-      if (el) { el.classList.remove('wrong', 'correct'); el.style.opacity = ''; }
+      const g = $('cb' + b.idx);
+      if (g) { g.classList.remove('correct', 'wrong'); g.querySelector('text').style.opacity = ''; }
     });
     spiritSay('我来唱第一个音，认真听哦～');
     playRound();
@@ -379,11 +396,9 @@
 
   function pickTarget() {
     const lv = currentLevel;
-    // 避免连续重复目标
     let t;
-    do {
-      t = lv.notes[Math.floor(Math.random() * lv.notes.length)];
-    } while (t === pt.target && lv.notes.length > 1);
+    do { t = lv.notes[Math.floor(Math.random() * lv.notes.length)]; }
+    while (t === pt.target && lv.notes.length > 1);
     return t;
   }
 
@@ -393,8 +408,6 @@
     pt.target = pickTarget();
     $('roundNow').textContent = Math.min(pt.round + 1, lv.rounds);
     $('listenBadge').innerHTML = '🎵 听音…';
-
-    // 播放目标音（先全音符提示，再播）
     setTimeout(function () {
       window.MusicCore.playNote(pt.target, 1.0);
       $('listenBadge').innerHTML = '🎵 点唱得一样高的小鸟！';
@@ -408,25 +421,35 @@
     $('listenBadge').innerHTML = '…';
 
     if (note === pt.target) {
-      // 答对
       el.classList.add('correct');
-      pt.combo += 1;
-      pt.ok += 1;
-      const pts = 10 + Math.min(pt.combo - 1, 3) * 5;   // 连击加成
+      pt.combo += 1; pt.ok += 1;
+      const pts = 10 + Math.min(pt.combo - 1, 3) * 5;
       addScore(pts);
       window.MusicCore.playNote(note, 0.8);
-      if (window.VoiceCore) window.VoiceCore.showCharacter('happy');
-      spiritSay('答对啦！积分 +' + pts + (pt.combo >= 2 ? '（连击 x' + pt.combo + '）' : ''));
+      if (window.MusicCore.sfx) window.MusicCore.sfx.correct();
+      spiritAvatar('happy');
+      const msg = PRAISE[Math.floor(Math.random() * PRAISE.length)] +
+        (pt.combo >= 2 ? '（连击 x' + pt.combo + '）' : '');
+      spiritSay(msg + ' 积了 ' + pts + ' 分！');
       toast('🎉 回家成功！+' + pts);
     } else {
-      // 答错：再试一次 + 重播示范（无惩罚）
       el.classList.add('wrong');
       pt.combo = 0;
       window.MusicCore.playNote(pt.target, 0.9);
-      if (window.VoiceCore) window.VoiceCore.showCharacter('sad');
-      spiritSay('没关系，再听一次～ 注意它站得多高？');
-      $('listenBadge').innerHTML = '🎵 再听一次（点上方按钮）';
-      setTimeout(function () { el.classList.remove('wrong'); }, 600);
+      if (window.MusicCore.sfx) window.MusicCore.sfx.wrong();
+      spiritAvatar('think');
+      // 逼近式引导：提示"高一点/低一点"（不剧透答案）
+      let hint = '再听一次～ 想想它站得高不高？';
+      if (note < pt.target) hint = '再往上一点～ 它站在更高的地方哦';
+      else if (note > pt.target) hint = '再往下一点～ 它站在更低的地方哦';
+      pt.misses = (pt.misses || 0) + 1;
+      if (pt.misses >= 3) {
+        hint = '我来帮你～ 听好了，就是这个音！';
+        spiritAvatar('happy');
+      }
+      spiritSay(hint);
+      $('listenBadge').innerHTML = '🎵 再听一次（点下方按钮）';
+      setTimeout(function () { el.classList.remove('wrong'); }, 500);
       setTimeout(function () {
         pt.locked = false;
         $('listenBadge').innerHTML = '🎵 点唱得一样高的小鸟！';
@@ -434,11 +457,8 @@
       return;
     }
 
-    // 更新 HUD
     $('roundOk').textContent = pt.ok;
     $('roundCombo').textContent = pt.combo;
-
-    // 下一题 / 通关
     pt.round += 1;
     if (pt.round >= lv.rounds || pt.ok >= lv.passCount) {
       finishPoint();
@@ -449,17 +469,15 @@
 
   function finishPoint() {
     const lv = currentLevel;
-    $('listenBadge').innerHTML = '🎉 全部小鸟都回家啦！';
-    if (window.VoiceCore) {
-      window.VoiceCore.showCharacter('celebrate');
-      window.VoiceCore.playAnimation('celebrate');
-    }
-    spiritSay('太棒了！你听出了 ' + pt.ok + ' 个音高，小鸟们都回家啦！');
-    toast('🏅 获得徽章：听音小帮手');
+    $('listenBadge').innerHTML = '🎉 小鸟们都回家啦！';
+    spiritAvatar('celebrate');
+    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.win();
+    spiritSay('太棒了！你听出了 ' + pt.ok + ' 个音高，' + CHEER[Math.floor(Math.random() * CHEER.length)]);
     if (!isLevelDone(lv.id)) {
       markLevelDone(lv.id);
       addScore(30);
       awardMedal('👂 听音小帮手');
+      toast('⭐ +30 · 🏅 听音小帮手');
     }
     $('pointStartBtn').textContent = '🎵 再来一轮';
   }
@@ -471,16 +489,152 @@
     }
   }
 
-  // ---------------- 山灵 ----------------
-  function spiritSay(text) {
-    $('spiritText').textContent = text;
+  // ================= sort 玩法（排排队 · 音阶心智）=================
+  let st = { order: [], next: 0, active: false, birds: [] };
+
+  function drawSortLevel(lv) {
+    const svg = $('staffSvg');
+    svg.innerHTML = '';
+    const lineY = [150, 120, 90, 60, 30];
+    let s = '';
+    lineY.forEach(function (y) {
+      s += '<line class="staff-line" x1="40" y1="' + y + '" x2="760" y2="' + y + '"/>';
+    });
+    s += '<text x="52" y="100" font-size="52" fill="rgba(55,66,59,.5)" text-anchor="middle" font-family="serif">𝄞</text>';
+
+    const notes = lv.notes.slice().sort(function (a, b) { return a - b; });
+    st.order = notes;
+    st.next = 0;
+    st.active = false;
+
+    const xs = [180, 310, 440, 570, 700];
+    for (let i = xs.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [xs[i], xs[j]] = [xs[j], xs[i]];
+    }
+
+    st.birds = notes.map(function (midi, i) {
+      const x = xs[i];
+      const y = window.NOTE_Y[midi];
+      s += '<g class="choice-bird hoverable" id="sb' + i + '" data-note="' + midi + '">' +
+        '<circle cx="' + x + '" cy="' + (y - 12) + '" r="22" fill="transparent" style="cursor:pointer"/>' +
+        '<text x="' + x + '" y="' + (y - 12) + '" font-size="32" text-anchor="middle">🐦</text>' +
+        '<text x="' + x + '" y="' + (y + 30) + '" font-size="12" text-anchor="middle" fill="var(--ink-soft)" style="opacity:.6">' +
+        (window.NOTE_NAME[midi] || midi) + '</text></g>';
+      return { x: x, y: y, midi: midi, idx: i };
+    });
+    svg.innerHTML += s;
+
+    svg.onclick = function (ev) {
+      const t = ev.target;
+      if (t && t.parentNode && t.parentNode.classList && t.parentNode.classList.contains('choice-bird')) {
+        const g = t.parentNode;
+        handleSortClick(parseInt(g.dataset.note, 10), g);
+      }
+    };
   }
 
-  function nextGuidance() {
-    if (!currentLevel) return;
-    const g = currentLevel.guidance;
-    guidanceIdx = (guidanceIdx + 1) % g.length;
-    spiritSay(g[guidanceIdx]);
+  function startSort() {
+    const lv = currentLevel;
+    if (!lv || lv.type !== 'sort') return;
+    if (window.MusicCore) window.MusicCore._ensureCtx();
+    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.click();
+    st.active = true;
+    st.next = 0;
+    $('roundHud').classList.remove('hidden');
+    $('listenRow').classList.remove('hidden');
+    $('segQ').style.display = 'none';
+    $('okLabel').textContent = '已排';
+    $('segCombo').style.display = 'none';
+    $('roundOk').textContent = '0';
+    $('roundTotal').textContent = st.order.length;
+    $('listenBadge').innerHTML = '🐦 从最低的小鸟开始点！';
+    document.querySelectorAll('#staffSvg .choice-bird').forEach(function (g) {
+      g.classList.remove('correct', 'wrong');
+      const texts = g.querySelectorAll('text');
+      texts[0].textContent = '🐦';
+      g.style.opacity = '';
+    });
+    spiritSay('先找唱得最低的那只，点它！');
+  }
+
+  function handleSortClick(note, g) {
+    if (!st.active || st.next >= st.order.length) return;
+    if (note === st.order[st.next]) {
+      g.classList.add('correct');
+      const texts = g.querySelectorAll('text');
+      texts[0].textContent = (st.next + 1) + '️⃣';
+      window.MusicCore.playNote(note, 0.55);
+      st.next++;
+      $('roundOk').textContent = st.next;
+
+      if (st.next >= st.order.length) {
+        finishSort();
+      } else {
+        spiritAvatar('happy');
+        spiritSay(PRAISE[Math.floor(Math.random() * PRAISE.length)] + ' 下一个，再高一点的～');
+      }
+    } else {
+      g.classList.add('wrong');
+      window.MusicCore.playNote(note, 0.3);
+      if (window.MusicCore.sfx) window.MusicCore.sfx.wrong();
+      spiritAvatar('think');
+      spiritSay('这只还不是哦，先点更低的～');
+      setTimeout(function () { g.classList.remove('wrong'); }, 500);
+    }
+  }
+
+  function finishSort() {
+    $('listenBadge').innerHTML = '🎉 排队完成！';
+    spiritAvatar('celebrate');
+    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.win();
+    st.order.forEach(function (n, i) {
+      setTimeout(function () { window.MusicCore.playNote(n, 0.5); }, i * 260);
+    });
+    spiritSay('太棒了！这就是音阶——从低到高，一个一个往上走！');
+    const lv = currentLevel;
+    if (!isLevelDone(lv.id)) {
+      markLevelDone(lv.id);
+      addScore(30);
+      awardMedal('📶 排队小达人');
+      toast('⭐ +30 · 🏅 排队小达人');
+    }
+    $('pointStartBtn').textContent = '🐦 再排一次';
+  }
+
+  // ================= 山灵对话（打字机 + SVG 表情）=================
+  function spiritSay(text) {
+    clearInterval(spiritTimer);
+    const el = $('spiritText');
+    el.textContent = '';
+    spiritAvatar('talk');
+    let i = 0;
+    spiritTimer = setInterval(function () {
+      if (i <= text.length) {
+        el.textContent = text.slice(0, i);
+        i++;
+      } else {
+        clearInterval(spiritTimer);
+      }
+    }, 28);
+  }
+
+  function spiritAvatar(state) {
+    const a = $('spirit');
+    a.classList.remove('talk', 'celebrate');
+    void a.offsetWidth;
+    if (state === 'talk') a.classList.add('talk');
+    if (state === 'celebrate') a.classList.add('celebrate');
+
+    const normal = $('sEyesNormal'), happy = $('sEyesHappy');
+    const mouth = $('sMouth'), mouthOpen = $('sMouthOpen');
+    const on = function (el, v) { if (el) el.style.display = v ? '' : 'none'; };
+    on(normal, true); on(happy, false); on(mouth, true); on(mouthOpen, false);
+    if (state === 'happy' || state === 'celebrate') {
+      on(normal, false); on(happy, true); on(mouth, false); on(mouthOpen, true);
+    } else if (state === 'think') {
+      on(mouth, false);
+    }
   }
 
   function toast(msg) {
@@ -490,16 +644,24 @@
     setTimeout(function () { t.classList.remove('show'); }, 2200);
   }
 
-  // ---------------- 初始化 ----------------
+  // ================= 开发者模式 =================
+  function toggleDev() {
+    const p = $('devPanel');
+    p.classList.toggle('hidden');
+    $('devToggle').classList.toggle('active', !p.classList.contains('hidden'));
+  }
+
+  // ================= 初始化 =================
   window.App = {
     goHome: goHome,
     playLevel: playLevel,
     setSpeed: setSpeed,
-    nextGuidance: nextGuidance,
     startPoint: startPoint,
     replayNote: replayNote,
+    toggleDev: toggleDev,
   };
 
-  renderProgressUI();
-  renderMaps();
+  renderTrailMap();
+  refreshCrumb();
+  spiritSay('你好呀，我是山灵！大山的音乐被封印了，和我一起去寻宝吧！');
 })();
