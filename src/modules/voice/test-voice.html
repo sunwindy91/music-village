@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>VoiceCore 独立测试 · module-voice</title>
+<style>
+  body { font-family:"Microsoft YaHei",sans-serif; background:#0a0e1f; color:#eef2ff;
+    padding:24px; }
+  button { background:#161d3d; color:#b48cff; border:1px solid #2a3560; border-radius:10px;
+    padding:10px 18px; margin:4px; font-size:1rem; cursor:pointer; }
+  #spirit { font-size:3rem; margin:10px 0; }
+  h2 { color:#b48cff; }
+</style>
+</head>
+<body>
+<h1>🎤 VoiceCore 测试页（module-voice 独立可开 · 队友领地）</h1>
+<p style="color:#93a0c8">契约接口：speak / showCharacter / playAnimation / renderVision（占位实现，队友可替换）</p>
+<div id="spirit">✨</div>
+<div>
+  <button onclick="VoiceCore.speak('太棒了，你答对啦！')">语音朗读</button>
+  <button onclick="VoiceCore.showCharacter('happy');VoiceCore.playAnimation('bounce')">开心</button>
+  <button onclick="VoiceCore.showCharacter('celebrate');VoiceCore.playAnimation('celebrate')">庆祝</button>
+  <button onclick="VoiceCore.showCharacter('idle')">待机</button>
+  <button onclick="VoiceCore.renderVision({kind:'note',value:60})">渲染音符</button>
+</div>
+<script src="voice-core.js"></script>
+</body>
+</html>
