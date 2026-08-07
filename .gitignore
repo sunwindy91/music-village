@@ -1,0 +1,7 @@
+# wrangler / cloudflare 本地缓存
+.wrangler/
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+deploy_tmp/

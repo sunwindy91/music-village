@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大山里的音乐课 · 产品架构图</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:"Baloo 2","Microsoft YaHei",system-ui,sans-serif;
+    background:#faf9f4; color:#4a4a4a; padding:30px 20px 60px;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(174,225,255,.35), transparent 40%),
+      radial-gradient(circle at 85% 20%, rgba(255,238,205,.5), transparent 45%),
+      radial-gradient(circle at 50% 95%, rgba(190,224,190,.4), transparent 50%);
+  }
+  header { text-align:center; margin-bottom:28px; }
+  h1 { font-size:1.7rem; color:#3e7d5e; letter-spacing:.05em; }
+  .sub { color:#8a8a8a; font-size:.9rem; margin-top:6px; }
+
+  .tree { display:flex; gap:22px; justify-content:center; align-items:flex-start;
+    flex-wrap:wrap; max-width:1400px; margin:0 auto; }
+  .root { flex-shrink:0; }
+  .root-box { width:150px; height:150px; border-radius:50%;
+    background:linear-gradient(160deg, #7fc48d, #3e7d5e); color:#fff;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    font-size:1.02rem; font-weight:800; line-height:1.5; padding:10px;
+    box-shadow:0 10px 24px rgba(62,125,94,.25); margin:90px auto 0; }
+  .root-box small { display:block; font-weight:400; font-size:.7rem; opacity:.85; margin-top:4px; }
+
+  .branches { display:grid; grid-template-columns:repeat(4, minmax(215px,1fr));
+    gap:20px; flex:1; max-width:1180px; }
+  @media (max-width: 1100px){ .branches{ grid-template-columns:repeat(2,1fr);} }
+  @media (max-width: 560px){ .branches{ grid-template-columns:1fr;} }
+
+  .branch { background:#fff; border-radius:18px; padding:14px 14px 12px;
+    box-shadow:0 6px 18px rgba(120,120,120,.08); border:1px solid #eee8da; }
+  .branch h3 { font-size:.95rem; margin-bottom:10px; padding:7px 10px; border-radius:12px;
+    color:#3e7d5e; }
+  .b0 h3 { background:#e8f3fb; } .b1 h3 { background:#fdf3e3; }
+  .b2 h3 { background:#eaf6ea; } .b3 h3 { background:#fbeef2; }
+  .b4 h3 { background:#f0ecfa; } .b5 h3 { background:#e8f3fb; }
+  .b6 h3 { background:#fdf3e3; } .b7 h3 { background:#eaf6ea; }
+
+  .node { background:#faf9f4; border:1px solid #ece7db; border-radius:12px;
+    padding:8px 10px; margin-bottom:7px; font-size:.78rem; line-height:1.55; }
+  .node b { color:#5a8a6d; }
+  .node .tag { display:inline-block; background:#fff; border:1px solid #d8e6d6;
+    color:#6b9b7a; border-radius:999px; font-size:.66rem; padding:1px 8px; margin-right:4px; }
+  .node .hl { color:#e76f8a; font-weight:700; }
+  footer { text-align:center; color:#aaa; font-size:.75rem; margin-top:34px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏔️ 大山里的音乐课 · 产品架构图</h1>
+  <div class="sub">给山区零基础孩子的 AI 陪伴式「乐理寻宝」启蒙 · 乐理 = 世界的物理规则</div>
+</header>
+
+<div class="tree">
+  <div class="root">
+    <div class="root-box">🎵 大山里的音乐课<small>音乐寻宝游戏</small></div>
+  </div>
+
+  <div class="branches">
+    <!-- 定位 -->
+    <div class="branch b0">
+      <h3>🎯 一句话定位</h3>
+      <div class="node"><b>不是教乐理的工具</b><br>是让孩子愿意打开、愿意坚持、感到美好的游戏</div>
+      <div class="node"><b>核心机制</b><br><span class="tag">越高=音越高</span><span class="tag">路长=音长</span><span class="tag">三色=和弦</span></div>
+      <div class="node"><b>目标</b><br>让抽象乐理 <span class="hl">看得见、摸得着、玩得懂</span></div>
+    </div>
+
+    <!-- 用户 -->
+    <div class="branch b1">
+      <h3>👧 用户与场景</h3>
+      <div class="node"><b>主用户</b>：6-9 岁山区零基础儿童</div>
+      <div class="node"><b>场景</b>：乡村课后 / 家庭手机平板 / 无音乐老师</div>
+      <div class="node"><b>设备</b>：纯网页 · 零安装 · 低配可跑</div>
+      <div class="node"><b>儿童心理</b>：怕失败 → <span class="hl">无"答错"只有"再试"</span></div>
+    </div>
+
+    <!-- 核心循环 -->
+    <div class="branch b2">
+      <h3>🔄 核心体验循环</h3>
+      <div class="node"><span class="tag">①</span><b>观察</b> 看小鸟飞 · 建立心智映射</div>
+      <div class="node"><span class="tag">②</span><b>体验</b> 自由玩 · 试错无惩罚</div>
+      <div class="node"><span class="tag">③</span><b>挑战</b> 小目标 · 驱动练习</div>
+      <div class="node"><span class="tag">④</span><b>成就</b> 点亮石碑 · 勋章解锁</div>
+    </div>
+
+    <!-- 画面流程 -->
+    <div class="branch b3">
+      <h3>🖥️ 画面流程</h3>
+      <div class="node"><b>启动</b> → 太阳升起 + 山灵问候</div>
+      <div class="node"><b>大山地图</b> → 山路串起 5 个地点</div>
+      <div class="node"><b>关卡总览</b> → 山灵介绍 + 关卡 chips</div>
+      <div class="node"><b>关卡舞台</b> → 五线谱 + 操作 + 反馈</div>
+      <div class="node"><b>成就反馈</b> → 勋章 + 积分 + 庆祝</div>
+    </div>
+
+    <!-- 关卡机制 -->
+    <div class="branch b4">
+      <h3>🎮 关卡机制（三件套）</h3>
+      <div class="node"><b>三件套</b>：概念 × 心智模型 × 游戏动作</div>
+      <div class="node"><span class="tag">observe</span>看小鸟飞 <span class="hl">✓</span></div>
+      <div class="node"><span class="tag">point</span>点小鸟回家 <span class="hl">✓</span></div>
+      <div class="node"><span class="tag">sort</span>排排队 · 音阶 <span style="color:#aaa">P1</span></div>
+      <div class="node"><span class="tag">sing</span>回声山谷 · 音准 <span style="color:#aaa">P1</span></div>
+      <div class="node"><span class="tag">boss</span>点亮石碑 · 成就 <span style="color:#aaa">P1</span></div>
+    </div>
+
+    <!-- 交互规范 -->
+    <div class="branch b5">
+      <h3>✋ 交互规范（8条）</h3>
+      <div class="node">大目标区 ≥44px · 热区大于视觉</div>
+      <div class="node">悬停只发光 <span class="hl">不位移</span>（防抖修复）</div>
+      <div class="node">无"×"语言 · 逼近引导（高/低一点）</div>
+      <div class="node">过程有奖励 · 进度永远可见</div>
+      <div class="node">一次一件事 · 术语藏开发者模式</div>
+      <div class="node">音效温柔 · 容错先宽后严</div>
+    </div>
+
+    <!-- 视觉规范 -->
+    <div class="branch b6">
+      <h3>🎨 视觉规范（大山主题）</h3>
+      <div class="node"><b>天空</b> #aee1ff→#fff3dc · 清晨渐变</div>
+      <div class="node"><b>森林绿</b> #3e7d5e 主色 · <b>阳光金</b> #ffd166 可点</div>
+      <div class="node"><b>签名元素</b>：山峦+草地+云+太阳 · 山路虚线 · 发光音符</div>
+      <div class="node"><b>字体</b>：圆体 · 圆角24 · 柔和阴影</div>
+    </div>
+
+    <!-- 技术与里程碑 -->
+    <div class="branch b7">
+      <h3>🚀 技术与里程碑</h3>
+      <div class="node"><b>架构</b>：纯前端 · MusicCore ⇄ VoiceCore ⇄ app.js</div>
+      <div class="node"><b>AI 山灵</b>：初赛本地规则 · 决赛大模型（接口已预留）</div>
+      <div class="node"><b>初赛 8/13</b>：可玩原型 + 3 分钟视频 + 方向材料</div>
+      <div class="node"><b>决赛 9/5</b>：全关卡类型 + 麦克风音准 + AI 对话</div>
+    </div>
+  </div>
+</div>
+
+<footer>大山里的音乐课 · 产品架构图 v1.0 · 2026-08-07 · 供共创与评审</footer>
+</body>
+</html>
