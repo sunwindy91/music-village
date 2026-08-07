@@ -159,11 +159,13 @@
     $('devPanel').classList.add('hidden');
     $('devToggle').classList.remove('active');
 
-    if (lv.type === 'point' || lv.type === 'sort') {
+    if (lv.type === 'point' || lv.type === 'sort' || lv.type === 'highlow') {
       $('observeControls').classList.add('hidden');
       $('pointControls').classList.remove('hidden');
       $('pointStartBtn').textContent = lv.type === 'sort' ? '🐦 开始排队' : '🎵 听音开始';
-      if (lv.type === 'sort') drawSortLevel(lv); else drawPointLevel(lv);
+      if (lv.type === 'sort') drawSortLevel(lv);
+      else if (lv.type === 'highlow') drawHighLowLevel(lv);
+      else drawPointLevel(lv);
       spiritSay(lv.guidance[0]);
     } else {
       $('observeControls').classList.remove('hidden');
@@ -377,6 +379,7 @@
     const lv = currentLevel;
     if (!lv) return;
     if (lv.type === 'sort') { startSort(); return; }
+    if (lv.type === 'highlow') { startHighLow(); return; }
     if (lv.type !== 'point') return;
     if (window.MusicCore) window.MusicCore._ensureCtx();
     if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.click();
@@ -600,6 +603,125 @@
       toast('⭐ +30 · 🏅 排队小达人');
     }
     $('pointStartBtn').textContent = '🐦 再排一次';
+  }
+
+  // ================= highlow 玩法（谁更高 · L0 听觉启蒙）=================
+  let hl = { round: 0, ok: 0, low: null, high: null, locked: false };
+
+  function drawHighLowLevel(lv) {
+    const svg = $('staffSvg');
+    const lineY = [150, 120, 90, 60, 30];
+    let s = '';
+    lineY.forEach(function (y) {
+      s += '<line class="staff-line" x1="40" y1="' + y + '" x2="760" y2="' + y + '"/>';
+    });
+    s += '<text x="52" y="100" font-size="52" fill="rgba(55,66,59,.5)" text-anchor="middle" font-family="serif">𝄞</text>';
+    // 两只小鸟：低处（左）+ 高处（右），位置=音高可视化
+    s += '<g class="choice-bird hoverable" id="hlLow" data-side="low">' +
+      '<circle cx="240" cy="150" r="26" fill="transparent" style="cursor:pointer"/>' +
+      '<text x="240" y="138" font-size="34" text-anchor="middle">🐦</text>' +
+      '<text x="240" y="182" font-size="13" text-anchor="middle" fill="var(--ink-soft)">低的</text></g>' +
+      '<g class="choice-bird hoverable" id="hlHigh" data-side="high">' +
+      '<circle cx="540" cy="60" r="26" fill="transparent" style="cursor:pointer"/>' +
+      '<text x="540" y="48" font-size="34" text-anchor="middle">🐦</text>' +
+      '<text x="540" y="92" font-size="13" text-anchor="middle" fill="var(--ink-soft)">高的</text></g>';
+    s += '<text x="390" y="215" font-size="14" text-anchor="middle" fill="var(--ink-soft)" font-weight="bold">🐦 谁唱得更高？</text>';
+    svg.innerHTML = s;
+    svg.onclick = function (ev) {
+      const t = ev.target;
+      if (t && t.parentNode && t.parentNode.classList && t.parentNode.classList.contains('choice-bird')) {
+        handleHighLowClick(t.parentNode.dataset.side, t.parentNode);
+      }
+    };
+  }
+
+  function startHighLow() {
+    const lv = currentLevel;
+    if (!lv || lv.type !== 'highlow') return;
+    if (window.MusicCore) window.MusicCore._ensureCtx();
+    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.click();
+    hl.round = 0; hl.ok = 0; hl.locked = false;
+    $('roundHud').classList.remove('hidden');
+    $('listenRow').classList.remove('hidden');
+    $('segQ').style.display = '';
+    $('okLabel').textContent = '猜对';
+    $('segCombo').style.display = '';
+    $('roundNow').textContent = '1'; $('roundOk').textContent = '0'; $('roundCombo').textContent = '0';
+    document.querySelectorAll('#staffSvg .choice-bird').forEach(function (g) {
+      g.classList.remove('correct', 'wrong');
+    });
+    spiritSay('听好啦，我要唱两个音～');
+    playHighLowRound();
+  }
+
+  function playHighLowRound() {
+    const lv = currentLevel;
+    hl.locked = false;
+    hl.low = lv.lowNotes[Math.floor(Math.random() * lv.lowNotes.length)];
+    hl.high = lv.highNotes[Math.floor(Math.random() * lv.highNotes.length)];
+    $('roundNow').textContent = Math.min(hl.round + 1, lv.rounds);
+    $('listenBadge').innerHTML = '🎵 听音…';
+    // 随机顺序播放两个音（低↔高）
+    const order = Math.random() < 0.5 ? [hl.low, hl.high] : [hl.high, hl.low];
+    setTimeout(function () { window.MusicCore.playNote(order[0], 0.8); }, 400);
+    setTimeout(function () { window.MusicCore.playNote(order[1], 1.0); }, 1250);
+    setTimeout(function () {
+      $('listenBadge').innerHTML = '🐦 点唱得更高的小鸟！';
+    }, 2100);
+  }
+
+  function handleHighLowClick(side, g) {
+    if (hl.locked) return;
+    const lv = currentLevel;
+    hl.locked = true;
+    $('listenBadge').innerHTML = '…';
+
+    if (side === 'high') {
+      g.classList.add('correct');
+      hl.ok += 1;
+      addScore(10);
+      window.MusicCore.playNote(hl.high, 0.8);
+      if (window.MusicCore.sfx) window.MusicCore.sfx.correct();
+      spiritAvatar('happy');
+      spiritSay(PRAISE[Math.floor(Math.random() * PRAISE.length)] + ' 高音像小鸟飞高高！');
+      toast('🎉 答对！+10');
+    } else {
+      g.classList.add('wrong');
+      if (window.MusicCore.sfx) window.MusicCore.sfx.wrong();
+      spiritAvatar('think');
+      spiritSay('再听一次～ 高的那个是不是更尖、更像小鸟？');
+      setTimeout(function () { g.classList.remove('wrong'); }, 500);
+      setTimeout(function () {
+        hl.locked = false;
+        window.MusicCore.playNote(hl.low, 0.7);
+        setTimeout(function () { window.MusicCore.playNote(hl.high, 0.9); }, 700);
+        $('listenBadge').innerHTML = '🐦 点唱得更高的小鸟！';
+      }, 1500);
+      return;
+    }
+
+    $('roundOk').textContent = hl.ok;
+    hl.round += 1;
+    if (hl.round >= lv.rounds || hl.ok >= lv.passCount) {
+      finishHighLow();
+    } else {
+      setTimeout(function () { playHighLowRound(); }, 1300);
+    }
+  }
+
+  function finishHighLow() {
+    const lv = currentLevel;
+    $('listenBadge').innerHTML = '🎉 你真厉害！';
+    spiritAvatar('celebrate');
+    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.win();
+    spiritSay('太棒了！你听出了 ' + hl.ok + ' 次谁更高，耳朵真灵！');
+    if (!isLevelDone(lv.id)) {
+      markLevelDone(lv.id);
+      addScore(30);
+      awardMedal('🎧 听音小能手');
+      toast('⭐ +30 · 🏅 听音小能手');
+    }
+    $('pointStartBtn').textContent = '🎵 再来一轮';
   }
 
   // ================= 山灵对话（打字机 + SVG 表情）=================
