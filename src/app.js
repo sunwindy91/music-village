@@ -159,12 +159,13 @@
     $('devPanel').classList.add('hidden');
     $('devToggle').classList.remove('active');
 
-    if (lv.type === 'point' || lv.type === 'sort' || lv.type === 'highlow') {
+    if (lv.type === 'point' || lv.type === 'sort' || lv.type === 'highlow' || lv.type === 'tap') {
       $('observeControls').classList.add('hidden');
       $('pointControls').classList.remove('hidden');
-      $('pointStartBtn').textContent = lv.type === 'sort' ? '🐦 开始排队' : '🎵 听音开始';
+      $('pointStartBtn').textContent = lv.type === 'sort' ? '🐦 开始排队' : '🥁 开始';
       if (lv.type === 'sort') drawSortLevel(lv);
       else if (lv.type === 'highlow') drawHighLowLevel(lv);
+      else if (lv.type === 'tap') drawTapLevel(lv);
       else drawPointLevel(lv);
       spiritSay(lv.guidance[0]);
     } else {
@@ -380,6 +381,7 @@
     if (!lv) return;
     if (lv.type === 'sort') { startSort(); return; }
     if (lv.type === 'highlow') { startHighLow(); return; }
+    if (lv.type === 'tap') { startTap(); return; }
     if (lv.type !== 'point') return;
     if (window.MusicCore) window.MusicCore._ensureCtx();
     if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.click();
@@ -722,6 +724,129 @@
       toast('⭐ +30 · 🏅 听音小能手');
     }
     $('pointStartBtn').textContent = '🎵 再来一轮';
+  }
+
+  // ================= tap 玩法（小鼓手 · 节奏/休止）=================
+  let tap = { times: [], hits: [], ok: 0, started: false, pattern: [] };
+
+  function drawTapLevel(lv) {
+    const svg = $('staffSvg');
+    let s = '';
+    // 节拍进度点（8 个，一排）
+    const n = lv.pattern.length;
+    const gap = 560 / (n - 1);
+    const x0 = 120;
+    for (let i = 0; i < n; i++) {
+      s += '<circle id="tp' + i + '" cx="' + (x0 + i * gap) + '" cy="60" r="13" ' +
+        'fill="' + (lv.pattern[i] ? 'var(--sun-soft)" stroke="var(--sun)"' : 'rgba(200,190,170,.35)"') +
+        ' stroke-width="2" style="opacity:.35"/>';
+    }
+    // 大鼓（中央大按钮）
+    s += '<g id="tapDrum" style="cursor:pointer">' +
+      '<circle cx="390" cy="160" r="52" fill="#c98a5e" stroke="#fff" stroke-width="4"/>' +
+      '<circle cx="390" cy="158" r="40" fill="#e0b48a"/>' +
+      '<text x="390" y="172" font-size="34" text-anchor="middle">🥁</text></g>';
+    s += '<text x="390" y="232" font-size="14" text-anchor="middle" fill="var(--ink-soft)" font-weight="bold">跟着鼓声拍它！</text>';
+    svg.innerHTML = s;
+
+    // 鼓点击
+    const drum = document.getElementById('tapDrum');
+    svg.onclick = function (ev) {
+      const t = ev.target;
+      if (t && t.id === 'tapDrum') { tapHit(); return; }
+      if (t && t.parentNode && t.parentNode.id === 'tapDrum') { tapHit(); }
+    };
+  }
+
+  function startTap() {
+    const lv = currentLevel;
+    if (!lv || lv.type !== 'tap') return;
+    if (window.MusicCore) window.MusicCore._ensureCtx();
+    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.click();
+    const interval = 60000 / lv.bpm;
+    tap.times = []; tap.hits = []; tap.ok = 0; tap.started = false; tap.pattern = lv.pattern;
+
+    $('roundHud').classList.remove('hidden');
+    $('listenRow').classList.remove('hidden');
+    $('segQ').style.display = 'none';
+    $('okLabel').textContent = '跟上';
+    $('segCombo').style.display = 'none';
+    $('roundOk').textContent = '0';
+    $('roundTotal').textContent = lv.pattern.filter(function (p) { return p; }).length;
+
+    // 重置进度点
+    for (let i = 0; i < lv.pattern.length; i++) {
+      const d = document.getElementById('tp' + i);
+      if (d) d.style.opacity = 0.35;
+    }
+
+    // 预计算有音拍时间
+    const t0 = performance.now() + 800;
+    lv.pattern.forEach(function (p, i) { if (p) tap.times.push(t0 + i * interval); });
+
+    spiritSay('准备好！听到"咚"就拍大鼓～');
+    $('listenBadge').innerHTML = '🥁 准备…';
+
+    setTimeout(function () {
+      tap.started = true;
+      // 播放节奏
+      lv.pattern.forEach(function (p, i) {
+        setTimeout(function () {
+          const d = document.getElementById('tp' + i);
+          if (d) d.style.opacity = 1;
+          if (p && window.MusicCore.sfx) window.MusicCore.sfx.drum();
+        }, i * interval);
+      });
+      // 结束
+      setTimeout(function () {
+        tap.started = false;
+        finishTap();
+      }, lv.pattern.length * interval + 300);
+    }, 800);
+  }
+
+  function tapHit() {
+    if (!tap.started) return;
+    const now = performance.now();
+    let best = -1, bestD = 99999;
+    tap.times.forEach(function (t, i) {
+      if (tap.hits.indexOf(i) === -1) {
+        const d = Math.abs(now - t);
+        if (d < bestD) { bestD = d; best = i; }
+      }
+    });
+    if (best >= 0 && bestD < 300) {
+      // 命中
+      tap.hits.push(best); tap.ok++;
+      if (window.MusicCore.sfx) window.MusicCore.sfx.drum();
+      const d = document.getElementById('tp' + best);
+      if (d) d.style.filter = 'drop-shadow(0 0 6px var(--sun))';
+      $('roundOk').textContent = tap.ok;
+      spiritAvatar('happy');
+      if (tap.ok >= tap.pattern.filter(function (p) { return p; }).length) {
+        spiritSay('全拍对啦！你真是小鼓手！');
+      }
+    } else {
+      // 误拍（休止时）
+      spiritAvatar('think');
+      spiritSay('嘘～这里没有鼓声，要停一停哦');
+    }
+  }
+
+  function finishTap() {
+    const lv = currentLevel;
+    const total = lv.pattern.filter(function (p) { return p; }).length;
+    $('listenBadge').innerHTML = tap.ok >= 3 ? '🎉 节奏小鼓手！' : '🎵 再试一次会更棒！';
+    spiritAvatar('celebrate');
+    if (tap.ok >= 3 && window.MusicCore.sfx) window.MusicCore.sfx.win();
+    spiritSay(tap.ok >= 3 ? '你跟上 ' + tap.ok + ' 个鼓点，节奏感真棒！' : '跟上了 ' + tap.ok + ' 个，休息一下再来～');
+    if (tap.ok >= 3 && !isLevelDone(lv.id)) {
+      markLevelDone(lv.id);
+      addScore(30);
+      awardMedal('🥁 小鼓手');
+      toast('⭐ +30 · 🏅 小鼓手');
+    }
+    $('pointStartBtn').textContent = '🥁 再来一次';
   }
 
   // ================= 山灵对话（打字机 + SVG 表情）=================
