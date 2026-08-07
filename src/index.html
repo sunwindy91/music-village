@@ -93,14 +93,15 @@
     margin-bottom:2px; letter-spacing:.03em; }
   .map-sub { text-align:center; font-size:.86rem; color:var(--ink-soft); margin-bottom:10px; }
   .trail-map { width:100%; height:auto; display:block; }
-  .place { cursor:pointer; transition:transform .18s ease; }
-  .place:hover { transform:scale(1.12); }
+  .place { cursor:pointer; }
+  .place:hover .p-base { filter: drop-shadow(0 0 12px rgba(255,209,102,.95)); }
+  .place:hover .p-emoji { filter: drop-shadow(0 0 8px rgba(255,201,100,.85)); transition: filter .15s ease; }
   .place circle.p-base { stroke:#fff; stroke-width:4; }
   .place .p-emoji { font-size:26px; text-anchor:middle; dominant-baseline:central; }
   .place .p-name { font-size:15px; font-weight:800; text-anchor:middle; }
   .place .p-stage { font-size:11px; text-anchor:middle; fill:var(--ink-soft); }
   .place.locked { opacity:.55; cursor:default; }
-  .place.locked:hover { transform:none; cursor:default; }
+  .place.locked:hover .p-base, .place.locked:hover .p-emoji { filter:none; }
   .place.done .p-base { fill:var(--leaf-light); }
   .place.open .p-base { fill:var(--sun-soft); stroke:var(--sun); }
   .road { fill:none; stroke:#d8c8a8; stroke-width:14; stroke-linecap:round;
@@ -229,6 +230,46 @@
   .toast.show { opacity:1; }
   footer { text-align:center; color:var(--ink-soft); font-size:.76rem; margin-top:26px;
     text-shadow:0 1px 0 rgba(255,255,255,.6); }
+
+  /* ================= 记忆叙事层（章节故事感） ================= */
+  .memory-overlay { position:fixed; inset:0; z-index:30; display:flex; align-items:center;
+    justify-content:center; background: rgba(255,249,235,.92); backdrop-filter: blur(3px); }
+  .memory-card { max-width: 560px; text-align:center; background:#fff; border-radius:32px;
+    padding:30px 28px 26px; box-shadow: var(--shadow); border:1px solid #f2efe2; }
+  .memory-deer { font-size:4.4rem; display:inline-block; animation: storyBob 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 16px rgba(255,209,102,.8)); }
+  .memory-title { font-size:1.15rem; font-weight:800; color:var(--forest-deep); margin:10px 0 12px; }
+  .memory-text { font-size:1.05rem; line-height:1.9; color:var(--ink); min-height:80px;
+    display:flex; align-items:center; justify-content:center; }
+  .memory-card .story-actions { margin-top:18px; }
+
+  /* ================= 响应式：手机 / 平板 / 电脑 自动适配 ================= */
+  @media (max-width: 640px) {
+    .app { padding: 10px 10px 50px; }
+    .topbar { padding: 7px 10px; }
+    .topbar h1 { font-size: 1rem; }
+    .crumb { font-size: .7rem; }
+    .score-pill, .medal-pill { font-size: .72rem; padding: 5px 10px; }
+    .map-panel { padding: 12px 10px; border-radius: 20px; }
+    .map-title { font-size: 1.05rem; }
+    .map-sub { font-size: .78rem; }
+    .spirit-avatar { width: 52px; height: 52px; }
+    .spirit-avatar svg { width: 46px; height: 46px; }
+    .bubble { font-size: .88rem; padding: 10px 12px; }
+    .stage { padding: 10px 8px 6px; border-radius: 20px; }
+    .btn { padding: 12px 20px; font-size: .92rem; }
+    .btn.soft { padding: 9px 14px; font-size: .82rem; }
+    .nav-chip { padding: 6px 12px; font-size: .78rem; }
+    .level-head .ltitle { font-size: 1.15rem; }
+    .legend span { font-size: .7rem; }
+    .story-box { padding: 22px 18px 20px; border-radius: 24px; }
+    .story-deer { font-size: 4rem; }
+    .story-text { font-size: .95rem; min-height: 84px; }
+  }
+  @media (min-width: 641px) and (max-width: 900px) {
+    .app { padding: 14px 14px 60px; }
+    .map-panel { padding: 14px 12px; }
+  }
 </style>
 </head>
 <body>
@@ -387,7 +428,19 @@
 </div>
 
 <div class="toast" id="toast"></div>
-
+  <!-- ===== 记忆叙事层 ===== -->
+  <div id="memoryView" class="hidden">
+    <div class="memory-overlay">
+      <div class="memory-card">
+        <div class="memory-deer">🦌</div>
+        <div class="memory-title" id="memoryMapName">一段记忆</div>
+        <div class="memory-text" id="memoryText"></div>
+        <div class="story-actions">
+          <button class="btn primary" id="memoryBtn">继续 ▸</button>
+        </div>
+      </div>
+    </div>
+  </div>
 <!-- 契约加载顺序：audio → voice → 配置 → 应用 -->
 <script src="modules/audio/music-core.js"></script>
 <script src="modules/voice/voice-core.js"></script>
