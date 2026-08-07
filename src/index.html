@@ -136,7 +136,10 @@
 
   /* 五线谱舞台（自然风） */
   .stage { background: rgba(255,255,255,.9); border-radius:28px; padding:14px 14px 8px;
-    box-shadow: var(--shadow); margin:6px 0 10px; border:1px solid #f2efe2; }
+    box-shadow: var(--shadow); margin:6px 0 10px; border:1px solid #f2efe2; position:relative; }
+  .stage-forest { background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(238,246,234,.96)); }
+  .stage-forest::after { content:"🌿  🌸"; position:absolute; bottom:8px; left:16px; font-size:13px; opacity:.55; pointer-events:none; }
+  .stage-scale::after { content:"🎼 音阶山谷"; position:absolute; bottom:8px; right:16px; font-size:11px; color:var(--ink-soft); opacity:.55; pointer-events:none; }
   .stage svg { width:100%; height:auto; display:block; }
   .staff-line { stroke:#c8b48e; stroke-width:2; stroke-linecap:round; }
   .note-dot { opacity:0; transition:opacity .25s; }
