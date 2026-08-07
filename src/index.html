@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>音乐寻宝 · 大山里的音乐课</title>
+<style>
+  :root {
+    --bg:#0a0e1f; --bg2:#101531; --card:#161d3d; --line:#2a3560;
+    --gold:#ffc964; --pink:#ff7eb3; --green:#7ee081; --blue:#6db3ff;
+    --purple:#b48cff; --ink:#eef2ff; --muted:#93a0c8;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+    background: radial-gradient(1200px 800px at 20% 0%, var(--bg2), var(--bg));
+    color:var(--ink); min-height:100vh; overflow-x:hidden;
+  }
+
+  /* 星空闪烁 */
+  .stars { position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      radial-gradient(1.5px 1.5px at 20% 30%, rgba(255,255,255,.5), transparent),
+      radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,.4), transparent),
+      radial-gradient(2px 2px at 40% 70%, rgba(255,201,100,.35), transparent),
+      radial-gradient(1.5px 1.5px at 85% 60%, rgba(255,126,179,.35), transparent),
+      radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,.3), transparent);
+    animation: twinkle 5s ease-in-out infinite; }
+  @keyframes twinkle { 0%,100%{opacity:.55;} 50%{opacity:1;} }
+  .aurora { position:fixed; inset:0; pointer-events:none; z-index:0;
+    background: radial-gradient(900px 400px at 15% 110%, rgba(110,179,255,.10), transparent),
+      radial-gradient(800px 380px at 85% 115%, rgba(255,126,179,.08), transparent);
+    filter: blur(30px); }
+
+  .app { position:relative; z-index:1; max-width:980px; margin:0 auto; padding:22px 18px 60px; }
+
+  /* 积分栏 */
+  .scorebar { display:flex; align-items:center; gap:8px; margin-left:auto; }
+  .score-pill { background:var(--card); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px; font-size:.85rem; color:var(--gold); display:flex; align-items:center; gap:6px; }
+  .medal-pill { background:var(--card); border:1px solid var(--line); border-radius:999px;
+    padding:6px 12px; font-size:.85rem; color:var(--pink); display:flex; align-items:center; gap:4px; }
+  .medal-pill.empty { opacity:.4; }
+
+  /* 顶栏 */
+  .topbar { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+  .topbar .logo { font-size:1.6rem; }
+  .topbar h1 { font-size:1.25rem; letter-spacing:.04em;
+    background:linear-gradient(90deg,var(--gold),var(--pink));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .topbar .crumb { font-size:.8rem; color:var(--muted); margin-left:auto; }
+  .back-btn { background:var(--card); border:1px solid var(--line); color:var(--ink);
+    border-radius:10px; padding:8px 14px; font-size:.85rem; cursor:pointer; }
+  .back-btn:hover { border-color:var(--gold); }
+
+  /* 地图总览 */
+  .map-title { text-align:center; font-size:1.15rem; margin:6px 0 4px; color:var(--ink); }
+  .map-sub { text-align:center; font-size:.85rem; color:var(--muted); margin-bottom:20px; }
+  .maps { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+  .map-card { background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:16px 18px; cursor:pointer; transition:transform .15s, box-shadow .15s, border-color .15s; }
+  .map-card:hover { transform:translateY(-3px); box-shadow:0 10px 26px rgba(0,0,0,.35); }
+  .map-card.open { border-left:4px solid var(--gold); }
+  .map-card.locked { opacity:.55; cursor:not-allowed; }
+  .map-card.locked:hover { transform:none; box-shadow:none; }
+  .map-card .row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .map-card .micon { font-size:1.7rem; }
+  .map-card .mname { font-size:1.05rem; font-weight:700; }
+  .map-card .mstage { font-size:.72rem; color:var(--muted); border:1px solid var(--line);
+    border-radius:6px; padding:2px 8px; }
+  .map-card .mdesc { font-size:.85rem; color:var(--muted); line-height:1.5; }
+  .map-card .mstatus { font-size:.78rem; margin-top:10px; }
+  .map-card .mstatus.open-t { color:var(--green); }
+  .map-card .mstatus.lock-t { color:var(--muted); }
+  .map-card .mlevels { font-size:.78rem; color:var(--gold); margin-top:6px; }
+
+  /* 关卡视图 */
+  .level-head { text-align:center; margin-bottom:10px; }
+  .level-head .ltitle { font-size:1.3rem; font-weight:700; }
+  .level-head .lsub { font-size:.85rem; color:var(--muted); margin-top:4px; }
+  .level-head .lconcept { font-size:.8rem; color:var(--gold); margin-top:6px; }
+
+  /* 五线谱画布 */
+  .stage { background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:16px; margin:12px 0; position:relative;
+    box-shadow: inset 0 0 60px rgba(110,179,255,.05), 0 10px 30px rgba(0,0,0,.3); }
+  .stage svg { width:100%; height:auto; display:block; }
+  .staff-line { stroke:rgba(147,160,200,.35); stroke-width:1.5; }
+  .note-dot { fill:rgba(255,201,100,.25); stroke:#ffc964; stroke-width:1.5;
+    opacity:0; transition:opacity .2s, fill .3s, r .3s; }
+  .note-dot.lit { opacity:1; fill:rgba(255,201,100,.9);
+    filter: drop-shadow(0 0 8px rgba(255,201,100,.9)); }
+  .note-dot.rainbow { filter: drop-shadow(0 0 10px currentColor); }
+  .note-name { font-size:11px; fill:#93a0c8; text-anchor:middle; opacity:0;
+    transition:opacity .2s; }
+  .note-name.lit { opacity:1; fill:#ffc964; }
+  .trail { stroke:#ffc964; stroke-width:2.5; stroke-linecap:round;
+    stroke-dasharray:6 5; fill:none; opacity:.45; }
+  .bird { font-size:26px; text-anchor:middle; opacity:0; transition:opacity .2s;
+    filter: drop-shadow(0 0 6px rgba(255,201,100,.6)); }
+  .bird.show { opacity:1; }
+  .pop-note { font-size:18px; text-anchor:middle; opacity:0; }
+  .pop-note.show { animation: pop .7s ease forwards; }
+  @keyframes pop { 0%{opacity:0; transform:translateY(6px) scale(.5);}
+    40%{opacity:1; transform:translateY(-10px) scale(1.2);}
+    100%{opacity:0; transform:translateY(-24px) scale(.8);} }
+
+  /* 点选关卡（点小鸟回家） */
+  .choice-bird { font-size:30px; text-anchor:middle; cursor:pointer;
+    opacity:.85; transition:transform .15s; }
+  .choice-bird:hover { transform:scale(1.25); }
+  .choice-bird.correct { animation: correctBounce .6s ease; }
+  .choice-bird.wrong { opacity:.35; }
+  @keyframes correctBounce { 0%{transform:scale(1);} 40%{transform:scale(1.4) rotate(8deg);}
+    70%{transform:scale(.95);} 100%{transform:scale(1);} }
+  .round-hud { display:flex; align-items:center; justify-content:center; gap:14px;
+    font-size:.9rem; color:var(--muted); margin:6px 0; }
+  .round-hud .hl { color:var(--gold); font-weight:700; }
+  .listen-badge { background:rgba(255,126,179,.12); border:1px solid rgba(255,126,179,.4);
+    color:var(--pink); border-radius:999px; padding:6px 16px; font-size:.85rem;
+    display:inline-flex; align-items:center; gap:6px; animation:pulse 1.6s infinite; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,126,179,.25);}
+    50%{box-shadow:0 0 0 8px rgba(255,126,179,0);} }
+  .listen-row { text-align:center; margin:10px 0 4px; }
+
+  /* 关卡导航 */
+  .level-nav { display:flex; gap:10px; justify-content:center; margin:8px 0; flex-wrap:wrap; }
+  .nav-chip { background:var(--card); border:1px solid var(--line); color:var(--muted);
+    border-radius:999px; padding:7px 16px; font-size:.82rem; cursor:pointer; }
+  .nav-chip.active { border-color:var(--gold); color:var(--gold); }
+  .nav-chip.done { color:var(--green); border-color:rgba(126,224,129,.4); }
+
+  /* 山灵 */
+  .spirit-bar { display:flex; align-items:flex-start; gap:12px; background:var(--card);
+    border:1px solid var(--line); border-radius:16px; padding:14px 16px; margin:12px 0; }
+  #spirit { font-size:2.2rem; line-height:1; transition:transform .2s; }
+  #spirit.anim-bounce { transform:translateY(-6px); }
+  #spirit.anim-celebrate { animation:spin .6s ease; }
+  @keyframes spin { 0%{transform:rotate(0) scale(1);} 50%{transform:rotate(20deg) scale(1.3);} 100%{transform:rotate(0) scale(1);} }
+  .spirit-text { font-size:.95rem; line-height:1.7; color:var(--ink); }
+  .spirit-text .who { color:var(--gold); font-weight:700; margin-right:6px; }
+
+  /* 控制 */
+  .controls { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:10px 0; }
+  .btn { background:linear-gradient(90deg, rgba(255,201,100,.2), rgba(255,126,179,.2));
+    border:1px solid rgba(255,201,100,.45); color:var(--ink); border-radius:12px;
+    padding:10px 20px; font-size:.95rem; cursor:pointer; }
+  .btn:hover { filter:brightness(1.15); }
+  .btn.small { padding:7px 14px; font-size:.82rem; background:var(--card);
+    border-color:var(--line); }
+  .btn.small.active { border-color:var(--gold); color:var(--gold); }
+
+  /* 三件套面板 */
+  .kit { display:grid; gap:8px; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-top:10px; }
+  .kit .k { background:rgba(255,255,255,.035); border-radius:10px; padding:9px 12px; font-size:.8rem; }
+  .kit .k b { color:var(--green); display:block; margin-bottom:3px; font-size:.75rem; }
+  .kit .k span { color:var(--muted); line-height:1.5; }
+
+  .hidden { display:none !important; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:var(--card); border:1px solid var(--gold); color:var(--ink);
+    border-radius:999px; padding:10px 22px; font-size:.9rem; z-index:9;
+    opacity:0; transition:opacity .3s; pointer-events:none; }
+  .toast.show { opacity:1; }
+  footer { text-align:center; color:var(--muted); font-size:.78rem; margin-top:34px; }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div class="aurora"></div>
+
+<div class="app">
+  <div class="topbar">
+    <span class="logo">🎵</span>
+    <h1>音乐寻宝 · 大山里的音乐课</h1>
+    <span class="crumb" id="crumb">地图总览</span>
+    <div class="scorebar">
+      <span class="score-pill">⭐ <b id="scoreVal">0</b></span>
+      <span class="medal-pill" id="medalPill">🏅 无</span>
+    </div>
+    <button class="back-btn hidden" id="backBtn" onclick="App.goHome()">← 返回</button>
+  </div>
+
+  <!-- ===== 地图总览 ===== -->
+  <section id="mapView">
+    <div class="map-title">🗺️ 音乐秘境 · 世界地图</div>
+    <div class="map-sub">大山被"静默"封印了……和山灵一起收集音符、点亮石碑，让大山重新唱歌吧</div>
+    <div class="maps" id="mapGrid"></div>
+  </section>
+
+  <!-- ===== 关卡视图 ===== -->
+  <section id="levelView" class="hidden">
+    <div class="level-nav" id="levelNav"></div>
+
+    <div class="level-head">
+      <div class="ltitle" id="levelTitle">—</div>
+      <div class="lsub" id="levelSub">—</div>
+      <div class="lconcept" id="levelConcept">—</div>
+    </div>
+
+    <!-- 山灵 -->
+    <div class="spirit-bar">
+      <div id="spirit">✨</div>
+      <div class="spirit-text"><span class="who" id="spiritWho">山灵</span><span id="spiritText">你好呀，我是山灵！</span></div>
+    </div>
+
+    <!-- point 模式 HUD（点小鸟回家） -->
+    <div class="listen-row hidden" id="listenRow">
+      <span class="listen-badge" id="listenBadge">🎵 正在听音…</span>
+    </div>
+    <div class="round-hud hidden" id="roundHud">
+      <span>第 <b class="hl" id="roundNow">1</b> / <span id="roundTotal">5</span> 题</span>
+      <span>答对 <b class="hl" id="roundOk">0</b></span>
+      <span>连击 <b class="hl" id="roundCombo">0</b></span>
+    </div>
+
+    <!-- 五线谱舞台 -->
+    <div class="stage" id="stage">
+      <svg id="staffSvg" viewBox="0 0 800 240" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+    <!-- 控制（observe 模式） -->
+    <div class="controls" id="observeControls">
+      <button class="btn" id="playBtn" onclick="App.playLevel()">▶ 播放</button>
+      <button class="btn small" onclick="App.setSpeed(0)">慢</button>
+      <button class="btn small" onclick="App.setSpeed(1)">中</button>
+      <button class="btn small" onclick="App.setSpeed(2)">快</button>
+      <button class="btn small" onclick="App.nextGuidance()">山灵提示 ▸</button>
+    </div>
+
+    <!-- 控制（point 模式） -->
+    <div class="controls hidden" id="pointControls">
+      <button class="btn" id="pointStartBtn" onclick="App.startPoint()">🎵 听音开始</button>
+      <button class="btn small" onclick="App.replayNote()">🔁 再听一次</button>
+      <button class="btn small" onclick="App.nextGuidance()">山灵提示 ▸</button>
+    </div>
+
+    <!-- 三件套 -->
+    <div class="kit">
+      <div class="k"><b>🎯 乐理概念</b><span id="kitConcept">—</span></div>
+      <div class="k"><b>🧠 心智模型</b><span id="kitModel">—</span></div>
+      <div class="k"><b>🕹️ 游戏动作</b><span id="kitAction">—</span></div>
+      <div class="k"><b>⚖️ 判定规则</b><span id="kitJudge">—</span></div>
+      <div class="k"><b>💬 反馈协议</b><span id="kitFeedback">—</span></div>
+      <div class="k"><b>🎯 本关目标</b><span id="kitGoal">—</span></div>
+    </div>
+  </section>
+
+  <footer>音乐寻宝 v0.1 原型 · module-audio / module-voice 接口契约 v1.0</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 加载顺序：audio → voice → 配置 → 应用（契约约定） -->
+<script src="modules/audio/music-core.js"></script>
+<script src="modules/voice/voice-core.js"></script>
+<script src="shared/levels.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
