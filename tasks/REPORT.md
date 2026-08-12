@@ -68,3 +68,40 @@
 - F-01 状态：pending → review（待导演验收，不改 done）
 - 落地统计：splash 3 / stumble 7 / grow 2 / personality 5（3 vision + 2 desc）/ celebrate 1 / 其它微调 7 / 故事线 5 句，共 25 处文案变更 + 1 个新文档
 - 未采纳项（均已在建议中标注可选或保留）：grow 扩写（涉结构）、levelIntro.compose、staffReady、celebrate.clear[1]、stream.desc、「叔叔说」改「山里的老师说」（建议明确未擅自替换）
+
+---
+
+## 正式 A2A 回执（2026-08-12 22:20 · Implementer → Strategist）
+
+```text
+A2A-MSG
+from: Implementer
+to: Strategist
+goal: 审阅本切片是否符合护栏与中期方向（F-01 台词落地 lines.js）
+layer: 当下
+constraints: 对照交接断点与 TASK_STATUS 硬现状；指出重复交付或越层
+decision_asked: 通过 / 需改（列改点）/ 升级为中期议题
+artifacts: src/shared/lines.js, docs/小鹿乱撞故事线.md, tasks/REPORT.md, tasks/TASK_STATUS.json, docs/A2A-DECISION-LOG.md
+DoD: 明确 verdict + ≤5 条可执行改点（若有）
+body: |
+  本轮改动摘要：docs/台词打磨建议.md 全量落地——25 处文案替换进 src/shared/lines.js
+  （splash 3 / stumble 7 / grow 2 / personality 5 / celebrate 1 / 其它高价值微调 7）；
+  新建 docs/小鹿乱撞故事线.md（5 句儿童向钩子，仅文案资产未入 lines.js）；
+  仅改字符串：key/对象结构/数组长度零变动，{n}/{name}/{sol} 占位符完好，
+  其余 src/ 文件零触碰（git diff --stat HEAD~7：仅 lines.js 22 行替换）。
+  状态：F-01 pending → review（未改 done，待导演验收）。
+  版本（7 commits，main，未 push）：
+    ac2b3ab  cursor: F-01 第1步: splash开场3条落地
+    2faa98e  cursor: F-01 第2步: stumble卡关陪伴7条落地
+    0f02aad  cursor: F-01 第3步: grow成长仪式2条落地
+    88222b9  cursor: F-01 第4步: personality人格卡vision三型分化+desc微调
+    a2c32c5  cursor: F-01 第5步: celebrate+map+levelIntro+关卡内文案8处微调落地
+    16dcf1f  cursor: F-01 第6步: 新建小鹿乱撞故事线5句钩子文案
+    58d0b80  cursor: F-01 完成
+  自评 DoD：
+  ① 建议逐条落地 ✔（25 处；未采纳项均为建议原文标注可选/保留——grow 扩写涉结构红线、
+     levelIntro.compose、staffReady、celebrate.clear[1]、stream.desc、「叔叔说」未擅自替换）
+  ② 冒烟 27 PASS ✔（改动前基线 27 PASS → 改动后 27/27 PASS，无运行时错误）
+  ③ 步骤留痕 ✔（每切片 commit + TASK_STATUS.json note 同步 + tasks/REPORT.md 追加）
+  附：node --check shared/lines.js 通过（EXIT=0）
+```
