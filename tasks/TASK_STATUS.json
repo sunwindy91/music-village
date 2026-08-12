@@ -76,11 +76,11 @@
                       "files":  [
                                     "docs/素材协作计划.md"
                                 ],
-                      "review":  null,
+                      "review":  "ok：盘点21张+P0-P3分级+构图要点/提示词全套，风格锚点与gen_assets对齐；P2乐器×4/P3徽章待导演生图",
                       "defOfDone":  "现有盘点+新素材清单+提示词",
                       "title":  "素材协作计划+生图提示词",
-                      "status":  "pending",
-                      "note":  "08-12 导演已派活(信封B存档 tasks/envelope-B-F02.md)：盘点现有+新素材清单(聚类封面×3/理论卡×3/乐器×3)+提示词；生图归导演执行",
+                      "status":  "done",
+                      "note":  "08-13 导演验收通过：素材协作计划已随 main 680a9f6 合入；P2 音色关乐器×4 待导演生图",
                       "branch":  "cursor/f-02"
                   },
                   {
@@ -89,11 +89,11 @@
                       "files":  [
                                     "docs/UI修复方案.md"
                                 ],
-                      "review":  null,
+                      "review":  "ok：9条(P1×5/P2×4)全含文件+行号+改法+冒烟影响+风险；落点规则正确(main_c20260812h.css)；P0复核已落地",
                       "defOfDone":  "每条文件+行号+改法",
                       "title":  "UI审查P1/P2修复方案",
-                      "status":  "review",
-                      "note":  "08-12 Cursor完成待审：P1×5+P2×4共9条全部落到选择器+行号+具体CSS/HTML改法+冒烟标注；行号已按线上 main_c20260812h.css 重定位(b→h 漂移已修)；P0两条复核已在h版落地；附审查备注4残留扫描(.overlay inset已清/.grid-cell aspect-ratio仍在)",
+                      "status":  "done",
+                      "note":  "08-13 导演验收通过：按方案分批发执行（P1-1~P2-4），红线合规",
                       "branch":  "cursor/f-03"
                   },
                   {
