@@ -79,7 +79,9 @@
                       "review":  null,
                       "defOfDone":  "现有盘点+新素材清单+提示词",
                       "title":  "素材协作计划+生图提示词",
-                      "status":  "pending"
+                      "status":  "pending",
+                      "note":  "08-12 导演已派活(信封B存档 tasks/envelope-B-F02.md)：盘点现有+新素材清单(聚类封面×3/理论卡×3/乐器×3)+提示词；生图归导演执行",
+                      "branch":  "cursor/f-02"
                   },
                   {
                       "id":  "F-03",
@@ -90,7 +92,9 @@
                       "review":  null,
                       "defOfDone":  "每条文件+行号+改法",
                       "title":  "UI审查P1/P2修复方案",
-                      "status":  "pending"
+                      "status":  "pending",
+                      "note":  "08-12 导演已派活(信封B存档 tasks/envelope-B-F03.md)：P1/P2逐条文件+行号+改法；注意 CSS 文件线(main_c20260812h.css)",
+                      "branch":  "cursor/f-03"
                   },
                   {
                       "id":  "F-04",

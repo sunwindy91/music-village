@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-08-12 · [导演] 并行分工派活（F-02/F-03 + 美工规划）
+
+- **分工**：导演=src 功能（B2 旋律填空 / 旋律草原补关）+ openai-next 生图；Cursor=F-02 素材协作计划 + F-03 UI 修复方案（docs 域，分支 cursor/f-02、cursor/f-03）
+- **信封存档**：tasks/envelope-B-F02.md、tasks/envelope-B-F03.md（已 push）
+- **美工规划**：聚类封面×3、理论卡配图×3、乐器形象×3（待 F-02 出提示词后导演生图+webp）
+- **隔离**：Cursor 只碰 docs/，导演碰 src/+生图，零冲突；merge 靠 REVIEW_FEEDBACK 对齐
+
+---
+
 ## 2026-08-12 · [导演] F-04 审查通过 + 文件线统一修复（重大 bug）
 
 - **F-04 逐镜脚本**：Cursor 完成（26 镜 177s），导演审查 ok 置 done（REVIEW_FEEDBACK 顶部）
