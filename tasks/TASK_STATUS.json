@@ -42,7 +42,7 @@
       "id": "E-01",
       "title": "竞品与教学法调研",
       "owner": "cursor",
-      "status": "in_progress",
+      "status": "review",
       "files": ["docs/调研.md"],
       "defOfDone": "3个对标产品各3条可借鉴点；三大教学法落地点验证",
       "review": null
