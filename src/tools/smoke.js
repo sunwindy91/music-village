@@ -143,6 +143,21 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelector('#stage-back'));
   await sleep(120);
 
+  console.log('== 5b. 音阶山谷 · 走走停停（时值听辨） ==');
+  click(document.querySelectorAll('.loc-node')[1]);
+  await sleep(80);
+  const wsChips = document.querySelectorAll('.loc-level');
+  ok(wsChips.length === 2, '音阶山谷有 2 个关卡入口（认识音符 + 走走停停）');
+  click(wsChips[1]);
+  await sleep(500);
+  ok(window.MV.App.state.view === 'stage', '走走停停：进入关卡舞台');
+  const wsCards = document.querySelectorAll('.ws-card');
+  ok(wsCards.length === 3, '走走停停：三张时值卡渲染（走/走——/走————）');
+  await sleep(600);
+  ok(!wsCards[0].disabled, '走走停停：播放结束后可作答');
+  click(document.querySelector('#stage-back'));
+  await sleep(120);
+
   console.log('== 6. 旋律草原 · 网格作曲 + 五线谱出口 ==');
   click(document.querySelectorAll('.loc-node')[2]);
   await sleep(80);

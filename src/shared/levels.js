@@ -22,7 +22,7 @@ MV.locations = [
     subtitle: '认一认 · 音符的名字',
     memory: '晓声的歌喉',
     pos: [50, 56],
-    levels: ['notes']
+    levels: ['notes', 'walkstop']
   },
   {
     id: 'meadow',
@@ -70,6 +70,15 @@ MV.levels = [
     icon: 'fruit',
     brief: '听音摘果，认识 1 2 3 4 5 6 7',
     theory: '唱名 · 音高对应'
+  },
+  {
+    id: 'walkstop',
+    loc: 'scale',
+    title: '走走停停',
+    type: 'walkstop',
+    icon: 'foot',
+    brief: '听声音长短，走了几步？',
+    theory: '时值 · 音符长短'
   },
   {
     id: 'compose',

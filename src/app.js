@@ -842,6 +842,88 @@
     return 'stream';                              // 缓缓流动
   }
 
+  /* —— 关卡：走走停停（时值听辨 · 叔叔大纲第 2 阶：四分/二分/全音符 = 走/走——/走————） —— */
+  runners.walkstop = function (lv, body) {
+    // 播放顺序：先最长(4)→最短(1)→中间(2)，先两极后中间（先宽后严）
+    const order = [4, 1, 2];
+    let round = 0, correct = 0, wrong = 0, playing = false, answered = false;
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+    let cards, intro;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="ws-intro">第 1 题 · 听声音走了几步</div>' +
+        '<div id="ws-progress"></div>' +
+        '<div class="ws-cards" style="display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin:14px auto;max-width:520px">' +
+          '<button class="answer-btn ws-card" type="button" data-dur="1" style="flex:1 1 120px;min-height:88px"><span class="ws-feet" style="font-size:30px;display:block">🦶</span><b style="font-size:20px">走</b><small style="display:block;opacity:.85">短短 · 一拍</small></button>' +
+          '<button class="answer-btn ws-card" type="button" data-dur="2" style="flex:1 1 120px;min-height:88px"><span class="ws-feet" style="font-size:30px;display:block">🦶🦶</span><b style="font-size:20px">走——</b><small style="display:block;opacity:.85">中等 · 两拍</small></button>' +
+          '<button class="answer-btn ws-card" type="button" data-dur="4" style="flex:1 1 120px;min-height:88px"><span class="ws-feet" style="font-size:30px;display:block">🦶🦶🦶</span><b style="font-size:20px">走————</b><small style="display:block;opacity:.85">特别长 · 四拍</small></button>' +
+        '</div>' +
+        '<div class="compose-actions" style="justify-content:center">' +
+          '<button class="btn btn-ghost" id="ws-replay" type="button">再听一次</button>' +
+        '</div>' +
+      '</div>';
+
+    intro = $('#ws-intro');
+    const progBox = $('#ws-progress');
+    cards = $$('[data-dur]', body);
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function playRound() {
+      if (!alive()) return;
+      answered = false;
+      playing = true;
+      cards.forEach(bt => bt.disabled = true);
+      const dur = order[Math.min(round, order.length - 1)];
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 听这个声音走了几步';
+      MV.MusicCore.playSequence([{ midi: 60, start: 0, dur: dur }], {
+        bpm: 88, inst: 'piano',
+        onEnd: () => {
+          if (!alive()) return;
+          playing = false;
+          cards.forEach(bt => bt.disabled = false);
+        }
+      });
+    }
+
+    function answer(dur) {
+      if (answered || playing) return;
+      answered = true;
+      const ok = dur === order[Math.min(round, order.length - 1)];
+      if (ok) {
+        MV.MusicCore.sfx('correct');
+        correct++;
+        wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(pick(MV.lines.walkstop.correct), { done: () => {
+          if (!alive()) return;
+          if (correct >= C.correctToPass) {
+            MV.VoiceCore.say(MV.lines.walkstop.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+          } else {
+            round++;
+            setTimeout(() => { if (alive()) playRound(); }, 500);
+          }
+        }});
+      } else {
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        if (wrong >= 2) { // 卡关陪伴：连续错 2 次降难度重播，不判死
+          wrong = 0;
+          MV.VoiceCore.say(pick(MV.lines.stumble.walkstop), { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(); }, 450); } });
+        } else {
+          MV.VoiceCore.say(pick(MV.lines.walkstop.wrong), { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(); }, 400); } });
+        }
+      }
+    }
+
+    cards.forEach(bt => bt.addEventListener('pointerdown', () => answer(parseInt(bt.dataset.dur, 10))));
+    $('#ws-replay').addEventListener('pointerdown', () => { if (!playing) playRound(); });
+    renderProgress();
+    setTimeout(() => { if (alive()) playRound(); }, 600);
+  };
+
   runners.compose = function (lv, body) {
     const pitches = MV.gridPitches.slice();       // [60,62,64,65,67] 低→高
     const rows = pitches.length, cols = C.gridCols;
