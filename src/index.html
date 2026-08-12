@@ -1,452 +1,241 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>音乐寻宝 · 大山里的音乐课</title>
-<style>
-  /* ================= 设计系统（Token）· 遵循 docs/DESIGN.md ================= */
-  :root {
-    /* 晨光自然系：低饱和 · 无纯黑纯白 · 柔和 */
-    --sky-top: #bde4ff;        /* 天空（高）晨雾蓝 */
-    --sky-mid: #d8efff;        /* 天空（中） */
-    --sky-bottom: #fff3dc;     /* 晨光（地平线） */
-    --forest: #3e7d5e;         /* 森林绿·主色 */
-    --forest-deep: #2d6349;    /* 深林绿·标题 */
-    --leaf: #7fc48d;           /* 叶子绿 */
-    --leaf-light: #b7e0b0;     /* 浅叶 */
-    --sun: #e8b04b;            /* 晨光金·可点引导（降饱和） */
-    --sun-soft: #f7e4bd;       /* 浅金 */
-    --clay: #c98a5e;           /* 泥土棕 */
-    --berry: #d97a8e;          /* 草莓粉·听音（降饱和） */
-    --sky-blue: #6fb7e8;       /* 溪水蓝 */
-    --ink: #37423b;            /* 正文（墨绿灰，非纯黑） */
-    --ink-soft: #6d7a70;       /* 次文字 */
-    --card: #fff8ec;           /* 卡片底（奶油白，非纯白） */
-    --line: #e3ece2;           /* 柔和描边 */
-    --shadow: 0 10px 28px rgba(56,94,74,.14);
-    --radius-lg: 24px;
-    --radius-md: 18px;
-    --radius-pill: 999px;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { height:100%; }
-  body {
-    font-family: "Baloo 2", "Comic Sans MS", "Microsoft YaHei", system-ui, sans-serif;
-    color: var(--ink); min-height:100vh; overflow-x:hidden;
-    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-bottom) 100%);
-  }
-
-  /* ================= 天空层 ================= */
-  .sky { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
-  .sun { position:absolute; top:5%; right:8%; width:88px; height:88px; border-radius:50%;
-    background: radial-gradient(circle, #fff6df 0%, var(--sun) 55%, rgba(232,176,75,0) 72%);
-    filter: drop-shadow(0 0 24px rgba(232,176,75,.55)); animation: sunGlow 6s ease-in-out infinite; }
-  @keyframes sunGlow { 0%,100%{transform:scale(1);} 50%{transform:scale(1.06);} }
-  .cloud { position:absolute; background: rgba(255,255,255,.92); border-radius:999px;
-    filter: blur(1px); animation: drift linear infinite; }
-  .cloud::before,.cloud::after { content:""; position:absolute; background:inherit; border-radius:50%; }
-  .cloud.c1 { width:110px; height:34px; top:12%; left:-130px; animation-duration:70s; }
-  .cloud.c1::before { width:46px; height:46px; top:-20px; left:16px; }
-  .cloud.c1::after  { width:34px; height:34px; top:-12px; left:56px; }
-  .cloud.c2 { width:84px; height:28px; top:26%; left:-100px; animation-duration:95s; animation-delay:8s; opacity:.8; }
-  .cloud.c2::before { width:36px; height:36px; top:-16px; left:12px; }
-  .cloud.c2::after  { width:26px; height:26px; top:-8px; left:44px; }
-  @keyframes drift { from{transform:translateX(0);} to{transform:translateX(130vw);} }
-
-  /* 山峦剪影（SVG 固定） */
-  .mountains { position:absolute; left:0; right:0; bottom:0; width:100%; height:52vh; }
-
-  /* ================= 布局 ================= */
-  .app { position:relative; z-index:2; max-width:1020px; margin:0 auto; padding:18px 16px 70px; }
-
-  /* 顶栏 */
-  .topbar { display:flex; align-items:center; gap:10px; margin-bottom:14px;
-    background: rgba(255,248,236,.8); backdrop-filter: blur(6px);
-    border:1px solid rgba(255,255,255,.85); border-radius: 999px; padding:8px 14px;
-    box-shadow: var(--shadow); }
-  .logo { font-size:1.5rem; filter: drop-shadow(0 2px 3px rgba(0,0,0,.15)); }
-  .topbar h1 { font-size:1.12rem; font-weight:700; letter-spacing:.02em; color:var(--forest-deep); }
-  .crumb { font-size:.78rem; color:var(--ink-soft); margin-left:auto; white-space:nowrap; }
-  .icon-btn { background:var(--card); border:1px solid var(--line); color:var(--ink-soft);
-    border-radius:999px; padding:6px 12px; font-size:.82rem; cursor:pointer;
-    transition:transform .15s, box-shadow .15s; display:flex; align-items:center; gap:4px; }
-  .icon-btn:hover { transform:translateY(-1px); box-shadow:var(--shadow); }
-  .icon-btn.active { color:var(--forest); border-color:var(--leaf); }
-
-  /* ================= 开场故事（晓声旅程） ================= */
-  .story-view { min-height: 70vh; display:flex; align-items:center; justify-content:center; }
-  .story-box { max-width: 560px; text-align:center; background: rgba(255,248,236,.85);
-    backdrop-filter: blur(4px); border:1px solid rgba(255,255,255,.9); border-radius:32px;
-    padding:30px 28px 26px; box-shadow: var(--shadow); }
-  .story-deer { font-size:5rem; display:inline-block; animation: storyBob 3s ease-in-out infinite;
-    filter: drop-shadow(0 0 18px rgba(255,209,102,.8)); }
-  @keyframes storyBob { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
-  .story-title { font-size:1.2rem; font-weight:800; color:var(--forest-deep); margin:10px 0 14px; }
-  .story-text { font-size:1.05rem; line-height:1.9; color:var(--ink); min-height:96px;
-    display:flex; align-items:center; justify-content:center; }
-  .story-actions { display:flex; gap:12px; justify-content:center; margin-top:18px; flex-wrap:wrap; }
-
-  /* ================= 地图总览：山路寻宝 ================= */
-  .map-panel { background: rgba(255,248,236,.82); backdrop-filter: blur(4px);
-    border:1px solid rgba(255,255,255,.9); border-radius:28px; padding:18px;
-    box-shadow: var(--shadow); }
-  .map-title { text-align:center; font-size:1.25rem; font-weight:800; color:var(--forest-deep);
-    margin-bottom:2px; letter-spacing:.03em; }
-  .map-sub { text-align:center; font-size:.86rem; color:var(--ink-soft); margin-bottom:10px; }
-  .trail-map { width:100%; height:auto; display:block; }
-  .place { cursor:pointer; }
-  .place:hover .p-base { filter: drop-shadow(0 0 12px rgba(232,176,75,.8)); }
-  .place:hover .p-emoji { filter: drop-shadow(0 0 8px rgba(232,176,75,.7)); transition: filter .15s ease; }
-  .place circle.p-base { stroke:#fff; stroke-width:4; }
-  .place .p-emoji { font-size:26px; text-anchor:middle; dominant-baseline:central; }
-  .place .p-name { font-size:15px; font-weight:800; text-anchor:middle; }
-  .place .p-stage { font-size:11px; text-anchor:middle; fill:var(--ink-soft); }
-  .place.locked { opacity:.55; cursor:default; }
-  .place.locked:hover .p-base, .place.locked:hover .p-emoji { filter:none; }
-  .place.done .p-base { fill:var(--leaf-light); }
-  .place.open .p-base { fill:var(--sun-soft); stroke:var(--sun); }
-  .road { fill:none; stroke:#d8c8a8; stroke-width:14; stroke-linecap:round;
-    stroke-dasharray:1 12; opacity:.9; }
-  .road-shadow { fill:none; stroke:rgba(120,100,70,.12); stroke-width:18;
-    stroke-linecap:round; stroke-dasharray:1 12; }
-  .legend { display:flex; justify-content:center; gap:18px; margin-top:6px; flex-wrap:wrap; }
-  .legend span { font-size:.78rem; color:var(--ink-soft); display:flex; align-items:center; gap:5px; }
-  .legend .dot { width:12px; height:12px; border-radius:50%; display:inline-block; }
-
-  /* ================= 关卡视图 ================= */
-  .back-row { display:flex; justify-content:flex-start; margin-bottom:8px; }
-  .level-nav { display:flex; gap:8px; justify-content:center; margin:2px 0 10px; flex-wrap:wrap; }
-  .nav-chip { background:rgba(255,255,255,.85); border:2px solid var(--line); color:var(--ink-soft);
-    border-radius:999px; padding:7px 16px; font-size:.84rem; cursor:pointer; font-weight:600;
-    transition:all .15s; }
-  .nav-chip:hover { transform:translateY(-2px); }
-  .nav-chip.active { border-color:var(--forest); color:var(--forest-deep); background:#f0f8ee; }
-  .nav-chip.done { border-color:var(--leaf); color:var(--forest); }
-  .nav-chip.done::after { content:" ✓"; }
-
-  .level-head { text-align:center; margin:2px 0 10px; }
-  .level-head .ltitle { font-size:1.35rem; font-weight:800; color:var(--forest-deep); }
-  .level-head .lsub { font-size:.84rem; color:var(--ink-soft); margin-top:2px; }
-
-  /* 山灵对话 */
-  .spirit-wrap { display:flex; align-items:flex-end; gap:10px; margin:10px 0 6px; }
-  .spirit-avatar { width:64px; height:64px; border-radius:50%; flex-shrink:0;
-    background: radial-gradient(circle at 35% 30%, #fffbe9, #ffe3ad);
-    border:3px solid #fff; box-shadow: var(--shadow);
-    display:flex; align-items:center; justify-content:center;
-    animation: bob 3.6s ease-in-out infinite; overflow:hidden; }
-  .spirit-avatar svg { width:56px; height:56px; }
-  .spirit-avatar .sparkle { animation: sparkleRot 4s linear infinite; transform-origin:center; }
-  @keyframes sparkleRot { to{transform:rotate(360deg);} }
-  @keyframes bob { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
-  .spirit-avatar.talk { animation: talk 0.5s ease-in-out; }
-  @keyframes talk { 0%,100%{transform:scale(1);} 30%{transform:scale(1.1) rotate(-3deg);}
-    60%{transform:scale(1.06) rotate(3deg);} }
-  .spirit-avatar.celebrate { animation: celebrate 0.7s ease; }
-  @keyframes celebrate { 0%{transform:scale(1) rotate(0);} 40%{transform:scale(1.3) rotate(-10deg);}
-    70%{transform:scale(1.15) rotate(8deg);} 100%{transform:scale(1);} }
-  /* 晓声成长：找回记忆越多，越明亮、光晕越强（进度=成长） */
-  .spirit-avatar { transition: filter .7s ease, box-shadow .7s ease; }
-  .spirit-avatar.grow-0 { filter: saturate(.55) brightness(.82); }
-  .spirit-avatar.grow-1 { filter: saturate(.7) brightness(.9); }
-  .spirit-avatar.grow-2 { filter: saturate(1); }
-  .spirit-avatar.grow-3 { filter: saturate(1.15) drop-shadow(0 0 6px rgba(232,176,75,.4)); }
-  .spirit-avatar.grow-4 { filter: saturate(1.4); box-shadow: var(--shadow), 0 0 16px rgba(232,176,75,.5); }
-  .spirit-avatar.grow-5 { filter: saturate(1.65) drop-shadow(0 0 10px rgba(232,176,75,.6)); box-shadow: var(--shadow), 0 0 26px rgba(232,176,75,.75); }
-  .spirit-avatar.grow-6 { filter: saturate(1.9) brightness(1.08) drop-shadow(0 0 16px rgba(232,176,75,.9)); box-shadow: var(--shadow), 0 0 38px rgba(232,176,75,.95); }
-  .bubble { background:var(--card); border-radius: 20px 20px 20px 6px; padding:12px 16px;
-    box-shadow: var(--shadow); font-size:.96rem; line-height:1.65; flex:1;
-    border:1px solid #f2efe2; min-height:58px; }
-  .bubble .who { color:var(--forest); font-weight:800; margin-right:6px; }
-
-  /* 五线谱舞台（自然风） */
-  .stage { background: rgba(255,248,236,.92); border-radius:28px; padding:14px 14px 8px;
-    box-shadow: var(--shadow); margin:6px 0 10px; border:1px solid #f2efe2; position:relative; }
-  .stage-forest { background: linear-gradient(180deg, rgba(255,248,236,.94), rgba(238,246,234,.96)); }
-  .stage-forest::after { content:"🌿  🌸"; position:absolute; bottom:8px; left:16px; font-size:13px; opacity:.55; pointer-events:none; }
-  .stage-scale::after { content:"🎼 音阶山谷"; position:absolute; bottom:8px; right:16px; font-size:11px; color:var(--ink-soft); opacity:.55; pointer-events:none; }
-  .stage svg { width:100%; height:auto; display:block; }
-  .staff-line { stroke:#c8b48e; stroke-width:2; stroke-linecap:round; }
-  .note-dot { opacity:0; transition:opacity .25s; }
-  .note-dot.lit { opacity:1; }
-  .note-name { font-size:11px; fill:var(--ink-soft); text-anchor:middle; opacity:0; transition:opacity .2s; }
-  .note-name.lit { opacity:1; fill:var(--forest); font-weight:700; }
-  .bird { font-size:27px; text-anchor:middle; opacity:0; transition:opacity .2s;
-    filter: drop-shadow(0 2px 2px rgba(0,0,0,.2)); }
-  .bird.show { opacity:1; }
-  .pop-note { font-size:19px; text-anchor:middle; opacity:0; }
-  .pop-note.show { animation: pop .75s ease forwards; }
-  @keyframes pop { 0%{opacity:0; transform:translateY(6px) scale(.5);}
-    40%{opacity:1; transform:translateY(-10px) scale(1.25);}
-    100%{opacity:0; transform:translateY(-26px) scale(.8);} }
-
-  /* 点选关卡：hover 只发光+轻微放大（绝不动画位移/旋转，保证稳定可点） */
-  .choice-bird { font-size:32px; text-anchor:middle; cursor:pointer; }
-  .choice-bird.hoverable:hover text:first-of-type {
-    filter: drop-shadow(0 0 6px rgba(232,176,75,.9)) drop-shadow(0 0 14px rgba(232,176,75,.5));
-    transition: filter .15s ease; }
-  .choice-bird.correct { animation: correctBounce .6s ease; }
-  .choice-bird.wrong { animation: shake .4s ease; opacity:.5; }
-  @keyframes correctBounce { 0%{transform:scale(1);} 40%{transform:scale(1.4) rotate(8deg);}
-    70%{transform:scale(.95);} 100%{transform:scale(1);} }
-  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);}
-    50%{transform:translateX(5px);} 75%{transform:translateX(-3px);} }
-
-  .listen-row { text-align:center; margin:8px 0 2px; }
-  .listen-badge { background:var(--card); border:2px solid var(--sun); color:var(--forest-deep);
-    border-radius:999px; padding:7px 18px; font-size:.9rem; font-weight:700;
-    display:inline-flex; align-items:center; gap:6px; animation: pulse 1.8s infinite; }
-  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,209,102,.4);}
-    50%{box-shadow:0 0 0 10px rgba(255,209,102,0);} }
-  .round-hud { display:flex; justify-content:center; gap:16px; margin:6px 0;
-    font-size:.9rem; color:var(--ink-soft); }
-  .round-hud b { color:var(--forest); }
-
-  /* 控制按钮（大圆角·立体） */
-  .controls { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:8px 0; }
-  .btn { border:none; border-radius:999px; padding:13px 26px; font-size:1rem; font-weight:800;
-    cursor:pointer; color:#fff; transition:transform .12s, box-shadow .12s;
-    box-shadow: 0 6px 0 rgba(0,0,0,.12); }
-  .btn:active { transform:translateY(3px); box-shadow:0 3px 0 rgba(0,0,0,.12); }
-  .btn.primary { background:linear-gradient(180deg, #8fd09a, var(--forest)); }
-  .btn.berry { background:linear-gradient(180deg, #f39ab0, var(--berry)); }
-  .btn.soft { background:linear-gradient(180deg, #fffaf0, #eef5ec); color:var(--forest-deep);
-    border:2px solid var(--leaf); box-shadow:0 5px 0 rgba(0,0,0,.06); padding:10px 18px; font-size:.9rem; }
-
-  /* 开发者模式面板（默认隐藏·孩子界面干净） */
-  .dev-panel { background:rgba(255,255,255,.92); border:2px dashed var(--clay);
-    border-radius:20px; padding:14px; margin:12px 0; font-size:.82rem; }
-  .dev-panel h4 { color:var(--clay); margin-bottom:8px; font-size:.9rem; }
-  .dev-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:8px; }
-  .dev-grid .k { background:#faf8ef; border-radius:12px; padding:8px 10px; }
-  .dev-grid .k b { display:block; color:var(--forest); font-size:.75rem; margin-bottom:3px; }
-  .dev-grid .k span { color:var(--ink-soft); line-height:1.5; }
-
-  .hidden { display:none !important; }
-  .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
-    background:#fff; border:3px solid var(--sun); color:var(--forest-deep);
-    border-radius:999px; padding:12px 24px; font-size:.95rem; font-weight:700; z-index:9;
-    opacity:0; transition:opacity .3s; pointer-events:none; box-shadow:var(--shadow);
-    white-space:nowrap; }
-  .toast.show { opacity:1; }
-  footer { text-align:center; color:var(--ink-soft); font-size:.76rem; margin-top:26px;
-    text-shadow:0 1px 0 rgba(255,255,255,.6); }
-
-  /* ================= 记忆叙事层（章节故事感） ================= */
-  .memory-overlay { position:fixed; inset:0; z-index:30; display:flex; align-items:center;
-    justify-content:center; background: rgba(255,249,235,.92); backdrop-filter: blur(3px); }
-  .memory-card { max-width: 560px; text-align:center; background:var(--card); border-radius:32px;
-    padding:30px 28px 26px; box-shadow: var(--shadow); border:1px solid #f2efe2; }
-  .memory-deer { font-size:4.4rem; display:inline-block; animation: storyBob 3s ease-in-out infinite;
-    filter: drop-shadow(0 0 16px rgba(255,209,102,.8)); }
-  .memory-title { font-size:1.15rem; font-weight:800; color:var(--forest-deep); margin:10px 0 12px; }
-  .memory-text { font-size:1.05rem; line-height:1.9; color:var(--ink); min-height:80px;
-    display:flex; align-items:center; justify-content:center; }
-  .memory-card .story-actions { margin-top:18px; }
-
-  /* ================= 响应式：手机 / 平板 / 电脑 自动适配 ================= */
-  @media (max-width: 640px) {
-    .app { padding: 10px 10px 50px; }
-    .topbar { padding: 7px 10px; }
-    .topbar h1 { font-size: 1rem; }
-    .crumb { font-size: .7rem; }
-    .score-pill, .medal-pill { font-size: .72rem; padding: 5px 10px; }
-    .map-panel { padding: 12px 10px; border-radius: 20px; }
-    .map-title { font-size: 1.05rem; }
-    .map-sub { font-size: .78rem; }
-    .spirit-avatar { width: 52px; height: 52px; }
-    .spirit-avatar svg { width: 46px; height: 46px; }
-    .bubble { font-size: .88rem; padding: 10px 12px; }
-    .stage { padding: 10px 8px 6px; border-radius: 20px; }
-    .btn { padding: 12px 20px; font-size: .92rem; }
-    .btn.soft { padding: 9px 14px; font-size: .82rem; }
-    .nav-chip { padding: 6px 12px; font-size: .78rem; }
-    .level-head .ltitle { font-size: 1.15rem; }
-    .legend span { font-size: .7rem; }
-    .story-box { padding: 22px 18px 20px; border-radius: 24px; }
-    .story-deer { font-size: 4rem; }
-    .story-text { font-size: .95rem; min-height: 84px; }
-  }
-  @media (min-width: 641px) and (max-width: 900px) {
-    .app { padding: 14px 14px 60px; }
-    .map-panel { padding: 14px 12px; }
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>大山里的音乐课 · 音乐寻宝</title>
+  <meta name="description" content="给山区孩子的 AI 陪伴式乐理寻宝游戏 —— 把真实的音符、节奏、旋律，变成山谷里看得见、摸得着、玩得懂的宝藏。">
+  <meta name="theme-color" content="#bfe3ff">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/main.css?v=20260812b">
+  <!-- 音乐引擎 / 乐理引擎 / 记谱引擎（本地优先，离线可用） -->
+  <script src="vendor/tonal.min.js?v=1"></script>
+  <script src="vendor/tone.js?v=1"></script>
+  <script src="vendor/vexflow.js?v=1"></script>
 </head>
 <body>
-<!-- 天空层 -->
-<div class="sky">
-  <div class="sun"></div>
-  <div class="cloud c1"></div>
-  <div class="cloud c2"></div>
-  <svg class="mountains" viewBox="0 0 1440 500" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-    <path d="M0 380 L180 210 L330 330 L520 160 L700 340 L900 190 L1100 330 L1300 200 L1440 340 L1440 500 L0 500 Z" fill="#b9d8cf" opacity=".7"/>
-    <path d="M0 460 L240 300 L430 420 L660 260 L880 430 L1080 290 L1320 430 L1440 370 L1440 500 L0 500 Z" fill="#8cc3a4"/>
-    <path d="M0 500 L0 430 L160 380 L300 450 L520 360 L700 470 L900 390 L1120 470 L1300 400 L1440 450 L1440 500 Z" fill="#5e9c7c"/>
-    <path d="M0 500 L0 460 Q360 420 720 460 T1440 455 L1440 500 Z" fill="#7fc48d"/>
-    <g fill="#5e9c7c" opacity=".6">
-      <path d="M120 500 q4 -18 8 -24 q4 6 8 24 Z"/>
-      <path d="M480 500 q4 -18 8 -24 q4 6 8 24 Z"/>
-      <path d="M900 500 q4 -18 8 -24 q4 6 8 24 Z"/>
-      <path d="M1200 500 q4 -18 8 -24 q4 6 8 24 Z"/>
-    </g>
-  </svg>
-</div>
 
-<div class="app">
-  <!-- 顶栏 -->
-  <div class="topbar">
-    <span class="logo">🏔️</span>
-    <h1>音乐寻宝</h1>
-    <span class="crumb" id="crumb">大山地图</span>
-    <button class="icon-btn" id="devToggle" onclick="App.toggleDev()">⚙️</button>
-  </div>
-
-  <!-- ===== 开场故事（晓声旅程入口） ===== -->
-  <section id="storyView">
-    <div class="story-view">
-      <div class="story-box">
-        <div class="story-deer">🦌</div>
-        <div class="story-title">晓声 · 忘了唱歌的小鹿</div>
-        <div class="story-text" id="storyText"></div>
-        <div class="story-actions">
-          <button class="btn soft" onclick="App.skipStory()">跳过</button>
-          <button class="btn primary" id="storyNext" onclick="App.storyNext()">继续 ▸</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== 地图总览（山路寻宝） ===== -->
-  <section id="mapView" class="hidden">
-    <div class="map-panel">
-      <div class="map-title">🗺️ 大山音乐寻宝</div>
-      <div class="map-sub">大山里住着晓声——一只忘了怎么唱歌的小鹿。和我一起，帮她找回丢失的声音吧！</div>
-      <svg class="trail-map" id="trailSvg" viewBox="0 0 900 560"></svg>
-      <div class="legend">
-        <span><span class="dot" style="background:var(--sun-soft);border:2px solid var(--sun)"></span> 可以出发</span>
-        <span><span class="dot" style="background:var(--leaf-light)"></span> 已探索</span>
-        <span><span class="dot" style="background:#eee"></span> 还没开启</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== 关卡视图 ===== -->
-  <section id="levelView" class="hidden">
-    <div class="back-row">
-      <button class="btn soft" onclick="App.goHome()">← 返回地图</button>
-    </div>
-    <div class="level-nav" id="levelNav"></div>
-    <div class="level-head">
-      <div class="ltitle" id="levelTitle">—</div>
-      <div class="lsub" id="levelSub">—</div>
-    </div>
-
-    <!-- 山灵对话 -->
-    <div class="spirit-wrap">
-      <div class="spirit-avatar" id="spirit">
-        <svg viewBox="0 0 100 100" aria-hidden="true">
-          <g class="sparkle" fill="#ffd166" opacity=".8">
-            <circle cx="24" cy="60" r="2.4"/><circle cx="76" cy="66" r="2"/>
-            <circle cx="28" cy="74" r="1.6"/><circle cx="72" cy="52" r="1.8"/>
-          </g>
-          <path d="M16 54 Q 2 44 10 30 Q 22 38 28 48 Z" fill="#d9f0d9"/>
-          <path d="M84 54 Q 98 44 90 30 Q 78 38 72 48 Z" fill="#d9f0d9"/>
-          <ellipse cx="50" cy="60" rx="19" ry="21" fill="#7fc48d"/>
-          <circle cx="50" cy="40" r="17" fill="#ffe9a8"/>
-          <path d="M41 27 Q 45 18 54 20 Q 48 22 47 28 Z" fill="#5e9c7c"/>
-          <g id="sEyesNormal">
-            <circle cx="43" cy="39" r="4" fill="#37423b"/>
-            <circle cx="57" cy="39" r="4" fill="#37423b"/>
-            <circle cx="44.5" cy="37.5" r="1.4" fill="#fff"/>
-            <circle cx="58.5" cy="37.5" r="1.4" fill="#fff"/>
-          </g>
-          <g id="sEyesHappy" style="display:none">
-            <path d="M38 41 Q43 34 48 41" stroke="#37423b" stroke-width="3.2" fill="none" stroke-linecap="round"/>
-            <path d="M52 41 Q57 34 62 41" stroke="#37423b" stroke-width="3.2" fill="none" stroke-linecap="round"/>
-          </g>
-          <circle cx="37" cy="46" r="3.4" fill="#f8c8cf" opacity=".75"/>
-          <circle cx="63" cy="46" r="3.4" fill="#f8c8cf" opacity=".75"/>
-          <path id="sMouth" d="M45 49 Q 50 53 55 49" stroke="#c98a5e" stroke-width="2.6"
-            fill="none" stroke-linecap="round"/>
-          <ellipse id="sMouthOpen" style="display:none" cx="50" cy="52" rx="4.4" ry="5.4"
-            fill="#c98a5e"/>
+  <!-- ══════════ 启动 Splash：太阳升起 · 晓声打招呼 ══════════ -->
+  <section id="view-splash" class="view" aria-label="开场">
+    <div class="splash">
+      <div class="splash-sky" aria-hidden="true">
+        <span class="sun"></span>
+        <span class="cloud cloud-1"></span>
+        <span class="cloud cloud-2"></span>
+        <span class="cloud cloud-3"></span>
+        <svg class="splash-range" viewBox="0 0 400 260" preserveAspectRatio="none" aria-hidden="true">
+          <path class="mountain back" d="M0 260 L0 150 Q70 60 160 150 Q220 90 300 160 Q360 120 400 170 L400 260 Z"/>
+          <path class="mountain mid" d="M0 260 L0 200 Q90 130 210 205 Q300 150 400 225 L400 260 Z"/>
+          <path class="mountain front" d="M0 260 L0 232 Q140 170 260 238 Q330 210 400 242 L400 260 Z"/>
         </svg>
       </div>
-      <div class="bubble"><span class="who" id="spiritWho">晓声</span><span id="spiritText">你好呀，我是晓声！</span></div>
-    </div>
-
-    <!-- point HUD -->
-    <div class="listen-row hidden" id="listenRow">
-      <span class="listen-badge" id="listenBadge">🎵 正在听音…</span>
-    </div>
-    <div class="round-hud hidden" id="roundHud">
-      <span id="segQ">第 <b id="roundNow">1</b>/<span id="roundTotal">5</span> 题</span>
-      <span><span id="okLabel">答对</span> <b id="roundOk">0</b> 只</span>
-      <span id="segCombo">连击 <b id="roundCombo">0</b></span>
-    </div>
-
-    <!-- 五线谱舞台 -->
-    <div class="stage" id="stage">
-      <svg id="staffSvg" viewBox="0 0 800 240" preserveAspectRatio="xMidYMid meet"></svg>
-    </div>
-
-    <!-- 观察模式控制 -->
-    <div class="controls" id="observeControls">
-      <button class="btn primary" id="playBtn" onclick="App.playLevel()">▶ 播放</button>
-      <button class="btn soft" onclick="App.setSpeed(0)">🐢 慢</button>
-      <button class="btn soft" onclick="App.setSpeed(1)">🐾 中</button>
-      <button class="btn soft" onclick="App.setSpeed(2)">🐇 快</button>
-    </div>
-
-    <!-- 配对模式控制 -->
-    <div class="controls hidden" id="pointControls">
-      <button class="btn berry" id="pointStartBtn" onclick="App.startPoint()">🎵 听音开始</button>
-      <button class="btn soft" onclick="App.replayNote()">🔁 再听一次</button>
-    </div>
-
-    <!-- 通关衔接（下一关 / 回地图） -->
-    <div class="controls hidden" id="nextControls">
-      <button class="btn primary" id="nextBtn" onclick="App.nextLevel()">👉 下一关</button>
-      <button class="btn soft" onclick="App.goHome()">🗺️ 回地图</button>
-    </div>
-
-    <!-- 开发者模式面板（默认隐藏） -->
-    <div class="dev-panel hidden" id="devPanel">
-      <h4>🔧 开发者模式 · 关卡规格（乐理三件套）</h4>
-      <div class="dev-grid">
-        <div class="k"><b>🎯 乐理概念</b><span id="kitConcept">—</span></div>
-        <div class="k"><b>🧠 心智模型</b><span id="kitModel">—</span></div>
-        <div class="k"><b>🕹️ 游戏动作</b><span id="kitAction">—</span></div>
-        <div class="k"><b>⚖️ 判定规则</b><span id="kitJudge">—</span></div>
-        <div class="k"><b>💬 反馈协议</b><span id="kitFeedback">—</span></div>
-        <div class="k"><b>🎯 本关目标</b><span id="kitGoal">—</span></div>
+      <div class="splash-content">
+        <div class="xs-holder" id="splash-xs"></div>
+        <h1 class="splash-title">大山里的音乐课</h1>
+        <p class="splash-tag">没有音乐老师的山里，孩子也能学会真乐理</p>
+        <button class="btn btn-gold splash-go" type="button">开始寻宝</button>
+        <p class="splash-skip" role="button" tabindex="0" data-skip>点这里跳过 →</p>
       </div>
     </div>
   </section>
 
-  <footer>音乐寻宝 v0.2 · 大山里的音乐课 · 山灵陪伴</footer>
-</div>
+  <!-- ══════════ 山谷主场景 · 寻宝地图 ══════════ -->
+  <section id="view-map" class="view" aria-label="山谷寻宝地图">
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-title">大山里的音乐课</span>
+      </div>
+      <div class="topbar-right">
+        <div class="points-pill" aria-live="polite">
+          <span class="points-icon" aria-hidden="true">♪</span>
+          <span class="points-num" id="map-points">0</span>
+        </div>
+        <button class="icon-btn" id="btn-reset" type="button" aria-label="重新开始" title="重新开始">↺</button>
+      </div>
+    </div>
 
-<div class="toast" id="toast"></div>
-  <!-- ===== 记忆叙事层 ===== -->
-  <div id="memoryView" class="hidden">
-    <div class="memory-overlay">
-      <div class="memory-card">
-        <div class="memory-deer">🦌</div>
-        <div class="memory-title" id="memoryMapName">一段记忆</div>
-        <div class="memory-text" id="memoryText"></div>
-        <div class="story-actions">
-          <button class="btn primary" id="memoryBtn">继续 ▸</button>
+    <div class="map-wrap">
+      <div class="map-scene" id="map-scene">
+        <!-- 山谷背景（SVG 手绘风） -->
+        <svg class="map-bg" viewBox="0 0 400 640" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <defs>
+            <linearGradient id="mapSky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#dceffb"/>
+              <stop offset="0.55" stop-color="#bfe3ff"/>
+              <stop offset="1" stop-color="#e8f3d8"/>
+            </linearGradient>
+            <linearGradient id="mntBack" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#9cc3b4"/>
+              <stop offset="1" stop-color="#7fae9c"/>
+            </linearGradient>
+            <linearGradient id="mntMid" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#7fae9c"/>
+              <stop offset="1" stop-color="#5e9279"/>
+            </linearGradient>
+            <linearGradient id="mntFront" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#5e9279"/>
+              <stop offset="1" stop-color="#3e7d5e"/>
+            </linearGradient>
+            <linearGradient id="meadowGrass" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#8fc49a"/>
+              <stop offset="1" stop-color="#5e9279"/>
+            </linearGradient>
+            <linearGradient id="riverGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#b7ddf5"/>
+              <stop offset="1" stop-color="#8ec3e8"/>
+            </linearGradient>
+          </defs>
+
+          <!-- 天空 -->
+          <rect width="400" height="640" fill="url(#mapSky)"/>
+          <!-- 太阳 -->
+          <circle cx="330" cy="72" r="30" fill="#f6dc9a"/>
+          <circle cx="330" cy="72" r="22" fill="#f3ce7e"/>
+          <!-- 云 -->
+          <g class="map-clouds">
+            <ellipse cx="90"  cy="80" rx="46" ry="16" fill="#ffffff" opacity="0.85"/>
+            <ellipse cx="118" cy="72" rx="30" ry="13" fill="#ffffff" opacity="0.85"/>
+            <ellipse cx="250" cy="140" rx="40" ry="13" fill="#ffffff" opacity="0.7"/>
+          </g>
+          <!-- 远山 -->
+          <path d="M0 300 L0 168 Q80 96 168 176 Q252 112 330 190 Q370 168 400 196 L400 300 Z" fill="url(#mntBack)"/>
+          <!-- 中山 -->
+          <path d="M0 392 L0 268 Q110 190 226 282 Q320 210 400 300 L400 392 Z" fill="url(#mntMid)"/>
+          <!-- 山脊=五线谱意象（贴在山腰的柔线） -->
+          <g class="stave-hint" opacity="0.55">
+            <path d="M0 330 L400 330" stroke="#fff8ec" stroke-width="3" stroke-dasharray="0.1 14" stroke-linecap="round"/>
+            <path d="M0 346 L400 346" stroke="#fff8ec" stroke-width="3" stroke-dasharray="0.1 14" stroke-linecap="round"/>
+            <path d="M0 362 L400 362" stroke="#fff8ec" stroke-width="3" stroke-dasharray="0.1 14" stroke-linecap="round"/>
+            <path d="M0 378 L400 378" stroke="#fff8ec" stroke-width="3" stroke-dasharray="0.1 14" stroke-linecap="round"/>
+            <path d="M0 394 L400 394" stroke="#fff8ec" stroke-width="3" stroke-dasharray="0.1 14" stroke-linecap="round"/>
+          </g>
+          <!-- 前山 / 谷地 -->
+          <path d="M0 470 L0 400 Q110 330 226 420 Q320 348 400 436 L400 470 Z" fill="url(#mntFront)"/>
+          <!-- 溪水 / 草地 -->
+          <path d="M0 470 Q200 410 400 470 L400 640 L0 640 Z" fill="url(#meadowGrass)"/>
+          <path class="river" d="M178 408 C 168 452 208 478 200 520 C 190 566 232 596 214 640" fill="none" stroke="url(#riverGrad)" stroke-width="16" stroke-linecap="round" opacity="0.9"/>
+          <path class="river-line" d="M178 408 C 168 452 208 478 200 520 C 190 566 232 596 214 640" fill="none" stroke="#dff0fb" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+          <!-- 寻宝小路（虚线） -->
+          <path id="trail" d="M200 150 C 120 190 150 260 205 300 C 260 340 250 400 196 430 C 150 456 160 520 208 548 C 236 566 232 600 214 630" fill="none" stroke="#f3d9a4" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 16" opacity="0.95"/>
+          <path id="trail-core" d="M200 150 C 120 190 150 260 205 300 C 260 340 250 400 196 430 C 150 456 160 520 208 548 C 236 566 232 600 214 630" fill="none" stroke="#c98a5e" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 16" opacity="0.9"/>
+          <!-- 底部点缀小花 -->
+          <g class="flowers" fill="#eec2c9" opacity="0.9">
+            <circle cx="60" cy="560" r="5"/>
+            <circle cx="66" cy="552" r="5"/>
+            <circle cx="63" cy="556" r="3" fill="#f3e2a4"/>
+            <circle cx="330" cy="600" r="6"/>
+            <circle cx="338" cy="592" r="6"/>
+            <circle cx="334" cy="596" r="3.5" fill="#f3e2a4"/>
+            <circle cx="120" cy="620" r="5"/>
+          </g>
+        </svg>
+
+        <!-- 晓声 -->
+        <div class="xs-holder map-xs" id="map-xs"></div>
+
+        <!-- 地点节点（JS 按 MV.locations 生成） -->
+        <div class="locs" id="map-locs"></div>
+
+        <!-- 萤火层 -->
+        <div class="firefly-layer" id="map-fireflies" aria-hidden="true"></div>
+
+        <!-- 地图底部提示 -->
+        <div class="map-footer" id="map-footer"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 关卡舞台 ══════════ -->
+  <section id="view-stage" class="view" aria-label="关卡舞台">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn" id="stage-back" type="button" aria-label="返回地图">←</button>
+        <span class="topbar-title" id="stage-title">关卡</span>
+      </div>
+      <div class="topbar-right">
+        <div class="points-pill" aria-live="polite">
+          <span class="points-icon" aria-hidden="true">♪</span>
+          <span class="points-num" id="stage-points">0</span>
         </div>
       </div>
     </div>
+
+    <div class="stage">
+      <!-- 晓声引导区（每个关卡共用） -->
+      <div class="stage-xs">
+        <div class="xs-holder stage-xs-holder" id="stage-xs"></div>
+      </div>
+
+      <div class="stage-body" id="stage-body">
+        <!-- 关卡舞台内容由 JS 注入 -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ 通关庆祝 ══════════ -->
+  <section id="view-celebrate" class="view" aria-label="通关庆祝">
+    <div class="celebrate">
+      <div class="confetti" id="confetti" aria-hidden="true"></div>
+      <div class="xs-holder celebrate-xs" id="celebrate-xs"></div>
+      <h2 class="celebrate-title" id="celebrate-title">通关啦！</h2>
+      <p class="celebrate-line" id="celebrate-line"></p>
+      <div class="celebrate-song hidden" id="celebrate-song" aria-live="polite">
+        <div class="celebrate-song-name" id="celebrate-song-name"></div>
+        <p class="celebrate-song-lyrics" id="celebrate-song-lyrics"></p>
+      </div>
+      <div class="celebrate-points" id="celebrate-points"></div>
+      <button class="btn btn-primary" id="celebrate-next" type="button">回到山谷</button>
+    </div>
+  </section>
+
+  <!-- ══════════ 我的音乐会（作品墙 · P1） ══════════ -->
+  <section id="view-concert" class="view" aria-label="我的音乐会">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn" id="concert-back" type="button" aria-label="返回地图">←</button>
+        <span class="topbar-title">我的音乐会</span>
+      </div>
+      <div class="topbar-right">
+        <div class="points-pill" aria-live="polite">
+          <span class="points-icon" aria-hidden="true">♪</span>
+          <span class="points-num" id="concert-points">0</span>
+        </div>
+      </div>
+    </div>
+    <div class="concert" id="concert-body"></div>
+  </section>
+
+  <!-- ══════════ 五线谱出口（覆盖面板） ══════════ -->
+  <div id="staff-overlay" class="overlay" hidden>
+    <div class="staff-panel">
+      <div class="staff-panel-head">
+        <h2 class="staff-panel-title">你的第一首谱</h2>
+        <button class="icon-btn" id="staff-close" type="button" aria-label="关闭">✕</button>
+      </div>
+      <div class="staff-xs">
+        <div class="xs-holder" id="staff-xs"></div>
+      </div>
+      <div class="staff-canvas" id="staff-canvas" aria-label="五线谱渲染区"></div>
+      <div class="staff-actions">
+        <button class="btn btn-primary" id="staff-play" type="button" aria-label="播放这段旋律">▶ 听一听</button>
+        <button class="btn btn-gold" id="staff-save" type="button">保存图片</button>
+        <button class="btn btn-ghost" id="staff-midi" type="button">存 MIDI</button>
+      </div>
+      <p class="staff-note">乐理小贴士：五条线、四个间，音符住在线和间里。你的曲子，现在有家了。</p>
+    </div>
   </div>
-<!-- 契约加载顺序：audio → voice → 配置 → 应用 -->
-<script src="modules/audio/music-core.js"></script>
-<script src="modules/voice/voice-core.js"></script>
-<script src="shared/levels.js"></script>
-<script src="app.js"></script>
+
+  <!-- 积分飘字 -->
+  <div id="points-toast" class="points-toast" aria-hidden="true"></div>
+
+  <script src="config.js?v=20260812b"></script>
+  <script src="shared/lines.js?v=20260812b"></script>
+  <script src="shared/levels.js?v=20260812b"></script>
+  <script src="modules/audio/music-core.js?v=20260812b"></script>
+  <script src="modules/voice/voice-core.js?v=20260812b"></script>
+  <script src="modules/notation/staff.js?v=20260812b"></script>
+  <script src="app.js?v=20260812b"></script>
 </body>
 </html>

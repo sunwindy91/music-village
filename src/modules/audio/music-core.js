@@ -1,143 +1,267 @@
-/**
- * ============================================================
- *  MusicCore · 音频核心（module-audio 领地 · 邹翔）
- * ============================================================
- *  接口契约 v1.0 实现：
- *   - playNote(midi, duration?)      播放单音
- *   - playMelody([{midi,dur}])       播放旋律
- *   - playChord(rootMidi, type)      和弦
- *   - stopAll()                      停止所有声音
- *   - sfx.correct/wrong/win/stone/click  游戏音效
- *   - getScore() / resetScore()      积分
- * ============================================================
- */
-(function () {
-  'use strict';
+/* ============================================================
+ * MusicCore · 音频引擎（Tone.js）
+ * 温柔音色（三角波 + 缓起缓落 + 山谷轻混响）· 旋律/节奏/音效
+ * 接口（与接口契约一致）：
+ *   start() / playMidi() / playSequence() / playPair()
+ *   playRhythm() / sfx() / stopAll()
+ * ============================================================ */
+window.MV = window.MV || {};
 
-  let ctx = null;
-  let master = null;
-  const active = new Set();
-  let score = 0;
+MV.MusicCore = (() => {
+  const C = () => MV.config;
 
-  // 懒初始化 AudioContext（浏览器要求用户手势后）
-  function ensureCtx() {
-    if (!ctx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return null;
-      ctx = new AC();
-      master = ctx.createGain();
-      master.gain.value = 0.9;
-      master.connect(ctx.destination);
+  let ready = false;
+  let audioError = null;
+  let limiter = null;
+  let reverb = null;
+  let mainSynth = null;
+  let drum = null;
+  let tick = null;
+  let instruments = {};
+  let scheduled = [];
+
+  function init() {
+    if (ready) return;
+    if (typeof Tone === 'undefined') { audioError = 'Tone 引擎未加载'; return; }
+    const guard = (label, fn) => {
+      try { return fn(); }
+      catch (e) { console.warn('[MusicCore] ' + label + ' 创建失败：' + (e && e.message)); return null; }
+    };
+    limiter = guard('limiter', () => new Tone.Limiter(-2).toDestination());
+    reverb = guard('reverb', () => new Tone.Freeverb({ roomSize: .55, dampening: 2800, wet: .2 }));
+    if (reverb) { try { reverb.connect(limiter); } catch (e) { /* noop */ } }
+    const chain = reverb || limiter;   // 混响失败也能响（直连限幅器）
+
+    // 听辨主音色：三角波，柔和（核心音色，优先保证）
+    mainSynth = guard('mainSynth', () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle' },
+      envelope: { attack: .012, decay: .3, sustain: .18, release: .6 }
+    }));
+    if (mainSynth) { try { mainSynth.connect(chain); } catch (e) { /* noop */ } }
+
+    // 创作四音色（逐个独立，失败不影响其他）
+    instruments.bird = guard('bird', () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle' },
+      envelope: { attack: .005, decay: .16, sustain: .04, release: .28 }
+    }));
+    instruments.bell = guard('bell', () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine' },
+      envelope: { attack: .002, decay: .55, sustain: 0, release: .6 }
+    }));
+    instruments.water = guard('water', () => new Tone.PolySynth(Tone.PluckSynth, { resonance: .7, dampening: 6000 }));
+    instruments.piano = guard('piano', () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle' },
+      envelope: { attack: .008, decay: .5, sustain: .22, release: .9 }
+    }));
+    for (const k in instruments) {
+      if (!instruments[k]) continue;
+      try { instruments[k].connect(chain); } catch (e) { /* noop */ }
+      try { instruments[k].volume.value = -4; } catch (e) { /* noop */ }
     }
-    if (ctx.state === 'suspended') ctx.resume();
-    return ctx;
+
+    // 大鼓（小鼓手关卡）
+    drum = guard('drum', () => new Tone.MembraneSynth({
+      pitchDecay: .04, octaves: 3,
+      envelope: { attack: .001, decay: .3, sustain: .01, release: .45 }
+    }));
+    if (drum) {
+      try { drum.volume.value = -8; drum.connect(chain); } catch (e) { /* noop */ }
+    }
+
+    // 木鱼「嗒」（准备/节拍器）
+    tick = guard('tick', () => new Tone.Synth({
+      oscillator: { type: 'square' },
+      envelope: { attack: .002, decay: .09, sustain: 0, release: .12 }
+    }));
+    if (tick) {
+      try { tick.volume.value = -18; tick.connect(chain); } catch (e) { /* noop */ }
+    }
+
+    ready = true;
+    if (audioError) console.warn('[MusicCore] ' + audioError);
   }
 
-  // midi → 频率
-  function midiToFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
-
-  // 温柔音色：三角波 + 快速起音 + 缓落音尾（不刺耳）
-  function tone(freq, start, dur, vol) {
-    const c = ensureCtx();
-    if (!c) return;
-    const osc = c.createOscillator();
-    const g = c.createGain();
-    osc.type = 'triangle';
-    osc.frequency.value = freq;
-
-    const t0 = c.currentTime + start;
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-
-    osc.connect(g); g.connect(master);
-    osc.start(t0); osc.stop(t0 + dur + 0.05);
-    active.add(osc);
-    osc.onended = function () { active.delete(osc); };
+  /* —— 首次用户手势解锁音频（幂等，可重复调用） —— */
+  function start() {
+    if (typeof Tone === 'undefined') return Promise.resolve();
+    try { init(); } catch (e) { console.warn('[MusicCore] init', e); }
+    try { return Tone.start(); } catch (e) { console.warn('[MusicCore] start', e); return Promise.resolve(); }
   }
 
-  const MusicCore = {
-    playNote: function (midi, duration) {
-      duration = duration || 0.6;
-      tone(midiToFreq(midi), 0, duration, 0.5);
-    },
+  /* —— 确保音频上下文在运行（每次发声前调用，幂等） —— */
+  function ensureRunning() {
+    if (!ready || typeof Tone === 'undefined') return;
+    try { Tone.start(); } catch (e) { /* 忽略 */ }
+  }
 
-    playMelody: function (melody) {
-      let t = 0;
-      melody.forEach(function (n) {
-        tone(midiToFreq(n.midi), t, n.dur || 0.5, 0.5);
-        t += (n.dur || 0.5) * 0.95;
+  function mtof(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+  /* —— 调度工具（基于全局 Transport，可整体取消） —— */
+  function scheduleAt(sec, fn) {
+    if (typeof Tone === 'undefined') return;
+    const id = Tone.getTransport().scheduleOnce(fn, sec);
+    scheduled.push(id);
+    return id;
+  }
+  function clearScheduled() {
+    if (typeof Tone === 'undefined') return;
+    scheduled.forEach(id => Tone.getTransport().clear(id));
+    scheduled = [];
+  }
+  function stopTransport() {
+    if (typeof Tone === 'undefined') return;
+    try { Tone.getTransport().stop(); } catch (e) { /* noop */ }
+    clearScheduled();
+  }
+  function resetTransport() {
+    try { Tone.getTransport().stop(); } catch (e) { /* noop */ }
+    clearScheduled();
+  }
+
+  /* —— 单音 —— */
+  function playMidi(midi, opts = {}) {
+    if (!ready || midi == null) return;
+    ensureRunning();
+    const dur = opts.dur != null ? opts.dur : 0.4;
+    const inst = opts.inst || 'main';
+    if (inst === 'main') mainSynth.triggerAttackRelease(mtof(midi), dur);
+    else if (instruments[inst]) instruments[inst].triggerAttackRelease(mtof(midi), dur);
+  }
+
+  /* —— 按拍序列（作曲/示范） notes: [{midi, start, dur}]（单位：拍） —— */
+  function playSequence(notes, opts = {}) {
+    if (!ready || !notes.length) { if (opts.onEnd) opts.onEnd(); return; }
+    ensureRunning();
+    const bpm = opts.bpm || C().gridBpm;
+    const beat = 60 / bpm;
+    const inst = opts.inst || 'piano';
+    resetTransport();
+    notes.forEach(n => {
+      scheduleAt(Math.max(n.start, 0) * beat, () => {
+        playMidi(n.midi, { dur: Math.max(n.dur * beat * .92, .12), inst });
+        if (opts.onNote) opts.onNote(n);
       });
-    },
+    });
+    let total = 0;
+    notes.forEach(n => { total = Math.max(total, n.start + n.dur); });
+    scheduleAt((total + 0.25) * beat, () => {
+      stopTransport();
+      if (opts.onEnd) opts.onEnd();
+    });
+    Tone.getTransport().start();
+  }
 
-    playChord: function (rootMidi, type) {
-      const offsets = { major: [0, 4, 7], minor: [0, 3, 7], dim: [0, 3, 6] }[type] || [0, 4, 7];
-      offsets.forEach(function (o) { tone(midiToFreq(rootMidi + o), 0, 1.2, 0.3); });
-    },
+  /* —— 双音听辨（谁更高 / 听音找家） —— */
+  function playPair(a, b, opts = {}) {
+    if (!ready) return;
+    const gap = opts.gap != null ? opts.gap : 0.95;
+    resetTransport();
+    playMidi(a, { dur: .55 });
+    scheduleAt(gap, () => playMidi(b, { dur: .6 }));
+    scheduleAt(gap + 1.0, () => {
+      stopTransport();
+      if (opts.onDone) opts.onDone();
+    });
+    Tone.getTransport().start();
+  }
 
-    stopAll: function () {
-      active.forEach(function (o) { try { o.stop(); } catch (e) {} });
-      active.clear();
-    },
-
-    getScore: function () { return score; },
-    resetScore: function () { score = 0; },
-    addScore: function (n) { score += n; },
-
-    startLevel: function (levelId, opts) {
-      opts = opts || {};
-      if (window.VoiceCore && window.VoiceCore.onLevelEvent) {
-        window.VoiceCore.onLevelEvent({ type: 'level_start', payload: { levelId: levelId } });
-      }
-      return { levelId: levelId, ok: true };
-    },
-
-    playGuidance: function (script) {
-      script = script || [];
-      script.forEach(function (s, i) {
-        if (s.type === 'note') {
-          setTimeout(function () { MusicCore.playNote(s.value); }, i * 500);
+  /* —— 节奏关卡：pattern = 'x' 走 / '-' 停 —— */
+  function playRhythm(pattern, opts = {}) {
+    if (!ready) return;
+    ensureRunning();
+    const bpm = opts.bpm || 88;
+    const beat = 60 / bpm;
+    resetTransport();
+    const startT = Tone.getContext().currentTime;
+    [...pattern].forEach((v, i) => {
+      scheduleAt(i * beat, () => {
+        const abs = startT + i * beat;
+        if (v === 'x') {
+          drum.triggerAttackRelease('C2', .26);
+          if (opts.onHit) opts.onHit(i, abs);
+        } else if (opts.onRest) {
+          opts.onRest(i, abs);
         }
+        if (opts.onBeat) opts.onBeat(i, v, abs);
       });
-    },
+    });
+    scheduleAt(pattern.length * beat + .1, () => {
+      stopTransport();
+      if (opts.onDone) opts.onDone();
+    });
+    Tone.getTransport().start();
+  }
 
-    // 供关卡渲染器使用的音频辅助
-    _tone: tone,
-    _ensureCtx: ensureCtx,
+  /* —— 准备拍（嗒·嗒·嗒·走） —— */
+  function countIn(opts = {}) {
+    if (!ready) return;
+    ensureRunning();
+    const bpm = opts.bpm || 88;
+    const beat = 60 / bpm;
+    resetTransport();
+    for (let i = 0; i < 3; i++) {
+      scheduleAt(i * beat, () => tick.triggerAttackRelease('C6', .08));
+    }
+    scheduleAt(3 * beat, () => {
+      stopTransport();
+      if (opts.onDone) opts.onDone();
+    });
+    Tone.getTransport().start();
+  }
 
-    // —— 游戏音效（孩子化·温柔）——
-    sfx: {
-      click: function () { tone(660, 0, 0.08, 0.25); },
-      correct: function () {
-        tone(midiToFreq(64), 0, 0.18, 0.4);
-        tone(midiToFreq(67), 0.12, 0.18, 0.4);
-        tone(midiToFreq(72), 0.24, 0.3, 0.42);
-      },
-      wrong: function () {
-        tone(midiToFreq(55), 0, 0.2, 0.3);
-        tone(midiToFreq(52), 0.16, 0.26, 0.3);
-      },
-      win: function () {
-        const seq = [[60, 0], [60, 0], [67, 0], [67, 0], [69, 0], [69, 0], [67, 0.55],
-                     [65, 0], [65, 0], [64, 0], [64, 0], [62, 0], [62, 0], [60, 0.6]];
-        let t = 0;
-        seq.forEach(function (n) {
-          tone(midiToFreq(n[0]), t, 0.3, 0.42);
-          t += n[1] + 0.18;
-        });
-      },
-      stone: function () {
-        tone(midiToFreq(60), 0, 0.9, 0.3);
-        tone(midiToFreq(64), 0.1, 0.9, 0.3);
-        tone(midiToFreq(67), 0.2, 1.0, 0.32);
-        tone(midiToFreq(72), 0.3, 1.2, 0.28);
-      },
-      drum: function () {          // 鼓点（低频）
-        tone(160, 0, 0.1, 0.5);
-        tone(95, 0.02, 0.14, 0.42);
-      },
-    },
+  /* —— 音效 —— */
+  function sfx(name) {
+    if (!ready) return;
+    ensureRunning();
+    const now = () => 0;
+    switch (name) {
+      case 'correct': {
+        // 上行三音：亮晶晶
+        const seq = [72, 76, 79];
+        seq.forEach((m, i) => scheduleAt(i * .09, () => mainSynth.triggerAttackRelease(mtof(m), .22)));
+        scheduleAt(seq.length * .09 + .3, stopTransport);
+        Tone.getTransport().start();
+        break;
+      }
+      case 'wrong': {
+        // 温柔下行两音（不说教，只“再听一次”）
+        scheduleAt(0, () => mainSynth.triggerAttackRelease(mtof(64), .3));
+        scheduleAt(.22, () => mainSynth.triggerAttackRelease(mtof(60), .42));
+        scheduleAt(.8, stopTransport);
+        Tone.getTransport().start();
+        break;
+      }
+      case 'win': {
+        const seq = [72, 76, 79, 84];
+        seq.forEach((m, i) => scheduleAt(i * .12, () => mainSynth.triggerAttackRelease(mtof(m), .28)));
+        scheduleAt(seq.length * .12 + .5, stopTransport);
+        Tone.getTransport().start();
+        break;
+      }
+      case 'click':
+        tick.triggerAttackRelease('C6', .06);
+        break;
+      case 'tap': // 鼓点命中的反馈音
+        drum.triggerAttackRelease('C2', .2);
+        break;
+      case 'pop': // 摘果
+        instruments.bell.triggerAttackRelease(mtof(80), .3);
+        break;
+      default: break;
+    }
+  }
+
+  function stopAll() { stopTransport(); }
+
+  /* 当前音频上下文时间（拍点判题用） */
+  function contextNow() {
+    return (typeof Tone !== 'undefined') ? Tone.getContext().currentTime : performance.now() / 1000;
+  }
+
+  return {
+    init, start, ensureRunning, playMidi, playSequence, playPair, playRhythm, countIn, sfx, stopAll,
+    contextNow,
+    isReady: () => ready,
+    lastError: () => audioError
   };
-
-  window.MusicCore = MusicCore;
 })();

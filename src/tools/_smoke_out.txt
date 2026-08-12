@@ -1,0 +1,50 @@
+﻿== 鍚姩锛堝唴鑱旇剼鏈墽琛岋級 ==
+node : Not implemented: Window's scrollTo() method
+所在位置 行:1 字符: 64
++ ... /music-core.js; node --check app.js; node tools/smoke.js 2>&1 | Out-F ...
++                                          ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Not implemented...rollTo() method 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+== 1. Splash 鈫?灞辫胺鍦板浘 ==
+Not implemented: Window's scrollTo() method
+== 2. 澹伴煶灞辫胺 路 璋佹洿楂?==
+Not implemented: Window's scrollTo() method
+  [trace] t=770ms startLevel -> highlow session=2
+Not implemented: Window's scrollTo() method
+== 3. 灏忛紦鎵嬶紙娓叉煋涓嶅穿婧冿級 ==
+Not implemented: Window's scrollTo() method
+  [trace] t=4803ms startLevel -> drum session=5
+Not implemented: Window's scrollTo() method
+== 4. 鍚煶鎵惧 ==
+Not implemented: Window's scrollTo() method
+  [trace] t=5491ms startLevel -> same session=8
+Not implemented: Window's scrollTo() method
+== 5. 闊抽樁灞辫胺 路 璁よ瘑闊崇 ==
+Not implemented: Window's scrollTo() method
+  [trace] t=6278ms startLevel -> notes session=11
+Not implemented: Window's scrollTo() method
+== 6. 鏃嬪緥鑽夊師 路 缃戞牸浣滄洸 + 浜旂嚎璋卞嚭鍙?==
+Not implemented: Window's scrollTo() method
+  [trace] t=8772ms startLevel -> compose session=14
+== 7. 浜嬩欢鍏煎灞傦紙鏃?PointerEvent 鈫?click 鍏滃簳锛?==
+
+== 缁撴灉姹囨€?==
+ PASS  鍚姩鍚庡仠鍦?splash
+ PASS  寮€鍦鸿鍥惧凡婵€娲伙紙鍙锛? PASS  Tonal 鍏ㄥ眬鍙敤锛堢湡瀹炶剼鏈涔夛級
+ PASS  Vex 鍏ㄥ眬鍙敤
+ PASS  鐐瑰嚮寮€濮嬪悗杩涘叆鍦板浘
+ PASS  鍦板浘涓婃湁 3 涓湴鐐硅妭鐐? PASS  澹伴煶灞辫胺鏈?3 涓叧鍗″叆鍙? PASS  杩涘叆鍏冲崱鑸炲彴
+ PASS  璋佹洿楂橈細鍚鲸鍖烘覆鏌? PASS  璋佹洿楂橈細涓や釜绛旀鎸夐挳灏辩华
+ PASS  璋佹洿楂橈細鎸夐挳宸插彲鐢紙鍙綔绛旓級
+ PASS  杩斿洖鍦板浘
+ PASS  灏忛紦鎵嬶細榧撻潰娓叉煋
+ PASS  鍚煶鎵惧锛氭覆鏌? PASS  璁よ瘑闊崇锛氶杞?3 涓灉瀛愶紙do re mi锛? PASS  浣滄洸缃戞牸锛? 琛?脳 8 鎷?= 40 鏍? PASS  绉嶄笅 4 涓煶绗? PASS  娓呯┖鍚庣綉鏍间负绌? PASS  浣滃搧宸蹭繚瀛樺埌闊充箰浼? PASS  浣滄洸绉垎 +30
+ PASS  鏃嬪緥鑽夊師宸茬偣浜? PASS  浜旂嚎璋?SVG 宸茬湡瀹炴覆鏌擄紙VexFlow锛? PASS  闊充箰浜烘牸鍗″凡鏄剧ず
+ PASS  浜旂嚎璋卞嚭鍙ｈ鐩栧眰鍙
+ PASS  鏋勯€犲悗鏃?PointerEvent锛堝吋瀹瑰眰鐢熸晥鐨勫墠鎻愶級
+ PASS  鍏煎灞傦細pointerdown 鐩戝惉鍦ㄦ棤 PointerEvent 鐜鐢?click 瑙﹀彂
+ PASS  鍏煎灞傦細鏈?PointerEvent 鏃朵粎 pointerdown 瑙﹀彂锛堜笉鍙岃Е鍙戯級
+
+鉁?鏃犺繍琛屾椂閿欒

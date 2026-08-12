@@ -1,1036 +1,1109 @@
-/**
- * ============================================================
- *  app.js v0.2 · 大山主题版（合并点）
- * ============================================================
- *  山路寻宝地图 / 3 关卡（观察·配对·排序）/ 山灵表情 / 音效 /
- *  逼近式引导 / 开发者模式 / 孩子化反馈
- * ============================================================
- */
+/* ============================================================
+ * 应用核心：状态机 / 路由 / 进度 / 积分 / 关卡分派
+ * 视图流：Splash → 山谷地图 → 地点总览 → 关卡舞台 → 庆祝 → 地图
+ * ============================================================ */
 (function () {
   'use strict';
 
-  const $ = function (id) { return document.getElementById(id); };
-  const sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+  const C = MV.config;
+  const $  = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => [...(root || document).querySelectorAll(sel)];
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
-  let currentMap = null;
-  let currentLevel = null;
-  let levelIdx = 0;
-  let speedIdx = 1;
-  let playing = false;
-  let spiritTimer = null;
+  /* ---------------- 应用状态 ---------------- */
+  const App = {
+    state: {
+      view: 'splash',
+      points: 0,
+      completed: {},      // { levelId: true }
+      works: [],          // 作品 [{name, notes, bpm, inst, personality, ts}]
+      currentLevel: null,
+      currentLoc: null
+    }
+  };
+  MV.App = App;
 
-  // —— 进度（localStorage 本地存储，无账号零收集）——
-  const SAVE_KEY = 'mv_progress_v1';
-  let save = { score: 0, medals: [], doneLevels: {} };
-  try { save = Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch (e) {}
-  function persist() { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }
-  function addScore(n) { save.score += n; persist(); refreshCrumb(); }
-  function awardMedal(name) {
-    if (save.medals.indexOf(name) === -1) save.medals.push(name);
-    persist(); refreshCrumb();
-  }
-  function markLevelDone(id) { save.doneLevels[id] = true; persist(); }
-  function isLevelDone(id) { return !!save.doneLevels[id]; }
-  function refreshCrumb() {
-    const m = currentMap ? currentMap.name : '大山地图';
-    const s = '⭐' + save.score + (save.medals.length ? ' · 🏅' + save.medals.length : '');
-    $('crumb').textContent = m + ' · ' + s;
-  }
-
-  // 鼓励语池（孩子化·随机积极反馈）
-  const PRAISE = ['太棒了！', '你好厉害！', '对啦！', '真聪明！', '哇，答对啦！', '好样的！'];
-  const CHEER = ['加油！再来一个～', '你越来越棒啦！', '马上就好啦！', '坚持住，快成功啦！'];
-
-  // ================= 山路寻宝地图 =================
-  function renderTrailMap() {
-    const svg = $('trailSvg');
-    const places = [
-      { id: 'sound-valley', name: '声音山谷', stage: '听·唱·动', emoji: '🏞️', x: 170, y: 470 },
-      { id: 'scale-valley', name: '音阶山谷', stage: '音高·音阶', emoji: '⛰️', x: 340, y: 372 },
-      { id: 'rhythm-path', name: '节奏小路', stage: '时值·节拍', emoji: '🛤️', x: 510, y: 300 },
-      { id: 'chord-garden', name: '和弦花园', stage: '三和弦', emoji: '🌸', x: 665, y: 208 },
-      { id: 'melody-meadow', name: '旋律草原', stage: '小旋律', emoji: '🌾', x: 800, y: 120 },
-    ];
-
-    let s = '';
-    const roadD = 'M 170 500 C 240 470 280 430 340 372 C 420 320 450 330 510 300 C 580 265 610 245 665 208 C 720 170 760 145 800 120';
-    s += '<path class="road-shadow" d="' + roadD + '"/>';
-    s += '<path class="road" d="' + roadD + '"/>';
-    // 起点小屋
-    s += '<g><circle cx="150" cy="515" r="16" fill="#c98a5e" stroke="#fff" stroke-width="3"/><text x="150" y="520" font-size="16" text-anchor="middle">🏡</text></g>';
-
-    // 自然装饰：树 / 溪流 / 花 / 山顶云
-    s += '<g opacity=".9">' +
-      '<circle cx="80" cy="430" r="24" fill="#5e9c7c"/><circle cx="70" cy="425" r="14" fill="#7fc48d"/>' +
-      '<rect x="76" y="448" width="8" height="20" rx="3" fill="#c98a5e"/>' +
-      '<circle cx="60" cy="462" r="16" fill="#5e9c7c"/><rect x="57" y="474" width="7" height="16" rx="3" fill="#c98a5e"/>' +
-      '<circle cx="820" cy="350" r="20" fill="#5e9c7c"/><rect x="817" y="366" width="7" height="16" rx="3" fill="#c98a5e"/>' +
-      '</g>';
-    s += '<path d="M 60 500 Q 100 512 170 496 Q 230 486 300 498" stroke="#6fb7e8" stroke-width="7" fill="none" stroke-linecap="round" opacity=".45"/>';
-    s += '<g fill="#ffd166" opacity=".85">' +
-      '<circle cx="260" cy="452" r="4"/><circle cx="270" cy="458" r="3"/>' +
-      '<circle cx="620" cy="470" r="4"/><circle cx="750" cy="430" r="3.4"/>' +
-      '<circle cx="700" cy="470" r="3"/></g>' +
-      '<g fill="#e76f8a" opacity=".8">' +
-      '<circle cx="290" cy="466" r="3.2"/><circle cx="660" cy="452" r="3.4"/>' +
-      '<circle cx="780" cy="415" r="3"/></g>';
-    s += '<g opacity=".85"><ellipse cx="800" cy="88" rx="34" ry="12" fill="#fff"/>' +
-      '<ellipse cx="788" cy="82" rx="18" ry="11" fill="#fff"/>' +
-      '<ellipse cx="814" cy="84" rx="16" ry="9" fill="#fff"/></g>';
-
-    // 地点
-    places.forEach(function (p) {
-      const m = window.MAPS.find(function (mm) { return mm.id === p.id; });
-      if (!m) return;
-      const cls = m.status === 'open' ? 'open' : (m.levels.length && isLevelDone(m.levels[0].id) ? 'done' : 'locked');
-      const doneCount = m.levels.filter(function (l) { return isLevelDone(l.id); }).length;
-      const totalCount = m.levels.length;
-      const prog = totalCount ? (doneCount === totalCount ? '✓ 全通' : '⭐' + doneCount + '/' + totalCount) : '';
-      s += '<g id="place-' + p.id + '" data-place="' + p.id + '" class="place ' + cls + '">' +
-        '<circle class="p-base" cx="' + p.x + '" cy="' + p.y + '" r="34"/>' +
-        '<text class="p-emoji" x="' + p.x + '" y="' + (p.y - 2) + '">' + p.emoji + '</text>' +
-        '<text class="p-name" x="' + p.x + '" y="' + (p.y + 52) + '">' + p.name + '</text>' +
-        '<text class="p-stage" x="' + p.x + '" y="' + (p.y + 68) + '">' + (prog || p.stage) + '</text>' +
-        (m.status === 'open' ? '<text x="' + (p.x + 26) + '" y="' + (p.y - 26) + '" font-size="15">▶</text>' : '') +
-        '</g>';
-    });
-    svg.innerHTML = s;
-
-    svg.querySelectorAll('.place.open').forEach(function (g) {
-      g.addEventListener('click', function () {
-        const m = window.MAPS.find(function (mm) { return mm.id === g.dataset.place; });
-        if (m) enterMap(m);
-      });
-    });
-    svg.querySelectorAll('.place.locked').forEach(function (g) {
-      g.addEventListener('click', function () {
-        const m = window.MAPS.find(function (mm) { return mm.id === g.dataset.place; });
-        spiritSay(m && m.lockedHint ? '🔒 ' + m.lockedHint : '🔒 这片地方还没开启哦');
-      });
-    });
-  }
-
-  // ================= 关卡导航 =================
-  function enterMap(m) {
-    if (!m.levels.length) { spiritSay('🔧 这里的关卡还在设计呢，先去别的山看看吧～'); return; }
-    currentMap = m;
-    levelIdx = 0;
-    showMemory(m);
-  }
-
-  // —— 记忆叙事：进入地图先看一段晓声的记忆（章节故事感）——
-  function showMemory(m) {
-    const mem = m.memory || [];
-    $('memoryView').classList.remove('hidden');
-    $('memoryMapName').textContent = '📍 ' + m.name + ' · 晓声的记忆';
-    let idx = 0;
-    $('memoryText').textContent = mem[0] || '……';
-    $('memoryBtn').textContent = mem.length > 1 ? '继续 ▸' : '开始回忆 ✨';
-    $('memoryBtn').onclick = function () {
-      idx++;
-      if (idx < mem.length) {
-        $('memoryText').textContent = mem[idx];
-        $('memoryBtn').textContent = (idx === mem.length - 1) ? '开始回忆 ✨' : '继续 ▸';
-      } else {
-        $('memoryView').classList.add('hidden');
-        loadLevel();
+  /* ---------------- 进度存取 ---------------- */
+  function loadProgress() {
+    try {
+      const raw = localStorage.getItem(C.storageKey);
+      if (raw) {
+        const d = JSON.parse(raw);
+        App.state.points = d.points || 0;
+        App.state.completed = d.completed || {};
+        App.state.works = d.works || [];
+        return true;
       }
+    } catch (e) { /* 忽略损坏数据 */ }
+    return false;
+  }
+  function saveProgress() {
+    try {
+      localStorage.setItem(C.storageKey, JSON.stringify({
+        points: App.state.points,
+        completed: App.state.completed,
+        works: App.state.works
+      }));
+    } catch (e) { /* 隐私模式等 */ }
+  }
+
+  /* ---------------- 积分 ---------------- */
+  function refreshPoints() {
+    ['map-points', 'stage-points', 'concert-points'].forEach(id => {
+      const el = $('#' + id);
+      if (el) el.textContent = App.state.points;
+    });
+  }
+  function toastPoints(n) {
+    const el = $('#points-toast');
+    if (!el) return;
+    el.textContent = '积分 +' + n;
+    el.classList.remove('show');
+    void el.offsetWidth; // 重启动画
+    el.classList.add('show');
+  }
+  function addPoints(n) {
+    App.state.points += n;
+    refreshPoints();
+    saveProgress();
+    toastPoints(n);
+  }
+
+  /* ---------------- 视图路由 ---------------- */
+  function showView(name) {
+    $$('.view').forEach(v => v.classList.remove('active'));
+    const el = $('#view-' + name);
+    if (el) el.classList.add('active');
+    App.state.view = name;
+    window.scrollTo(0, 0);
+  }
+
+  /* ---------------- 晓声挂载 ---------------- */
+  function mountXs(id, opts = {}) {
+    const el = $('#' + id);
+    if (!el) return;
+    MV.VoiceCore.mount(el, opts);
+    if (opts.breathe) el.classList.add('xs-breathe');
+    if (opts.float) el.classList.add('xs-float');
+    return el;
+  }
+  const xsStage = () => $('#stage-xs');
+  function xsSay(text, opts) {
+    if (!xsStage()) return;
+    MV.VoiceCore.say(text, opts);
+  }
+
+  /* ---------------- Splash ---------------- */
+  let splashBooted = false;
+  function bootSplash() {
+    if (splashBooted) return;
+    splashBooted = true;
+    const had = loadProgress();
+    refreshPoints();
+    mountXs('splash-xs', { exp: had ? 'happy' : 'calm', breathe: true });
+
+    const go = () => {
+      if (App.state.view !== 'splash') return; // 防重复触发
+      try { MV.MusicCore.start(); } catch (e) { /* 音频初始化失败也不能卡住进入地图 */ }
+      MV.VoiceCore.stopTyping();
+      showView('map');
+      bootMap();
+      try { MV.MusicCore.playMidi(60, { dur: .3 }); } catch (e) { /* 欢迎音失败不阻塞 */ }
     };
-  }
 
-  function switchLevel(i) {
-    if (!currentMap) return;
-    if (i < 0 || i >= currentMap.levels.length) return;
-    levelIdx = i;
-    loadLevel();
-  }
-
-  function renderLevelNav() {
-    const nav = $('levelNav');
-    nav.innerHTML = '';
-    currentMap.levels.forEach(function (lv, i) {
-      const chip = document.createElement('span');
-      chip.className = 'nav-chip' + (i === levelIdx ? ' active' : '') +
-        (isLevelDone(lv.id) ? ' done' : '');
-      chip.textContent = lv.icon + ' ' + lv.title;
-      chip.addEventListener('click', function () { switchLevel(i); });
-      nav.appendChild(chip);
-    });
-  }
-
-  function loadLevel() {
-    const lv = currentMap.levels[levelIdx];
-    currentLevel = lv;
-    $('mapView').classList.add('hidden');
-    $('levelView').classList.remove('hidden');
-    // 舞台按地图差异化（森林风 / 五线谱风）
-    $('stage').className = 'stage ' + (currentMap.id === 'sound-valley' ? 'stage-forest' : 'stage-scale');
-    $('levelTitle').textContent = lv.icon + ' ' + lv.title;
-    $('levelSub').textContent = currentMap.name + ' · ' +
-      (lv.type === 'observe' ? '👀 先看看' : lv.type === 'point' ? '🎯 帮小鸟回家' : lv.type === 'sort' ? '📶 排排队' : lv.type);
-
-    $('kitConcept').textContent = lv.concept;
-    $('kitModel').textContent = lv.model;
-    $('kitAction').textContent = lv.action;
-    $('kitJudge').textContent = lv.judge;
-    $('kitFeedback').textContent = lv.feedback;
-    $('kitGoal').textContent = lv.goal;
-
-    renderLevelNav();
-    refreshCrumb();
-    setGrow();
-
-    $('listenRow').classList.add('hidden');
-    $('roundHud').classList.add('hidden');
-    $('devPanel').classList.add('hidden');
-    $('devToggle').classList.remove('active');
-    $('nextControls').classList.add('hidden');
-
-    if (lv.type === 'point' || lv.type === 'sort' || lv.type === 'highlow' || lv.type === 'tap') {
-      $('observeControls').classList.add('hidden');
-      $('pointControls').classList.remove('hidden');
-      $('pointStartBtn').textContent = lv.type === 'sort' ? '🐦 开始排队' : '🥁 开始';
-      if (lv.type === 'sort') drawSortLevel(lv);
-      else if (lv.type === 'highlow') drawHighLowLevel(lv);
-      else if (lv.type === 'tap') drawTapLevel(lv);
-      else drawPointLevel(lv);
-      spiritSay(lv.guidance[0]);
+    if (had) {
+      // 老朋友：简短招呼后进入
+      MV.VoiceCore.say('欢迎回来，音乐寻宝家。', { done: () => setTimeout(go, 700) });
+      setTimeout(go, 2200);
     } else {
-      $('observeControls').classList.remove('hidden');
-      $('pointControls').classList.add('hidden');
-      drawStaff(lv);
-      renderNotes(lv);
-      spiritSay(lv.guidance[0]);
-    }
-  }
-
-  function goHome() {
-    if (window.MusicCore) window.MusicCore.stopAll();
-    playing = false;
-    $('memoryView').classList.add('hidden');
-    currentMap = null;
-    currentLevel = null;
-    $('levelView').classList.add('hidden');
-    $('mapView').classList.remove('hidden');
-    spiritSay('回来啦！想去哪段记忆看看呀？');
-    refreshCrumb();
-    setGrow();
-  }
-
-  // —— 通关衔接：下一关 / 全部完成回地图 ——
-  function showNext() {
-    const next = currentMap && currentMap.levels[levelIdx + 1];
-    $('observeControls').classList.add('hidden');
-    $('pointControls').classList.add('hidden');
-    $('nextControls').classList.remove('hidden');
-    $('nextBtn').textContent = next ? '👉 下一关：' + next.icon + ' ' + next.title : '🎉 全通关！回地图看看';
-    spiritSay(next ? '真棒！要不要去试试下一关？' : '这张地图全通关啦！回地图看看别的山吧～');
-  }
-
-  function nextLevel() {
-    if (currentMap && levelIdx + 1 < currentMap.levels.length) {
-      switchLevel(levelIdx + 1);
-    } else {
-      goHome();
-    }
-  }
-
-  // ================= 五线谱（观察） =================
-  function drawStaff(lv) {
-    const svg = $('staffSvg');
-    const lineY = [150, 120, 90, 60, 30];
-    let s = '';
-    lineY.forEach(function (y) {
-      s += '<line class="staff-line" x1="40" y1="' + y + '" x2="760" y2="' + y + '"/>';
-    });
-    s += '<text x="52" y="100" font-size="52" fill="rgba(55,66,59,.5)" text-anchor="middle" font-family="serif">𝄞</text>';
-    svg.innerHTML = s;
-  }
-
-  function renderNotes(lv) {
-    const svg = $('staffSvg');
-    const notes = lv.notes;
-    const total = notes.length;
-    const x0 = 110, gap = (760 - 140) / (total - 1);
-
-    let dots = '', names = '', trail = '';
-    const pts = notes.map(function (n, i) {
-      return { x: x0 + i * gap, y: window.NOTE_Y[n], midi: n, i: i };
-    });
-
-    for (let i = 0; i < pts.length - 1; i++) {
-      trail += '<line x1="' + pts[i].x + '" y1="' + pts[i].y + '" x2="' + pts[i + 1].x +
-        '" y2="' + pts[i + 1].y + '" stroke="' + window.noteColor(pts[i + 1].midi) +
-        '" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 5" opacity=".55"/>';
+      // 新朋友：开场白 + 手动/自动进入
+      let i = 0;
+      const lines = MV.lines.splash;
+      const next = () => {
+        if (i < lines.length && App.state.view === 'splash') {
+          MV.VoiceCore.say(lines[i], { done: () => setTimeout(() => { i++; next(); }, 420) });
+        } else if (i >= lines.length) {
+          setTimeout(go, 700);
+        }
+      };
+      setTimeout(next, 600);
+      setTimeout(go, 9000); // 兜底自动进入
     }
 
-    pts.forEach(function (p) {
-      dots += '<circle class="note-dot" id="dot' + p.i + '" cx="' + p.x + '" cy="' + p.y +
-        '" r="11" fill="' + window.noteColor(p.midi) + '" style="opacity:0"/>';
-      names += '<text class="note-name" id="nm' + p.i + '" x="' + p.x + '" y="' + (p.y + 34) + '">' +
-        (window.NOTE_NAME[p.midi] || p.midi) + '</text>';
-    });
-
-    const b0 = pts[0];
-    const bird = '<text class="bird" id="birdEl" x="' + b0.x + '" y="' + (b0.y - 14) + '">🐦</text>';
-    svg.insertAdjacentHTML('beforeend', trail + dots + names + bird);
-    svg.__pts = pts;
-  }
-
-  function animateBird(fromX, fromY, toX, toY, dur) {
-    return new Promise(function (resolve) {
-      const bird = $('birdEl');
-      const t0 = performance.now();
-      function step(now) {
-        const p = Math.min(1, (now - t0) / (dur * 1000));
-        const ease = 1 - Math.pow(1 - p, 3);
-        bird.setAttribute('x', fromX + (toX - fromX) * ease);
-        bird.setAttribute('y', fromY + (toY - fromY) * ease - 14 + Math.sin(p * Math.PI * 3) * 3);
-        if (p < 1) requestAnimationFrame(step); else resolve();
-      }
-      requestAnimationFrame(step);
+    $('.splash-go').addEventListener('pointerdown', go);
+    const skipEl = $('.splash-skip');
+    skipEl.addEventListener('pointerdown', go);
+    skipEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
     });
   }
 
-  function setSpeed(i) {
-    speedIdx = i;
-    document.querySelectorAll('#observeControls .btn.soft').forEach(function (b, idx) {
-      b.style.borderColor = idx === i ? 'var(--forest)' : '';
-      b.style.color = idx === i ? 'var(--forest-deep)' : '';
-    });
+  /* ---------------- 山谷地图 ---------------- */
+  function stageNum() {
+    return Math.min(5, Object.keys(App.state.completed).length);
   }
-
-  async function playLevel() {
-    if (playing) return;
-    const lv = currentLevel;
-    if (!lv || lv.type !== 'observe') return;
-    playing = true;
-    $('playBtn').textContent = '⏳ 播放中…';
-    $('playBtn').classList.add('disabled');
-
-    if (window.MusicCore) window.MusicCore._ensureCtx();
-    window.MusicCore.startLevel(lv.id, {});
-
-    const svg = $('staffSvg');
-    const pts = svg.__pts || [];
-    const base = lv.speed[speedIdx] || 1.2;
-    const birdEl = $('birdEl');
-
-    pts.forEach(function (p) {
-      const d = $('dot' + p.i); if (d) d.style.opacity = 0;
-      const n = $('nm' + p.i); if (n) n.classList.remove('lit');
-    });
-    birdEl.classList.add('show');
-    birdEl.setAttribute('x', pts[0].x);
-    birdEl.setAttribute('y', pts[0].y - 14);
-
-    spiritSay('仔细看哦～');
-
-    for (let i = 0; i < pts.length; i++) {
-      const p = pts[i];
-      const prev = i > 0 ? pts[i - 1] : pts[0];
-      await animateBird(prev.x, prev.y - 14, p.x, p.y - 14, base * 0.55);
-
-      const d = $('dot' + p.i);
-      if (d) {
-        d.style.opacity = 1;
-        d.style.filter = 'drop-shadow(0 0 8px ' + window.noteColor(p.midi) + ')';
-      }
-      const n = $('nm' + p.i); if (n) n.classList.add('lit');
-      popNote(p.x, p.y - 30);
-      window.MusicCore.playNote(p.midi, base * 0.8);
-      spiritAvatar('talk');
-      await sleep(base * 500);
+  /* 地图晓声脚下：当前成长形态小标签 */
+  function updateXsForm() {
+    MV.VoiceCore.applyGrowth(stageNum());
+    const holder = $('#map-xs');
+    if (!holder) return;
+    const f = MV.VoiceCore.currentForm();
+    let tag = holder.querySelector('.xs-form-tag');
+    if (!tag) {
+      tag = document.createElement('div');
+      tag.className = 'xs-form-tag';
+      holder.appendChild(tag);
     }
+    tag.textContent = f.name + ' · 点亮 ' + stageNum() + '/5';
+    tag.dataset.stage = String(stageNum());
+  }
+  function bootMap() {
+    mountXs('map-xs', { exp: 'calm', float: true, breathe: true });
+    updateXsForm();
+    MV.VoiceCore.fireflies($('#map-fireflies'), 14);
+    renderLocs();
 
-    pts.forEach(function (p) {
-      const d = $('dot' + p.i);
-      if (d) { d.style.opacity = 1; d.style.filter = 'drop-shadow(0 0 9px ' + window.noteColor(p.midi) + ')'; }
-    });
-    spiritAvatar('celebrate');
-    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.stone();
-    spiritSay('看见了吗？落点越高，音就越高！这就是"音高"～');
-    toast('🎉 观察完成！记住：高 = 上面，低 = 下面');
-
-    if (!isLevelDone(lv.id)) {
-      markLevelDone(lv.id);
-      addScore(20);
-      awardMedal('👀 观察员');
-      setGrow();
-      toast('⭐ +20 · 🏅 观察员');
+    if (!sessionStorage.getItem('mv-greeted')) {
+      sessionStorage.setItem('mv-greeted', '1');
+      MV.VoiceCore.say(Object.keys(App.state.completed).length ? MV.lines.mapWelcomeBack : pick(MV.lines.mapHello));
     }
-
-    playing = false;
-    $('playBtn').textContent = '▶ 再看一遍';
-    $('playBtn').classList.remove('disabled');
-    showNext();
+    refreshPoints();
   }
 
-  function popNote(x, y) {
-    const svg = $('staffSvg');
-    const el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    el.textContent = '🎵';
-    el.setAttribute('x', x); el.setAttribute('y', y);
-    el.setAttribute('font-size', '19'); el.setAttribute('text-anchor', 'middle');
-    el.classList.add('pop-note');
-    svg.appendChild(el);
-    requestAnimationFrame(function () { el.classList.add('show'); });
-    setTimeout(function () { el.remove(); }, 900);
-  }
-
-  // ================= point 玩法（点小鸟回家）=================
-  let pt = { round: 0, ok: 0, combo: 0, target: null, locked: false, misses: 0, birds: [] };
-
-  function drawPointLevel(lv) {
-    const svg = $('staffSvg');
-    svg.innerHTML = '';
-    const lineY = [150, 120, 90, 60, 30];
-    let s = '';
-    lineY.forEach(function (y) {
-      s += '<line class="staff-line" x1="40" y1="' + y + '" x2="760" y2="' + y + '"/>';
+  function renderLocs() {
+    updateXsForm(); // 每次回到地图都刷新晓声形态
+    const wrap = $('#map-locs');
+    wrap.innerHTML = '';
+    MV.locations.forEach(loc => {
+      const allDone = loc.levels.every(id => App.state.completed[id]);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'loc-node' + (allDone ? ' completed' : '');
+      btn.style.left = loc.pos[0] + '%';
+      btn.style.top = loc.pos[1] + '%';
+      btn.setAttribute('aria-label', loc.name + (allDone ? '（已完成）' : ''));
+      btn.innerHTML =
+        '<span class="loc-dot" aria-hidden="true">' + (allDone ? '✓' : '♪') + '</span>' +
+        '<span class="loc-label">' + loc.name + '</span>' +
+        '<span class="loc-sub">' + loc.subtitle + '</span>';
+      btn.addEventListener('pointerdown', () => openLocation(loc.id));
+      wrap.appendChild(btn);
     });
-    s += '<text x="52" y="100" font-size="52" fill="rgba(55,66,59,.5)" text-anchor="middle" font-family="serif">𝄞</text>';
 
-    const notes = lv.notes.slice();
-    for (let i = notes.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [notes[i], notes[j]] = [notes[j], notes[i]];
-    }
-    const n = notes.length;
-    const x0 = 150, gap = (760 - 300) / (n - 1);
+    // 底部：我的音乐会入口
+    const footer = $('#map-footer');
+    footer.innerHTML = '';
+    const concertBtn = document.createElement('button');
+    concertBtn.type = 'button';
+    concertBtn.className = 'btn btn-gold map-concert-btn';
+    concertBtn.textContent = App.state.works.length ? '我的音乐会（' + App.state.works.length + ' 首）' : '我的音乐会';
+    concertBtn.addEventListener('pointerdown', () => openConcert());
+    footer.appendChild(concertBtn);
+  }
 
-    pt.birds = notes.map(function (midi, i) {
-      const x = x0 + i * gap;
-      const y = window.NOTE_Y[midi];
-      const emoji = (lv.friends && lv.friends[i]) || '🐦';
-      s += '<g class="choice-bird hoverable" id="cb' + i + '" data-note="' + midi + '">' +
-        '<circle cx="' + x + '" cy="' + (y - 12) + '" r="22" fill="transparent" style="cursor:pointer"/>' +
-        '<text x="' + x + '" y="' + (y - 12) + '" font-size="32" text-anchor="middle">' + emoji + '</text>' +
-        '<text x="' + x + '" y="' + (y + 30) + '" font-size="12" text-anchor="middle" fill="var(--ink-soft)" style="opacity:.6">' +
-        (window.NOTE_NAME[midi] || midi) + '</text></g>';
-      return { x: x, y: y, midi: midi, idx: i };
+  /* ---------------- 地点总览（关卡 chips） ---------------- */
+  function openLocation(locId) {
+    const loc = MV.locations.find(l => l.id === locId);
+    if (!loc) return;
+    App.state.currentLoc = loc;
+    $('#loc-overlay') && $('#loc-overlay').remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay';
+    overlay.id = 'loc-overlay';
+    overlay.innerHTML =
+      '<div class="loc-panel">' +
+        '<div class="loc-panel-head">' +
+          '<div><h2 class="loc-panel-title">' + loc.name + '</h2>' +
+          '<p class="loc-panel-sub">' + loc.memory + '</p></div>' +
+          '<button class="icon-btn loc-panel-close" type="button" aria-label="关闭">✕</button>' +
+        '</div>' +
+        '<div class="loc-levels"></div>' +
+      '</div>';
+    $('#view-map').appendChild(overlay);
+    $('.loc-panel-close', overlay).addEventListener('pointerdown', () => overlay.remove());
+
+    const list = $('.loc-levels', overlay);
+    loc.levels.forEach(id => {
+      const lv = MV.levels.find(x => x.id === id);
+      if (!lv) return;
+      const done = !!App.state.completed[id];
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'loc-level' + (done ? ' done' : '');
+      chip.innerHTML =
+        '<span class="loc-level-ico" aria-hidden="true">' + (done ? '✓' : '♪') + '</span>' +
+        '<span class="loc-level-txt"><b>' + lv.title + '</b><small>' + lv.brief + '</small></span>' +
+        '<span class="loc-level-theory">' + lv.theory + '</span>' +
+        '<span class="loc-level-go" aria-hidden="true">→</span>';
+      chip.addEventListener('pointerdown', () => openLevel(id));
+      list.appendChild(chip);
     });
-    svg.innerHTML += s;
 
-    svg.onclick = function (ev) {
-      const t = ev.target;
-      if (t && t.parentNode && t.parentNode.classList && t.parentNode.classList.contains('choice-bird')) {
-        const g = t.parentNode;
-        handleBirdClick(parseInt(g.dataset.note, 10), g);
-      }
-    };
+    // 面板自带记忆文案，避免地图气泡被遮罩遮挡
   }
 
-  function resetPointUI() {
-    pt.round = 0; pt.ok = 0; pt.combo = 0; pt.locked = false; pt.misses = 0;
-    $('roundNow').textContent = '1'; $('roundOk').textContent = '0'; $('roundCombo').textContent = '0';
+  /* ---------------- 关卡舞台 ---------------- */
+  /* 关卡会话令牌：在任何离开/切换关卡的时刻使令牌失效，
+     防止上一关遗留的播放/台词链继续占用晓声气泡打断新关卡 */
+  function invalidateSession() {
+    MV._session = (MV._session || 0) + 1;
   }
 
-  function startPoint() {
-    const lv = currentLevel;
+  function openLevel(id) {
+    const lv = MV.levels.find(x => x.id === id);
     if (!lv) return;
-    if (lv.type === 'sort') { startSort(); return; }
-    if (lv.type === 'highlow') { startHighLow(); return; }
-    if (lv.type === 'tap') { startTap(); return; }
-    if (lv.type !== 'point') return;
-    if (window.MusicCore) window.MusicCore._ensureCtx();
-    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.click();
-    resetPointUI();
-    $('roundHud').classList.remove('hidden');
-    $('listenRow').classList.remove('hidden');
-    $('segQ').style.display = '';
-    $('okLabel').textContent = '答对';
-    $('segCombo').style.display = '';
-    pt.birds.forEach(function (b) {
-      const g = $('cb' + b.idx);
-      if (g) { g.classList.remove('correct', 'wrong'); g.querySelector('text').style.opacity = ''; }
-    });
-    spiritSay('我来唱第一个音，认真听哦～');
-    playRound();
+    invalidateSession();
+    App.state.currentLevel = lv;
+    const ov = $('#loc-overlay'); if (ov) ov.remove();
+    $('#stage-title').textContent = lv.title;
+    mountXs('stage-xs', { exp: 'calm', breathe: true });
+    MV.VoiceCore.applyGrowth(stageNum());
+    showView('stage');
+    refreshPoints();
+    MV.VoiceCore.say(MV.lines.levelIntro[lv.type] || '准备好了吗？', { done: () => startLevel(lv) });
   }
 
-  function pickTarget() {
-    const lv = currentLevel;
-    let t;
-    do { t = lv.notes[Math.floor(Math.random() * lv.notes.length)]; }
-    while (t === pt.target && lv.notes.length > 1);
-    return t;
-  }
+  /* 关卡执行器注册表（各模块按块注册） */
+  const runners = {};
+  MV.runners = runners;
 
-  function playRound() {
-    const lv = currentLevel;
-    pt.locked = false;
-    pt.target = pickTarget();
-    $('roundNow').textContent = Math.min(pt.round + 1, lv.rounds);
-    $('listenBadge').innerHTML = '🎵 听音…';
-    setTimeout(function () {
-      window.MusicCore.playNote(pt.target, 1.0);
-      $('listenBadge').innerHTML = '🎵 点唱得一样高的小鸟！';
-    }, 600);
-  }
-
-  function handleBirdClick(note, el) {
-    if (pt.locked) return;
-    const lv = currentLevel;
-    pt.locked = true;
-    $('listenBadge').innerHTML = '…';
-
-    if (note === pt.target) {
-      el.classList.add('correct');
-      pt.combo += 1; pt.ok += 1;
-      const pts = 10 + Math.min(pt.combo - 1, 3) * 5;
-      addScore(pts);
-      window.MusicCore.playNote(note, 0.8);
-      if (window.MusicCore.sfx) window.MusicCore.sfx.correct();
-      spiritAvatar('happy');
-      const msg = PRAISE[Math.floor(Math.random() * PRAISE.length)] +
-        (pt.combo >= 2 ? '（连击 x' + pt.combo + '）' : '');
-      spiritSay(msg + ' 积了 ' + pts + ' 分！');
-      toast('🎉 回家成功！+' + pts);
-    } else {
-      el.classList.add('wrong');
-      pt.combo = 0;
-      window.MusicCore.playNote(pt.target, 0.9);
-      if (window.MusicCore.sfx) window.MusicCore.sfx.wrong();
-      spiritAvatar('think');
-      // 逼近式引导：提示"高一点/低一点"（不剧透答案）
-      let hint = '再听一次～ 想想它站得高不高？';
-      if (note < pt.target) hint = '再往上一点～ 它站在更高的地方哦';
-      else if (note > pt.target) hint = '再往下一点～ 它站在更低的地方哦';
-      pt.misses = (pt.misses || 0) + 1;
-      if (pt.misses >= 3) {
-        hint = '我来帮你～ 听好了，就是这个音！';
-        spiritAvatar('happy');
-      }
-      spiritSay(hint);
-      $('listenBadge').innerHTML = '🎵 再听一次（点下方按钮）';
-      setTimeout(function () { el.classList.remove('wrong'); }, 500);
-      setTimeout(function () {
-        pt.locked = false;
-        $('listenBadge').innerHTML = '🎵 点唱得一样高的小鸟！';
-      }, 1400);
-      return;
-    }
-
-    $('roundOk').textContent = pt.ok;
-    $('roundCombo').textContent = pt.combo;
-    pt.round += 1;
-    if (pt.round >= lv.rounds || pt.ok >= lv.passCount) {
-      finishPoint();
-    } else {
-      setTimeout(function () { playRound(); }, 1200);
+  function startLevel(lv) {
+    const body = $('#stage-body');
+    body.innerHTML = '';
+    invalidateSession();   // 关卡会话令牌：离开即失效
+    if (MV._drumCleanup) { MV._drumCleanup(); MV._drumCleanup = null; }
+    MV.VoiceCore.hideBubble();
+    if (runners[lv.type]) runners[lv.type](lv, body);
+    else {
+      body.innerHTML = '<p class="stage-intro">这个关卡还在路上，先去别的山谷玩吧！</p>';
     }
   }
 
-  function finishPoint() {
-    const lv = currentLevel;
-    $('listenBadge').innerHTML = '🎉 小鸟们都回家啦！';
-    spiritAvatar('celebrate');
-    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.win();
-    spiritSay('太棒了！你听出了 ' + pt.ok + ' 个音高，' + CHEER[Math.floor(Math.random() * CHEER.length)]);
-    if (!isLevelDone(lv.id)) {
-      markLevelDone(lv.id);
-      addScore(30);
-      awardMedal('👂 听音小帮手');
-      setGrow();
-      toast('⭐ +30 · 🏅 听音小帮手');
+  /* ============ P0-2 音之梯 · 真实听辨 ============ */
+
+  function stepDots(count, done) {
+    const box = document.createElement('div');
+    box.className = 'stage-progress';
+    for (let i = 0; i < count; i++) {
+      const d = document.createElement('span');
+      d.className = 'step-dot' + (i < done ? ' done' : i === done ? ' current' : '');
+      d.textContent = i + 1;
+      box.appendChild(d);
     }
-    $('pointStartBtn').textContent = '🎵 再来一轮';
-    showNext();
+    return box;
   }
 
-  function replayNote() {
-    if (pt.target != null) {
-      if (window.MusicCore) window.MusicCore._ensureCtx();
-      window.MusicCore.playNote(pt.target, 1.0);
+  const BIRD_SVG =
+    '<svg class="nv-bird" viewBox="0 0 44 44" aria-hidden="true">' +
+      '<circle class="bird-body" cx="22" cy="27" r="14"/>' +
+      '<path class="bird-beak" d="M30 25 L41 21 L30 29 Z"/>' +
+      '<circle class="bird-eye" cx="26" cy="23" r="2.6"/>' +
+    '</svg>';
+
+  const randInt = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+
+  /* —— 关卡 1：谁更高（真实音高 · tonal 判题） —— */
+  runners.highlow = function (lv, body) {
+    const low = 60, high = 67;                 // C4–G4
+    const spans = C.highlowSpans.slice();      // 跨度递进 7→5→3
+    let round = 0, correct = 0, a = 0, b = 0, wrong = 0;
+    let answered = false, playing = false;
+    let buttons, birdEls, labels;
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="hl-intro">第 1 题 · 竖起耳朵听</div>' +
+        '<div id="hl-progress"></div>' +
+        '<div class="note-visual" id="hl-visual">' +
+          '<div class="nv-item"><span id="hl-bird0">' + BIRD_SVG + '</span><span class="nv-label" id="hl-lab0">第一个音</span></div>' +
+          '<div class="nv-item"><span id="hl-bird1">' + BIRD_SVG + '</span><span class="nv-label" id="hl-lab1">第二个音</span></div>' +
+        '</div>' +
+        '<div class="listen-row">' +
+          '<button class="answer-btn up" type="button" data-ans="up">第二个更高<span class="answer-sub">声音往上飞</span></button>' +
+          '<button class="answer-btn down" type="button" data-ans="down">第二个更低<span class="answer-sub">声音往下落</span></button>' +
+        '</div>' +
+        '<div class="compose-actions" style="justify-content:center">' +
+          '<button class="btn btn-ghost" id="hl-replay" type="button">再听一次</button>' +
+        '</div>' +
+      '</div>';
+
+    const intro = $('#hl-intro');
+    const progBox = $('#hl-progress');
+    buttons = $$('[data-ans]', body);
+    birdEls = [$('#hl-bird0'), $('#hl-bird1')];
+    labels = [$('#hl-lab0'), $('#hl-lab1')];
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function setBird(i, midi, playState) {
+      birdEls[i].querySelector('.nv-bird').style.transform = 'translateY(' + (-(midi - 60) * 5) + 'px)';
+      labels[i].classList.toggle('playing', !!playState);
     }
-  }
 
-  // ================= sort 玩法（排排队 · 音阶心智）=================
-  let st = { order: [], next: 0, active: false, birds: [] };
-
-  function drawSortLevel(lv) {
-    const svg = $('staffSvg');
-    svg.innerHTML = '';
-    const lineY = [150, 120, 90, 60, 30];
-    let s = '';
-    lineY.forEach(function (y) {
-      s += '<line class="staff-line" x1="40" y1="' + y + '" x2="760" y2="' + y + '"/>';
-    });
-    s += '<text x="52" y="100" font-size="52" fill="rgba(55,66,59,.5)" text-anchor="middle" font-family="serif">𝄞</text>';
-
-    const notes = lv.notes.slice().sort(function (a, b) { return a - b; });
-    st.order = notes;
-    st.next = 0;
-    st.active = false;
-
-    const xs = [180, 310, 440, 570, 700];
-    for (let i = xs.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [xs[i], xs[j]] = [xs[j], xs[i]];
-    }
-
-    st.birds = notes.map(function (midi, i) {
-      const x = xs[i];
-      const y = window.NOTE_Y[midi];
-      s += '<g class="choice-bird hoverable" id="sb' + i + '" data-note="' + midi + '">' +
-        '<circle cx="' + x + '" cy="' + (y - 12) + '" r="22" fill="transparent" style="cursor:pointer"/>' +
-        '<text x="' + x + '" y="' + (y - 12) + '" font-size="32" text-anchor="middle">🐦</text>' +
-        '<text x="' + x + '" y="' + (y + 30) + '" font-size="12" text-anchor="middle" fill="var(--ink-soft)" style="opacity:.6">' +
-        (window.NOTE_NAME[midi] || midi) + '</text></g>';
-      return { x: x, y: y, midi: midi, idx: i };
-    });
-    svg.innerHTML += s;
-
-    svg.onclick = function (ev) {
-      const t = ev.target;
-      if (t && t.parentNode && t.parentNode.classList && t.parentNode.classList.contains('choice-bird')) {
-        const g = t.parentNode;
-        handleSortClick(parseInt(g.dataset.note, 10), g);
-      }
-    };
-  }
-
-  function startSort() {
-    const lv = currentLevel;
-    if (!lv || lv.type !== 'sort') return;
-    if (window.MusicCore) window.MusicCore._ensureCtx();
-    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.click();
-    st.active = true;
-    st.next = 0;
-    $('roundHud').classList.remove('hidden');
-    $('listenRow').classList.remove('hidden');
-    $('segQ').style.display = 'none';
-    $('okLabel').textContent = '已排';
-    $('segCombo').style.display = 'none';
-    $('roundOk').textContent = '0';
-    $('roundTotal').textContent = st.order.length;
-    $('listenBadge').innerHTML = '🐦 从最低的小鸟开始点！';
-    document.querySelectorAll('#staffSvg .choice-bird').forEach(function (g) {
-      g.classList.remove('correct', 'wrong');
-      const texts = g.querySelectorAll('text');
-      texts[0].textContent = '🐦';
-      g.style.opacity = '';
-    });
-    spiritSay('先找唱得最低的那只，点它！');
-  }
-
-  function handleSortClick(note, g) {
-    if (!st.active || st.next >= st.order.length) return;
-    if (note === st.order[st.next]) {
-      g.classList.add('correct');
-      const texts = g.querySelectorAll('text');
-      texts[0].textContent = (st.next + 1) + '️⃣';
-      window.MusicCore.playNote(note, 0.55);
-      st.next++;
-      $('roundOk').textContent = st.next;
-
-      if (st.next >= st.order.length) {
-        finishSort();
+    function pickPair(span) {
+      let x, y;
+      if (Math.random() < 0.5) {
+        x = randInt(low, high - span);
+        y = x + span;
       } else {
-        spiritAvatar('happy');
-        spiritSay(PRAISE[Math.floor(Math.random() * PRAISE.length)] + ' 下一个，再高一点的～');
+        x = randInt(low + span, high);
+        y = x - span;
       }
-    } else {
-      g.classList.add('wrong');
-      window.MusicCore.playNote(note, 0.3);
-      if (window.MusicCore.sfx) window.MusicCore.sfx.wrong();
-      spiritAvatar('think');
-      spiritSay('这只还不是哦，先点更低的～');
-      setTimeout(function () { g.classList.remove('wrong'); }, 500);
+      return [x, y];
     }
-  }
 
-  function finishSort() {
-    $('listenBadge').innerHTML = '🎉 排队完成！';
-    spiritAvatar('celebrate');
-    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.win();
-    st.order.forEach(function (n, i) {
-      setTimeout(function () { window.MusicCore.playNote(n, 0.5); }, i * 260);
-    });
-    spiritSay('太棒了！这就是音阶——从低到高，一个一个往上走！');
-    const lv = currentLevel;
-    if (!isLevelDone(lv.id)) {
-      markLevelDone(lv.id);
-      addScore(30);
-      awardMedal('📶 排队小达人');
-      setGrow();
-      toast('⭐ +30 · 🏅 排队小达人');
-    }
-    $('pointStartBtn').textContent = '🐦 再排一次';
-    showNext();
-  }
-
-  // ================= highlow 玩法（谁更高 · L0 听觉启蒙）=================
-  let hl = { round: 0, ok: 0, low: null, high: null, locked: false };
-
-  function drawHighLowLevel(lv) {
-    const svg = $('staffSvg');
-    const lineY = [150, 120, 90, 60, 30];
-    let s = '';
-    lineY.forEach(function (y) {
-      s += '<line class="staff-line" x1="40" y1="' + y + '" x2="760" y2="' + y + '"/>';
-    });
-    s += '<text x="52" y="100" font-size="52" fill="rgba(55,66,59,.5)" text-anchor="middle" font-family="serif">𝄞</text>';
-    // 两只小鸟：低处（左）+ 高处（右），位置=音高可视化
-    s += '<g class="choice-bird hoverable" id="hlLow" data-side="low">' +
-      '<circle cx="240" cy="150" r="26" fill="transparent" style="cursor:pointer"/>' +
-      '<text x="240" y="138" font-size="34" text-anchor="middle">🐦</text>' +
-      '<text x="240" y="182" font-size="13" text-anchor="middle" fill="var(--ink-soft)">低的</text></g>' +
-      '<g class="choice-bird hoverable" id="hlHigh" data-side="high">' +
-      '<circle cx="540" cy="60" r="26" fill="transparent" style="cursor:pointer"/>' +
-      '<text x="540" y="48" font-size="34" text-anchor="middle">🐦</text>' +
-      '<text x="540" y="92" font-size="13" text-anchor="middle" fill="var(--ink-soft)">高的</text></g>';
-    s += '<text x="390" y="215" font-size="14" text-anchor="middle" fill="var(--ink-soft)" font-weight="bold">🐦 谁唱得更高？</text>';
-    svg.innerHTML = s;
-    svg.onclick = function (ev) {
-      const t = ev.target;
-      if (t && t.parentNode && t.parentNode.classList && t.parentNode.classList.contains('choice-bird')) {
-        handleHighLowClick(t.parentNode.dataset.side, t.parentNode);
+    function playRound(generate) {
+      if (!alive()) return;
+      answered = false;
+      playing = true;
+      buttons.forEach(bt => bt.disabled = true);
+      if (generate) {
+        const p = pickPair(spans[Math.min(round, spans.length - 1)]);
+        a = p[0]; b = p[1];
       }
-    };
-  }
-
-  function startHighLow() {
-    const lv = currentLevel;
-    if (!lv || lv.type !== 'highlow') return;
-    if (window.MusicCore) window.MusicCore._ensureCtx();
-    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.click();
-    hl.round = 0; hl.ok = 0; hl.locked = false;
-    $('roundHud').classList.remove('hidden');
-    $('listenRow').classList.remove('hidden');
-    $('segQ').style.display = '';
-    $('okLabel').textContent = '猜对';
-    $('segCombo').style.display = '';
-    $('roundNow').textContent = '1'; $('roundOk').textContent = '0'; $('roundCombo').textContent = '0';
-    document.querySelectorAll('#staffSvg .choice-bird').forEach(function (g) {
-      g.classList.remove('correct', 'wrong');
-    });
-    spiritSay('听好啦，我要唱两个音～');
-    playHighLowRound();
-  }
-
-  function playHighLowRound() {
-    const lv = currentLevel;
-    hl.locked = false;
-    hl.low = lv.lowNotes[Math.floor(Math.random() * lv.lowNotes.length)];
-    hl.high = lv.highNotes[Math.floor(Math.random() * lv.highNotes.length)];
-    $('roundNow').textContent = Math.min(hl.round + 1, lv.rounds);
-    $('listenBadge').innerHTML = '🎵 听音…';
-    // 随机顺序播放两个音（低↔高）
-    const order = Math.random() < 0.5 ? [hl.low, hl.high] : [hl.high, hl.low];
-    setTimeout(function () { window.MusicCore.playNote(order[0], 0.8); }, 400);
-    setTimeout(function () { window.MusicCore.playNote(order[1], 1.0); }, 1250);
-    setTimeout(function () {
-      $('listenBadge').innerHTML = '🐦 点唱得更高的小鸟！';
-    }, 2100);
-  }
-
-  function handleHighLowClick(side, g) {
-    if (hl.locked) return;
-    const lv = currentLevel;
-    hl.locked = true;
-    $('listenBadge').innerHTML = '…';
-
-    if (side === 'high') {
-      g.classList.add('correct');
-      hl.ok += 1;
-      addScore(10);
-      window.MusicCore.playNote(hl.high, 0.8);
-      if (window.MusicCore.sfx) window.MusicCore.sfx.correct();
-      spiritAvatar('happy');
-      spiritSay(PRAISE[Math.floor(Math.random() * PRAISE.length)] + ' 高音像小鸟飞高高！');
-      toast('🎉 答对！+10');
-    } else {
-      g.classList.add('wrong');
-      if (window.MusicCore.sfx) window.MusicCore.sfx.wrong();
-      spiritAvatar('think');
-      spiritSay('再听一次～ 高的那个是不是更尖、更像小鸟？');
-      setTimeout(function () { g.classList.remove('wrong'); }, 500);
-      setTimeout(function () {
-        hl.locked = false;
-        window.MusicCore.playNote(hl.low, 0.7);
-        setTimeout(function () { window.MusicCore.playNote(hl.high, 0.9); }, 700);
-        $('listenBadge').innerHTML = '🐦 点唱得更高的小鸟！';
-      }, 1500);
-      return;
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 竖起耳朵听';
+      setBird(0, a, false);
+      setBird(1, b, false);
+      MV.VoiceCore.say('先听第一个音', { done: () => {
+        if (!alive()) return;
+        setBird(0, a, true);
+        MV.MusicCore.playMidi(a, { dur: .55 });
+        setTimeout(() => {
+          if (!alive()) return;
+          MV.VoiceCore.say('再听第二个音', { done: () => {
+            if (!alive()) return;
+            labels[0].classList.remove('playing');
+            setBird(1, b, true);
+            MV.MusicCore.playMidi(b, { dur: .6 });
+            setTimeout(() => {
+              if (!alive()) return;
+              labels[1].classList.remove('playing');
+              playing = false;
+              buttons.forEach(bt => bt.disabled = false);
+            }, 650);
+          }});
+        }, 300);
+      }});
     }
 
-    $('roundOk').textContent = hl.ok;
-    hl.round += 1;
-    if (hl.round >= lv.rounds || hl.ok >= lv.passCount) {
-      finishHighLow();
-    } else {
-      setTimeout(function () { playHighLowRound(); }, 1300);
-    }
-  }
-
-  function finishHighLow() {
-    const lv = currentLevel;
-    $('listenBadge').innerHTML = '🎉 你真厉害！';
-    spiritAvatar('celebrate');
-    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.win();
-    spiritSay('太棒了！你听出了 ' + hl.ok + ' 次谁更高，耳朵真灵！');
-    if (!isLevelDone(lv.id)) {
-      markLevelDone(lv.id);
-      addScore(30);
-      awardMedal('🎧 听音小能手');
-      setGrow();
-      toast('⭐ +30 · 🏅 听音小能手');
-    }
-    $('pointStartBtn').textContent = '🎵 再来一轮';
-    showNext();
-  }
-
-  // ================= tap 玩法（小鼓手 · 节奏/休止）=================
-  let tap = { times: [], hits: [], ok: 0, started: false, pattern: [] };
-
-  function drawTapLevel(lv) {
-    const svg = $('staffSvg');
-    let s = '';
-    // 节拍进度点（8 个，一排）
-    const n = lv.pattern.length;
-    const gap = 560 / (n - 1);
-    const x0 = 120;
-    for (let i = 0; i < n; i++) {
-      s += '<circle id="tp' + i + '" cx="' + (x0 + i * gap) + '" cy="60" r="13" ' +
-        'fill="' + (lv.pattern[i] ? 'var(--sun-soft)" stroke="var(--sun)"' : 'rgba(200,190,170,.35)"') +
-        ' stroke-width="2" style="opacity:.35"/>';
-    }
-    // 大鼓（中央大按钮）
-    s += '<g id="tapDrum" style="cursor:pointer">' +
-      '<circle cx="390" cy="160" r="52" fill="#c98a5e" stroke="#fff" stroke-width="4"/>' +
-      '<circle cx="390" cy="158" r="40" fill="#e0b48a"/>' +
-      '<text x="390" y="172" font-size="34" text-anchor="middle">🥁</text></g>';
-    s += '<text x="390" y="232" font-size="14" text-anchor="middle" fill="var(--ink-soft)" font-weight="bold">跟着鼓声拍它！</text>';
-    svg.innerHTML = s;
-
-    // 鼓点击
-    const drum = document.getElementById('tapDrum');
-    svg.onclick = function (ev) {
-      const t = ev.target;
-      if (t && t.id === 'tapDrum') { tapHit(); return; }
-      if (t && t.parentNode && t.parentNode.id === 'tapDrum') { tapHit(); }
-    };
-  }
-
-  function startTap() {
-    const lv = currentLevel;
-    if (!lv || lv.type !== 'tap') return;
-    if (window.MusicCore) window.MusicCore._ensureCtx();
-    if (window.MusicCore && window.MusicCore.sfx) window.MusicCore.sfx.click();
-    const interval = 60000 / lv.bpm;
-    tap.times = []; tap.hits = []; tap.ok = 0; tap.started = false; tap.pattern = lv.pattern;
-
-    $('roundHud').classList.remove('hidden');
-    $('listenRow').classList.remove('hidden');
-    $('segQ').style.display = 'none';
-    $('okLabel').textContent = '跟上';
-    $('segCombo').style.display = 'none';
-    $('roundOk').textContent = '0';
-    $('roundTotal').textContent = lv.pattern.filter(function (p) { return p; }).length;
-
-    // 重置进度点
-    for (let i = 0; i < lv.pattern.length; i++) {
-      const d = document.getElementById('tp' + i);
-      if (d) d.style.opacity = 0.35;
-    }
-
-    // 预计算有音拍时间
-    const t0 = performance.now() + 800;
-    lv.pattern.forEach(function (p, i) { if (p) tap.times.push(t0 + i * interval); });
-
-    spiritSay('准备好！听到"咚"就拍大鼓～');
-    $('listenBadge').innerHTML = '🥁 准备…';
-
-    setTimeout(function () {
-      tap.started = true;
-      // 播放节奏
-      lv.pattern.forEach(function (p, i) {
-        setTimeout(function () {
-          const d = document.getElementById('tp' + i);
-          if (d) d.style.opacity = 1;
-          if (p && window.MusicCore.sfx) window.MusicCore.sfx.drum();
-        }, i * interval);
-      });
-      // 结束
-      setTimeout(function () {
-        tap.started = false;
-        finishTap();
-      }, lv.pattern.length * interval + 300);
-    }, 800);
-  }
-
-  function tapHit() {
-    if (!tap.started) return;
-    const now = performance.now();
-    let best = -1, bestD = 99999;
-    tap.times.forEach(function (t, i) {
-      if (tap.hits.indexOf(i) === -1) {
-        const d = Math.abs(now - t);
-        if (d < bestD) { bestD = d; best = i; }
-      }
-    });
-    if (best >= 0 && bestD < 300) {
-      // 命中
-      tap.hits.push(best); tap.ok++;
-      if (window.MusicCore.sfx) window.MusicCore.sfx.drum();
-      const d = document.getElementById('tp' + best);
-      if (d) d.style.filter = 'drop-shadow(0 0 6px var(--sun))';
-      $('roundOk').textContent = tap.ok;
-      spiritAvatar('happy');
-      if (tap.ok >= tap.pattern.filter(function (p) { return p; }).length) {
-        spiritSay('全拍对啦！你真是小鼓手！');
-      }
-    } else {
-      // 误拍（休止时）
-      spiritAvatar('think');
-      spiritSay('嘘～这里没有鼓声，要停一停哦');
-    }
-  }
-
-  function finishTap() {
-    const lv = currentLevel;
-    const total = lv.pattern.filter(function (p) { return p; }).length;
-    $('listenBadge').innerHTML = tap.ok >= 3 ? '🎉 节奏小鼓手！' : '🎵 再试一次会更棒！';
-    spiritAvatar('celebrate');
-    if (tap.ok >= 3 && window.MusicCore.sfx) window.MusicCore.sfx.win();
-    spiritSay(tap.ok >= 3 ? '你跟上 ' + tap.ok + ' 个鼓点，节奏感真棒！' : '跟上了 ' + tap.ok + ' 个，休息一下再来～');
-    if (tap.ok >= 3 && !isLevelDone(lv.id)) {
-      markLevelDone(lv.id);
-      addScore(30);
-      awardMedal('🥁 小鼓手');
-      setGrow();
-      toast('⭐ +30 · 🏅 小鼓手');
-    }
-    $('pointStartBtn').textContent = '🥁 再来一次';
-    showNext();
-  }
-
-  // ================= 山灵对话（打字机 + SVG 表情）=================
-  function spiritSay(text) {
-    text = String(text || '').replace(/山灵/g, '晓声');
-    clearInterval(spiritTimer);
-    const el = $('spiritText');
-    el.textContent = '';
-    spiritAvatar('talk');
-    let i = 0;
-    spiritTimer = setInterval(function () {
-      if (i <= text.length) {
-        el.textContent = text.slice(0, i);
-        i++;
+    function answer(dir) {
+      if (answered || playing) return;
+      answered = true;
+      const isUp = b > a;
+      const ok = dir === (isUp ? 'up' : 'down');
+      if (ok) {
+        MV.MusicCore.sfx('correct');
+        correct++;
+        wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(pick(MV.lines.highlow.correct), { done: () => {
+          if (!alive()) return;
+          if (correct >= C.correctToPass) {
+            MV.VoiceCore.say(MV.lines.highlow.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+          } else {
+            round++;
+            setTimeout(() => { if (alive()) playRound(true); }, 500);
+          }
+        }});
       } else {
-        clearInterval(spiritTimer);
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        if (wrong >= 2) { // 卡关陪伴：连续错 2 次，降难度 + 换话术重播（不判死）
+          wrong = 0;
+          MV.VoiceCore.say(pick(MV.lines.stumble.highlow), { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(false); }, 450); } });
+        } else {
+          MV.VoiceCore.say(pick(MV.lines.highlow.wrong), { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(false); }, 400); } });
+        }
       }
-    }, 28);
-  }
-
-  function spiritAvatar(state) {
-    const a = $('spirit');
-    a.classList.remove('talk', 'celebrate');
-    void a.offsetWidth;
-    if (state === 'talk') a.classList.add('talk');
-    if (state === 'celebrate') a.classList.add('celebrate');
-
-    const normal = $('sEyesNormal'), happy = $('sEyesHappy');
-    const mouth = $('sMouth'), mouthOpen = $('sMouthOpen');
-    const on = function (el, v) { if (el) el.style.display = v ? '' : 'none'; };
-    on(normal, true); on(happy, false); on(mouth, true); on(mouthOpen, false);
-    if (state === 'happy' || state === 'celebrate') {
-      on(normal, false); on(happy, true); on(mouth, false); on(mouthOpen, true);
-    } else if (state === 'think') {
-      on(mouth, false);
     }
-  }
 
-  function toast(msg) {
-    const t = $('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(function () { t.classList.remove('show'); }, 2200);
-  }
-
-  // ================= 开发者模式 =================
-  function toggleDev() {
-    const p = $('devPanel');
-    p.classList.toggle('hidden');
-    $('devToggle').classList.toggle('active', !p.classList.contains('hidden'));
-  }
-
-// ================= 开场故事（晓声旅程入口） =================
-  const STORY = [
-    '大山里，住着一只透明的小鹿。',
-    '她叫晓声——因为她的心里，装着世界上所有的声音。',
-    '可是有一天，一场"静默"悄悄来了，',
-    '晓声忘了怎么唱歌，连自己是谁都记不清了。',
-    '她只记得：有五个地方，藏着她的五段记忆。',
-    '声音山谷、音阶山谷、节奏小路、和弦花园、旋律草原……',
-    '只要找回五段记忆，她就能重新唱歌，长出光做的翅膀。',
-    '你愿意，陪晓声一起去找回它们吗？',
-  ];
-  let storyIdx = 0;
-
-  function initStory() {
-    refreshCrumb();
-    let seen = false;
-    try { seen = localStorage.getItem('mv_story_v1') === '1'; } catch (e) {}
-    if (seen) { showMap(); return; }
-    storyIdx = 0;
-    $('storyView').classList.remove('hidden');
-    $('storyText').textContent = STORY[0];
-    $('storyNext').textContent = '继续 ▸';
-  }
-
-  function storyNext() {
-    storyIdx++;
-    if (storyIdx < STORY.length) {
-      $('storyText').textContent = STORY[storyIdx];
-      if (storyIdx === STORY.length - 1) $('storyNext').textContent = '我愿意！一起出发 ✨';
-    } else {
-      finishStory();
-    }
-  }
-
-  function skipStory() { finishStory(); }
-
-  function finishStory() {
-    try { localStorage.setItem('mv_story_v1', '1'); } catch (e) {}
-    showMap();
-  }
-
-  function showMap() {
-    $('storyView').classList.add('hidden');
-    $('mapView').classList.remove('hidden');
-    $('memoryView').classList.add('hidden');
-    renderTrailMap();
-    setGrow();
-    spiritSay('你好呀，我是晓声！五段记忆在等着我们，一起去寻找吧！');
-  }
-
-  // —— 晓声成长可视化：找回的记忆越多，越明亮、光晕越强 ——
-  function setGrow() {
-    let done = 0;
-    window.MAPS.forEach(function (m) {
-      m.levels.forEach(function (l) { if (isLevelDone(l.id)) done++; });
-    });
-    const g = Math.min(6, done);
-    const el = $('spirit');
-    for (let i = 0; i <= 6; i++) el.classList.remove('grow-' + i);
-    el.classList.add('grow-' + g);
-  }
-
-  // ================= 初始化 =================
-  window.App = {
-    goHome: goHome,
-    playLevel: playLevel,
-    setSpeed: setSpeed,
-    startPoint: startPoint,
-    replayNote: replayNote,
-    toggleDev: toggleDev,
-    nextLevel: nextLevel,
-    storyNext: storyNext,
-    skipStory: skipStory,
+    buttons.forEach(bt => bt.addEventListener('pointerdown', () => answer(bt.dataset.ans)));
+    $('#hl-replay').addEventListener('pointerdown', () => { if (!playing) playRound(false); });
+    renderProgress();
+    setTimeout(() => { if (alive()) playRound(true); }, 600);
   };
 
-  initStory();
+  /* —— 关卡 2：小鼓手（节奏判拍 · 拍点窗口 ≤250ms） —— */
+  runners.drum = function (lv, body) {
+    const bpm = 88;
+    const pattern = 'xxx-'.repeat(4);            // 走 走 走 停 × 4 轮
+    const soundBeats = [...pattern].filter(v => v === 'x').length; // 12
+    const win = C.drumWindowMs / 1000;
+    let active = false, hitIdx = new Set(), hitCount = 0, centers = [], slotCursor = 0;
+    let slots = [];
+    let abandoned = false;
+    const sess = MV._session;
+    const alive = () => sess === MV._session && !abandoned;
+
+    body.innerHTML =
+      '<div class="stage-panel">' +
+        '<div class="stage-intro">小鼓手 · 跟着“走 走 走 停”</div>' +
+        '<div class="drum-pad" id="drum-pad" role="button" tabindex="0" aria-label="大鼓，拍这里">' +
+          '<span class="drum-label" id="drum-label">走</span>' +
+        '</div>' +
+        '<div class="drum-beats" id="drum-beats"></div>' +
+        '<div class="compose-actions" style="justify-content:center">' +
+          '<button class="btn btn-gold" id="drum-start" type="button">开始</button>' +
+          '<button class="btn btn-ghost" id="drum-replay" type="button" disabled>再拍一次</button>' +
+        '</div>' +
+        '<p class="staff-note">金色鼓点落下的那一刻拍下去，四轮拍中六成就过关。</p>' +
+      '</div>';
+
+    const pad = $('#drum-pad');
+    const label = $('#drum-label');
+    const beatsBox = $('#drum-beats');
+    [...pattern].forEach(v => {
+      if (v === 'x') {
+        const s = document.createElement('span');
+        s.className = 'beat-slot';
+        beatsBox.appendChild(s);
+      }
+    });
+    slots = [...beatsBox.children];
+
+    function reset() {
+      active = false; hitIdx.clear(); hitCount = 0; centers = []; slotCursor = 0;
+      slots.forEach(s => s.classList.remove('hit'));
+      label.textContent = '走';
+    }
+
+    function tap(t) {
+      if (!active) return;
+      pad.classList.add('beat');
+      setTimeout(() => pad.classList.remove('beat'), 170);
+      let best = -1, bestD = win;
+      centers.forEach((c, i) => {
+        if (hitIdx.has(i)) return;
+        const d = Math.abs(t - c);
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      if (best >= 0) {
+        hitIdx.add(best);
+        hitCount++;
+        const s = slots[slotCursor++];
+        if (s) s.classList.add('hit');
+        MV.MusicCore.sfx('tap');
+      }
+    }
+
+    function drumKey(e) {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        tap(MV.MusicCore.contextNow());
+      }
+    }
+
+    function finish() {
+      active = false;
+      if (MV._drumKey) document.removeEventListener('keydown', MV._drumKey);
+      MV._drumKey = null;
+      MV._drumCleanup = null;
+      if (!alive()) return;
+      const rate = hitCount / soundBeats;
+      if (rate >= C.drumHitRate) {
+        MV.VoiceCore.say(MV.lines.drum.pass, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 350); } });
+      } else {
+        MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.say(MV.lines.drum.fail, { done: () => { if (alive()) $('#drum-replay').disabled = false; } });
+      }
+    }
+
+    function run() {
+      reset();
+      MV.MusicCore.start();
+      $('#drum-start').disabled = true;
+      $('#drum-replay').disabled = true;
+      document.addEventListener('keydown', drumKey);
+      MV._drumKey = drumKey;
+      MV._drumCleanup = () => { abandoned = true; document.removeEventListener('keydown', drumKey); };
+      MV.VoiceCore.say('先听四拍“嗒 嗒 嗒”——走！', { done: () => {
+        if (!alive()) return;
+        MV.MusicCore.countIn({ bpm, onDone: () => {
+          if (!alive()) return;
+          active = true;
+          MV.VoiceCore.say('走！走！走！停！跟着拍！');
+          MV.MusicCore.playRhythm(pattern, {
+            bpm,
+            onBeat: (i, v, abs) => {
+              if (!alive()) return;
+              if (v === 'x') {
+                label.textContent = '走';
+                centers.push(abs);
+                pad.classList.add('beat');
+                setTimeout(() => pad.classList.remove('beat'), 230);
+              } else {
+                label.textContent = '停';
+              }
+            },
+            onDone: finish
+          });
+        }});
+      }});
+    }
+
+    pad.addEventListener('pointerdown', () => tap(MV.MusicCore.contextNow()));
+    pad.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(MV.MusicCore.contextNow()); }
+    });
+    $('#drum-start').addEventListener('pointerdown', run);
+    $('#drum-replay').addEventListener('pointerdown', run);
+  };
+
+  /* —— 关卡 3：听音找家（同音/不同音） —— */
+  runners.same = function (lv, body) {
+    const low = 60, high = 67;
+    let round = 0, correct = 0, a = 0, b = 0, wrong = 0;
+    let answered = false, playing = false;
+    let buttons, birdEls, labels;
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="sm-intro">第 1 题 · 听一听</div>' +
+        '<div id="sm-progress"></div>' +
+        '<div class="note-visual" id="sm-visual">' +
+          '<div class="nv-item"><span id="sm-bird0">' + BIRD_SVG + '</span><span class="nv-label" id="sm-lab0">第一个音</span></div>' +
+          '<div class="nv-item"><span id="sm-bird1">' + BIRD_SVG + '</span><span class="nv-label" id="sm-lab1">第二个音</span></div>' +
+        '</div>' +
+        '<div class="listen-row">' +
+          '<button class="answer-btn up" type="button" data-ans="same">一样<span class="answer-sub">回同一个窝</span></button>' +
+          '<button class="answer-btn berry" type="button" data-ans="diff">不一样<span class="answer-sub">两个不同的家</span></button>' +
+        '</div>' +
+        '<div class="compose-actions" style="justify-content:center">' +
+          '<button class="btn btn-ghost" id="sm-replay" type="button">再听一次</button>' +
+        '</div>' +
+      '</div>';
+
+    const intro = $('#sm-intro');
+    const progBox = $('#sm-progress');
+    buttons = $$('[data-ans]', body);
+    birdEls = [$('#sm-bird0'), $('#sm-bird1')];
+    labels = [$('#sm-lab0'), $('#sm-lab1')];
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function setBird(i, midi, playState) {
+      birdEls[i].querySelector('.nv-bird').style.transform = 'translateY(' + (-(midi - 60) * 6) + 'px)';
+      labels[i].classList.toggle('playing', !!playState);
+    }
+
+    function pick() {
+      if (Math.random() < 0.5) {
+        const m = randInt(low, high);
+        a = b = m;
+      } else {
+        do { a = randInt(low, high); b = randInt(low, high); } while (a === b);
+      }
+    }
+
+    function playRound(generate) {
+      if (!alive()) return;
+      answered = false;
+      playing = true;
+      buttons.forEach(bt => bt.disabled = true);
+      if (generate) pick();
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 听一听';
+      setBird(0, a, false);
+      setBird(1, b, false);
+      MV.VoiceCore.say('先听第一个音', { done: () => {
+        if (!alive()) return;
+        setBird(0, a, true);
+        MV.MusicCore.playMidi(a, { dur: .55 });
+        setTimeout(() => {
+          if (!alive()) return;
+          MV.VoiceCore.say('再听第二个音', { done: () => {
+            if (!alive()) return;
+            labels[0].classList.remove('playing');
+            setBird(1, b, true);
+            MV.MusicCore.playMidi(b, { dur: .6 });
+            setTimeout(() => {
+              if (!alive()) return;
+              labels[1].classList.remove('playing');
+              playing = false;
+              buttons.forEach(bt => bt.disabled = false);
+            }, 650);
+          }});
+        }, 300);
+      }});
+    }
+
+    function answer(dir) {
+      if (answered || playing) return;
+      answered = true;
+      const same = a === b;
+      const ok = dir === (same ? 'same' : 'diff');
+      if (ok) {
+        MV.MusicCore.sfx('correct');
+        correct++;
+        wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(pick(MV.lines.same.correct), { done: () => {
+          if (!alive()) return;
+          if (correct >= C.correctToPass) {
+            MV.VoiceCore.say(MV.lines.same.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+          } else {
+            round++;
+            setTimeout(() => { if (alive()) playRound(true); }, 500);
+          }
+        }});
+      } else {
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        if (wrong >= 2) { // 卡关陪伴：连续错 2 次，换话术重播（不判死）
+          wrong = 0;
+          MV.VoiceCore.say(pick(MV.lines.stumble.same), { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(false); }, 450); } });
+        } else {
+          MV.VoiceCore.say(pick(MV.lines.same.wrong), { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(false); }, 400); } });
+        }
+      }
+    }
+
+    buttons.forEach(bt => bt.addEventListener('pointerdown', () => answer(bt.dataset.ans)));
+    $('#sm-replay').addEventListener('pointerdown', () => { if (!playing) playRound(false); });
+    renderProgress();
+    setTimeout(() => { if (alive()) playRound(true); }, 600);
+  };
+
+  /* —— 关卡 4：认识音符（听音摘果 · 唱名+简谱渐进） —— */
+  runners.notes = function (lv, body) {
+    const solfa = MV.solfa;
+    // 渐进解锁：先 do re mi → 加 fa sol → 全 7 音
+    const stages = [[0, 1, 2], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4, 5, 6]];
+    let stage = 0, round = 0, correct = 0, wrong = 0;
+    let playing = false, target = 0;
+    let fruits = [];
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="nt-intro">第 1 题 · 竖起耳朵听</div>' +
+        '<div id="nt-progress"></div>' +
+        '<p class="staff-note">山上的果子都有自己的声音，听一听它是谁，就点哪一个。</p>' +
+        '<div class="note-fireflies" aria-hidden="true">' +
+          '<img src="assets/note_eighth.webp" alt="">' +
+          '<img src="assets/note_quarter.webp" alt="">' +
+          '<img src="assets/note_full.webp" alt="">' +
+        '</div>' +
+        '<div class="fruit-row" id="nt-fruits"></div>' +
+        '<div class="compose-actions" style="justify-content:center">' +
+          '<button class="btn btn-ghost" id="nt-replay" type="button">再听一次</button>' +
+        '</div>' +
+      '</div>';
+
+    const intro = $('#nt-intro');
+    const progBox = $('#nt-progress');
+    const fruitBox = $('#nt-fruits');
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function renderFruits() {
+      fruitBox.innerHTML = '';
+      fruits = [];
+      stages[stage].forEach(idx => {
+        const s = solfa[idx];
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'fruit';
+        b.dataset.idx = idx;
+        b.innerHTML = '<span class="fruit-dot">' + s.num + '</span><span class="fruit-sol">' + s.sol + '</span>';
+        b.addEventListener('pointerdown', () => answer(idx));
+        fruitBox.appendChild(b);
+        fruits.push(b);
+      });
+    }
+
+    function playRound(generate) {
+      if (!alive()) return;
+      playing = true;
+      if (generate) {
+        const set = stages[stage];
+        target = set[randInt(0, set.length - 1)];
+      }
+      const s = solfa[target];
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 这是谁的声音？';
+      fruits.forEach(f => f.classList.remove('correct', 'wrong'));
+      MV.VoiceCore.say('听——', { done: () => {
+        if (!alive()) return;
+        MV.MusicCore.playMidi(s.midi, { dur: .6, inst: 'bell' });
+        setTimeout(() => { if (alive()) playing = false; }, 750);
+      }});
+    }
+
+    function answer(idx) {
+      if (!alive() || playing) return;
+      playing = true;
+      const s = solfa[target];
+      if (idx === target) {
+        MV.MusicCore.sfx('correct');
+        fruits[idx].classList.add('correct');
+        addPoints(C.pointsPerCorrect);
+        correct++;
+        wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(
+          pick(MV.lines.notes.correct).replace('{name}', '第' + s.num + '个果子').replace('{sol}', s.sol),
+          { done: () => {
+            if (!alive()) return;
+            if (correct >= C.correctToPass) {
+              MV.VoiceCore.say(MV.lines.notes.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+            } else {
+              round++;
+              if (round >= 3 && stage < stages.length - 1) { stage++; renderFruits(); }
+              setTimeout(() => { if (alive()) playRound(true); }, 500);
+            }
+          }});
+      } else {
+        MV.MusicCore.sfx('wrong');
+        fruits[idx].classList.add('wrong');
+        wrong++;
+        const stumble = wrong >= 2;   // 卡关陪伴：连续错 2 次，先安抚再进学习闭环
+        if (stumble) wrong = 0;
+        MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.notes) + ' ' : '') + pick(MV.lines.notes.wrong), { done: () => {
+          if (!alive()) return;
+          // 学习闭环：报出正确答案 + 再播一次该音
+          MV.VoiceCore.say('这个果子是 ' + s.sol + '，唱作 ' + s.num + '。再听一次它的声音。', { done: () => {
+            if (!alive()) return;
+            MV.MusicCore.playMidi(s.midi, { dur: .6, inst: 'bell' });
+            setTimeout(() => { if (alive()) playRound(false); }, 550);
+          }});
+        }});
+      }
+    }
+
+    $('#nt-replay').addEventListener('pointerdown', () => { if (!playing) playRound(false); });
+    renderProgress();
+    renderFruits();
+    setTimeout(() => { if (alive()) playRound(true); }, 600);
+  };
+
+  /* —— 关卡 5：旋律田（网格作曲 · 五线谱出口 · 音乐人格） —— */
+  function analyzePersonality(notes) {
+    const seq = notes.slice().sort((a, b) => a.start - b.start).map(n => n.midi);
+    if (seq.length < 2) return 'star';
+    const lo = Math.min.apply(null, seq), hi = Math.max.apply(null, seq);
+    const range = hi - lo;
+    let up = 0, down = 0, jumps = 0;
+    for (let i = 1; i < seq.length; i++) {
+      const d = seq[i] - seq[i - 1];
+      if (d > 0) up++; else if (d < 0) down++;
+      if (Math.abs(d) >= 4) jumps++;
+    }
+    const n = seq.length - 1;
+    if (jumps / n >= 0.45) return 'bird';        // 蹦蹦跳跳
+    if (range >= 5 || up > down) return 'star';  // 往高处飞
+    return 'stream';                              // 缓缓流动
+  }
+
+  runners.compose = function (lv, body) {
+    const pitches = MV.gridPitches.slice();       // [60,62,64,65,67] 低→高
+    const rows = pitches.length, cols = C.gridCols;
+    const solfaOf = {};
+    MV.solfa.forEach(s => { solfaOf[s.midi] = s; });
+    let inst = 'bird';
+    let cells = [];                               // cells[r][c]
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel">' +
+        '<div class="stage-intro">把音符当种子，种进田里，长成你的歌</div>' +
+        '<div class="compose-tools">' +
+          '<div class="chip-row" id="cz-inst" aria-label="选择音色">' +
+            C.instruments.map(ins =>
+              '<button type="button" class="chip' + (ins.id === 'bird' ? ' on' : '') + '" data-inst="' + ins.id + '">' +
+              ins.label + '</button>').join('') +
+          '</div>' +
+        '</div>' +
+        '<div class="grid" aria-label="旋律田，八拍五音">' +
+          '<div class="grid-inner" id="cz-grid"></div>' +
+        '</div>' +
+        '<div class="compose-actions">' +
+          '<button class="btn btn-primary" id="cz-play" type="button">▶ 听一听</button>' +
+          '<button class="btn btn-ghost" id="cz-clear" type="button">清空</button>' +
+          '<button class="btn btn-gold" id="cz-staff" type="button">变成五线谱</button>' +
+        '</div>' +
+        '<div id="cz-result"></div>' +
+      '</div>';
+
+    const gridBox = $('#cz-grid');
+
+    // 建网格：顶部高音（sol），底部低音（do）
+    for (let r = 0; r < rows; r++) {
+      const midi = pitches[rows - 1 - r];
+      const sf = solfaOf[midi];
+      const row = document.createElement('div');
+      row.className = 'grid-row';
+      row.innerHTML = '<span class="grid-note">' + sf.sol + '<small> ' + sf.num + '</small></span>';
+      const rowCells = [];
+      for (let c = 0; c < cols; c++) {
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'grid-cell';
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+        cell.setAttribute('aria-pressed', 'false');
+        cell.setAttribute('aria-label', '第 ' + (c + 1) + ' 拍，' + sf.sol);
+        cell.addEventListener('pointerdown', () => toggle(cell, r, c));
+        row.appendChild(cell);
+        rowCells.push(cell);
+      }
+      gridBox.appendChild(row);
+      cells.push(rowCells);
+    }
+
+    function toggle(cell, r, c) {
+      MV.MusicCore.start();
+      if (cell.classList.toggle('on')) {
+        cell.setAttribute('aria-pressed', 'true');
+        MV.MusicCore.playMidi(pitches[rows - 1 - r], { dur: .3, inst });
+      } else {
+        cell.setAttribute('aria-pressed', 'false');
+      }
+    }
+
+    function collectNotes() {
+      const out = [];
+      cells.forEach((rowArr, r) => rowArr.forEach((cell, c) => {
+        if (cell.classList.contains('on')) {
+          out.push({ midi: pitches[rows - 1 - r], start: c, dur: 1 });
+        }
+      }));
+      return out;
+    }
+
+    function pulseCell(col) {
+      cells.forEach(rowArr => {
+        const cell = rowArr[col];
+        if (cell && cell.classList.contains('on')) {
+          cell.classList.remove('playing');
+          void cell.offsetWidth; // 重启动画
+          cell.classList.add('playing');
+        }
+      });
+    }
+
+    function play() {
+      const notes = collectNotes();
+      if (!notes.length) { MV.VoiceCore.say(MV.lines.compose.empty); return; }
+      MV.MusicCore.start();
+      MV.MusicCore.playSequence(notes, { bpm: C.gridBpm, inst, onNote: n => pulseCell(n.start) });
+      MV.VoiceCore.say(MV.lines.compose.play);
+    }
+
+    function showPersonality(key) {
+      const p = MV.lines.personality[key];
+      if (!p) return;
+      const box = $('#cz-result');
+      box.innerHTML =
+        '<div class="personality-card">' +
+          '<div class="personality-icon" aria-hidden="true"><img src="assets/person_' + key + '.webp" alt="" loading="lazy"></div>' +
+          '<div class="personality-name">你的歌 · ' + p.name + '</div>' +
+          '<p class="personality-desc">' + p.desc + '</p>' +
+          '<span class="personality-vision">' + p.vision + '</span>' +
+        '</div>';
+      if (box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function toStaff() {
+      const notes = collectNotes();
+      if (!notes.length) { MV.VoiceCore.say(MV.lines.compose.empty); return; }
+      MV.MusicCore.stopAll();
+      const personality = analyzePersonality(notes);
+      const work = {
+        name: '我的小曲 ' + (App.state.works.length + 1),
+        notes, bpm: C.gridBpm, inst, personality, ts: Date.now()
+      };
+      App.state.works.push(work);
+      saveProgress();
+      addPoints(C.pointsPerCompose);
+      const first = !App.state.completed['compose'];
+      if (first) {
+        App.state.completed['compose'] = true;
+        MV.VoiceCore.applyGrowth(stageNum());
+      }
+      showPersonality(personality);
+      MV.VoiceCore.say(first ? MV.lines.compose.first : MV.lines.compose.saved, {
+        done: () => { if (alive()) openStaff(work); }
+      });
+    }
+
+    $$('[data-inst]', body).forEach(chip => {
+      chip.addEventListener('pointerdown', () => {
+        $$('[data-inst]', body).forEach(x => x.classList.remove('on'));
+        chip.classList.add('on');
+        inst = chip.dataset.inst;
+      });
+    });
+    $('#cz-play').addEventListener('pointerdown', play);
+    $('#cz-clear').addEventListener('pointerdown', () => {
+      cells.forEach(rowArr => rowArr.forEach(cell => {
+        cell.classList.remove('on');
+        cell.setAttribute('aria-pressed', 'false');
+      }));
+      MV.VoiceCore.say('田里空了，重新种吧。');
+    });
+    $('#cz-staff').addEventListener('pointerdown', toStaff);
+  };
+
+  /* ---------------- 通关庆祝 ---------------- */
+  function celebrate(lv, extra) {
+    invalidateSession();
+    MV.MusicCore.sfx('win');
+    showView('celebrate');
+    const firstClear = !App.state.completed[lv.id];
+    if (!App.state.completed[lv.id]) {
+      App.state.completed[lv.id] = true;
+      addPoints(C.pointsPerClear);
+      MV.VoiceCore.applyGrowth(stageNum());
+    }
+    mountXs('celebrate-xs', { exp: 'happy', float: true, breathe: true });
+    $('#celebrate-title').textContent = lv.title + ' · 通关啦！';
+    const line = firstClear ? pick(MV.lines.grow.lit)
+      : (extra && extra.line ? extra.line : pick(MV.lines.grow.spark));
+    $('#celebrate-line').textContent = line;
+    $('#celebrate-points').textContent = '积分 +' + C.pointsPerClear;
+    spawnConfetti(26);
+    MV.VoiceCore.say(line);
+    // 主题曲：全部关卡点亮后自动响起（旋律/歌词由你谱好填进 config.themeSong）
+    const song = MV.config.themeSong;
+    const songBox = $('#celebrate-song');
+    if (songBox) {
+      if (Object.keys(App.state.completed).length >= 5 && song) {
+        songBox.classList.remove('hidden');
+        $('#celebrate-song-name').textContent = song.name;
+        const lyr = $('#celebrate-song-lyrics');
+        if (song.lyrics && song.lyrics.length) { lyr.textContent = song.lyrics.join('　'); lyr.classList.remove('hidden'); }
+        else lyr.classList.add('hidden');
+        try { MV.MusicCore.start(); MV.MusicCore.playSequence(song.notes, { bpm: song.bpm, inst: song.inst }); } catch (e) { /* 播放失败不阻塞 */ }
+      } else {
+        songBox.classList.add('hidden');
+      }
+    }
+    $('#celebrate-next').onclick = () => { showView('map'); renderLocs(); };
+  }
+
+  function spawnConfetti(n) {
+    const box = $('#confetti');
+    box.innerHTML = '';
+    const colors = ['#e8b04b', '#d97a8e', '#6fb7e8', '#8fc49a', '#f3c878'];
+    for (let i = 0; i < n; i++) {
+      const c = document.createElement('i');
+      c.style.left = Math.random() * 100 + '%';
+      c.style.background = pick(colors);
+      c.style.animationDelay = (Math.random() * 2.4) + 's';
+      c.style.animationDuration = (2.6 + Math.random() * 2) + 's';
+      box.appendChild(c);
+    }
+  }
+  MV.App.celebrate = celebrate;
+
+  /* ---------------- 我的音乐会 ---------------- */
+  function openConcert() {
+    invalidateSession();
+    showView('concert');
+    refreshPoints();
+    const body = $('#concert-body');
+    body.innerHTML = '';
+    if (!App.state.works.length) {
+      body.innerHTML =
+        '<div class="concert-empty">还没有作品。<br>去「旋律草原」种一首歌，<br>它会变成真正的五线谱，住进你的音乐会。</div>';
+      return;
+    }
+    App.state.works.slice().reverse().forEach((w, i) => {
+      const card = document.createElement('div');
+      card.className = 'work-card';
+      const p = MV.lines.personality[w.personality];
+      card.innerHTML =
+        '<div class="work-card-head">' +
+          '<span class="work-title">第 ' + (App.state.works.length - i) + ' 首 · 我的小曲</span>' +
+          (p ? '<span class="work-badge">' + p.name + '</span>' : '') +
+        '</div>' +
+        '<div class="work-staff" data-work="' + i + '"></div>' +
+        '<div class="work-actions">' +
+          '<button class="btn btn-ghost" data-play="' + i + '" type="button" aria-label="播放这首作品">▶ 播放</button>' +
+          '<button class="btn btn-ghost" data-staff="' + i + '" type="button">看五线谱</button>' +
+          '<button class="btn btn-ghost" data-save="' + i + '" type="button">保存图片</button>' +
+        '</div>';
+      body.appendChild(card);
+      const staffBox = $('[data-work="' + i + '"]', card);
+      MV.Staff.render(w.notes, staffBox, { bpm: w.bpm, compact: true });
+      $('[data-play="' + i + '"]', card).addEventListener('pointerdown', () => {
+        MV.MusicCore.start();
+        MV.MusicCore.playSequence(w.notes, { bpm: w.bpm, inst: w.inst });
+      });
+      $('[data-staff="' + i + '"]', card).addEventListener('pointerdown', () => openStaff(w));
+      $('[data-save="' + i + '"]', card).addEventListener('pointerdown', () => MV.Staff.exportPNG($('[data-work="' + i + '"]', card), w.name || '我的小曲'));
+    });
+  }
+
+  /* ---------------- 五线谱出口面板 ---------------- */
+  function openStaff(piece) {
+    const overlay = $('#staff-overlay');
+    overlay.hidden = false;
+    mountXs('staff-xs', { exp: 'happy', breathe: true });
+    MV.Staff.render(piece.notes, $('#staff-canvas'), { bpm: piece.bpm });
+    MV.VoiceCore.say(MV.lines.staffReady);
+    $('#staff-play').onclick = () => {
+      MV.MusicCore.start();
+      MV.MusicCore.playSequence(piece.notes, { bpm: piece.bpm, inst: piece.inst });
+    };
+    $('#staff-save').onclick = () => MV.Staff.exportPNG($('#staff-canvas'), piece.name || '我的小曲');
+    $('#staff-midi').onclick = () => MV.Staff.exportMIDI(piece.notes, piece.bpm, piece.name || '我的小曲');
+  }
+  function closeStaff() {
+    $('#staff-overlay').hidden = true;
+    MV.VoiceCore.stopTyping();
+  }
+  MV.openStaff = openStaff;
+  MV.closeStaff = closeStaff;
+
+  /* ---------------- 全局事件 ---------------- */
+  function bindGlobal() {
+    $('#stage-back').addEventListener('pointerdown', () => {
+      invalidateSession();
+      MV.MusicCore.stopAll();
+      MV.VoiceCore.stopTyping();
+      if (MV._drumKey) document.removeEventListener('keydown', MV._drumKey);
+      showView('map');
+      renderLocs();
+    });
+    $('#concert-back').addEventListener('pointerdown', () => { showView('map'); renderLocs(); });
+    $('#staff-close').addEventListener('pointerdown', closeStaff);
+    $('#staff-overlay').addEventListener('pointerdown', e => { if (e.target === e.currentTarget) closeStaff(); });
+    $('#btn-reset').addEventListener('pointerdown', () => {
+      if (confirm('确定要重新开始吗？积分和作品都会清空。')) {
+        localStorage.removeItem(C.storageKey);
+        sessionStorage.removeItem('mv-greeted');
+        location.reload();
+      }
+    });
+  }
+
+  /* ---------------- 启动 ---------------- */
+  function boot() {
+    bindGlobal();
+    showView('splash');   // 关键：激活开场视图，否则 .view 默认 display:none 会白屏
+    bootSplash();
+    // 引擎就绪检测
+    const miss = [];
+    if (typeof Tonal === 'undefined') miss.push('乐理引擎');
+    if (typeof Tone === 'undefined') miss.push('音频引擎');
+    if (typeof Vex === 'undefined') miss.push('记谱引擎');
+    if (miss.length) {
+      setTimeout(() => {
+        MV.VoiceCore.say('哎呀，' + miss.join('、') + '没有加载好。请检查网络后再试试。');
+      }, 1200);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 })();
