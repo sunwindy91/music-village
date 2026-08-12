@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-08-12 · [cursor] F-03 UI 修复方案完成（→ review）
+
+- **产出**：`docs/UI修复方案.md`（P1×5 + P2×4 共 9 条 + 附录残留扫描），每条含：文件路径、类名/选择器、当前行号、具体 CSS/HTML 改法（代码级）、冒烟影响标注、风险备注
+- **关键定位**：审查报告基于 `main_c20260812b.css`，线上实引 `main_c20260812h.css`（index.html L14）——行号已按 h 版全部重定位（b→h 漂移：chip L976→983、grid-inner L997→1004、confirm L1078→L1511 等），方案注明「改名则按选择器迁移」
+- **P0 复核**：grid-cell 44px（h L1016）、splash-skip 44px（h L277）均已在 h 版落地，确认无遗留
+- **P1/P2 统计**：P1=5（云纯白 / transition:all×2+background×2 / 弹层 dialog 语义+焦点 / 320px 横滑提示 / Splash 灰字对比度）；P2=4（inset 纯黑阴影×5处 / loc-level-go 视觉 / confirm() 自制面板 / reduced-motion animation:none）
+- **冒烟判断**：9 条全部「不影响 27 PASS」；P2-3（confirm 替换）为唯一行为改动，需人工点一次重置验证；方案附导演执行顺序（先纯 CSS 批→再 JS 批→冒烟复核）
+- **残留扫描（审查备注4）**：`.overlay` inset:0 已清；`.grid-cell` aspect-ratio 仍在（h L1015），已给兜底改法
+- **状态**：F-03 pending → review（未改 done，待导演验收执行）
+- **分支**：cursor/f-03（从 main 创建；工作区有导演未提交 src 改动与本任务隔离，未触碰）
+
+---
+
 ## 2026-08-12 · [导演] 并行分工派活（F-02/F-03 + 美工规划）
 
 - **分工**：导演=src 功能（B2 旋律填空 / 旋律草原补关）+ openai-next 生图；Cursor=F-02 素材协作计划 + F-03 UI 修复方案（docs 域，分支 cursor/f-02、cursor/f-03）

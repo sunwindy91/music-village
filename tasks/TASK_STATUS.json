@@ -92,8 +92,8 @@
                       "review":  null,
                       "defOfDone":  "每条文件+行号+改法",
                       "title":  "UI审查P1/P2修复方案",
-                      "status":  "pending",
-                      "note":  "08-12 导演已派活(信封B存档 tasks/envelope-B-F03.md)：P1/P2逐条文件+行号+改法；注意 CSS 文件线(main_c20260812h.css)",
+                      "status":  "review",
+                      "note":  "08-12 Cursor完成待审：P1×5+P2×4共9条全部落到选择器+行号+具体CSS/HTML改法+冒烟标注；行号已按线上 main_c20260812h.css 重定位(b→h 漂移已修)；P0两条复核已在h版落地；附审查备注4残留扫描(.overlay inset已清/.grid-cell aspect-ratio仍在)",
                       "branch":  "cursor/f-03"
                   },
                   {
