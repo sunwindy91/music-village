@@ -1487,6 +1487,193 @@
     setTimeout(() => { if (alive()) buildRound(); }, 600);
   };
 
+  /* —— 关卡：回声谷（节奏回声 · 奥尔夫身体回应 · 判拍） —— */
+  runners.echo = function (lv, body) {
+    const pattern = 'x-x-x-x-';                    // 走停走停 × 4
+    const bpm = 88;
+    const win = C.drumWindowMs / 1000;
+    let count = 0, correct = 0, wrong = 0, hitCount = 0, soundBeats = 0, centers = [], hitIdx, active = false;
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel">' +
+        '<div class="stage-intro">回声谷 · 听节奏，拍回来</div>' +
+        '<div id="ec-progress"></div>' +
+        '<p class="ec-status" id="ec-status" style="text-align:center;font-size:15px;color:#8a7a63;margin:8px 0">先听，鼓点落下时拍鼓面</p>' +
+        '<div class="drum-pad" id="ec-pad" role="button" tabindex="0" aria-label="大鼓，拍这里">' +
+          '<span class="drum-label" id="ec-label">听</span>' +
+        '</div>' +
+        '<div class="compose-actions" style="justify-content:center">' +
+          '<button class="btn btn-gold" id="ec-start" type="button">开始</button>' +
+        '</div>' +
+        '<p class="staff-note">每轮命中六成，就算跟上啦！</p>' +
+      '</div>';
+
+    const progBox = $('#ec-progress');
+    const pad = $('#ec-pad');
+    const label = $('#ec-label');
+    const statusEl = $('#ec-status');
+    soundBeats = [...pattern].filter(v => v === 'x').length;
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function tap(t) {
+      if (!active) return;
+      pad.classList.add('beat');
+      setTimeout(() => pad.classList.remove('beat'), 170);
+      let best = -1, bestD = win;
+      centers.forEach((c, i) => {
+        if (hitIdx.has(i)) return;
+        const d = Math.abs(t - c);
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      if (best >= 0) { hitIdx.add(best); hitCount++; MV.MusicCore.sfx('tap'); }
+    }
+
+    function run() {
+      if (!alive()) return;
+      count++;
+      hitCount = 0; hitIdx = new Set(); centers = []; active = false;
+      $('#ec-start').disabled = true;
+      statusEl.textContent = '第 ' + count + ' 轮 · 跟着拍';
+      label.textContent = '走';
+      MV.MusicCore.countIn({ bpm, onDone: () => {
+        if (!alive()) return;
+        active = true;
+        MV.MusicCore.playRhythm(pattern, {
+          bpm,
+          onBeat: (i, v) => {
+            if (!alive()) return;
+            if (v === 'x') { label.textContent = '走'; centers.push(MV.MusicCore.contextNow()); pad.classList.add('beat'); setTimeout(() => pad.classList.remove('beat'), 200); }
+            else label.textContent = '停';
+          },
+          onDone: finish
+        });
+      }});
+    }
+
+    function finish() {
+      if (!alive()) return;
+      active = false;
+      const rate = hitCount / soundBeats;
+      if (rate >= C.drumHitRate) {
+        correct++; wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(pick(MV.lines.echo.correct), { done: () => {
+          if (!alive()) return;
+          if (correct >= C.correctToPass) {
+            MV.VoiceCore.say(MV.lines.echo.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+          } else { $('#ec-start').disabled = false; statusEl.textContent = '跟上了！再来一轮'; }
+        }});
+      } else {
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        const stumble = wrong >= 2;
+        if (stumble) wrong = 0;
+        MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.echo) + ' ' : '') + pick(MV.lines.echo.wrong), { done: () => {
+          if (!alive()) return;
+          $('#ec-start').disabled = false;
+          statusEl.textContent = '再试一轮，跟着鼓点拍';
+        }});
+      }
+    }
+
+    pad.addEventListener('pointerdown', () => tap(MV.MusicCore.contextNow()));
+    $('#ec-start').addEventListener('pointerdown', run);
+    renderProgress();
+    setTimeout(() => { if (alive()) run(); }, 600);
+  };
+
+  /* —— 关卡：十六分赛跑（四分/八分/十六分 选辨） —— */
+  runners.sixteenth = function (lv, body) {
+    const patterns = [
+      { label: '走 · 走 · 走',          desc: '稳稳地走',   notes: [{ midi: 60, start: 0, dur: 1 }, { midi: 60, start: 1, dur: 1 }, { midi: 60, start: 2, dur: 1 }] },
+      { label: '跑 · 跑 · 跑 · 跑',      desc: '小跑',       notes: [{ midi: 60, start: 0, dur: .5 }, { midi: 60, start: .5, dur: .5 }, { midi: 60, start: 1, dur: .5 }, { midi: 60, start: 1.5, dur: .5 }] },
+      { label: '快快跑 × 8',            desc: '飞快地跑',    notes: Array.from({ length: 8 }, (_, i) => ({ midi: 60, start: i * .25, dur: .25 })) }
+    ];
+    const order = [0, 1, 2];
+    let round = 0, correct = 0, wrong = 0, playing = false, answered = false;
+    let target = 0, cards = [];
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="st-intro">第 1 题 · 走、跑，还是快快跑？</div>' +
+        '<div id="st-progress"></div>' +
+        '<p class="st-legend" style="text-align:center;font-size:14px;color:#8a7a63;margin:6px 0 12px">走=四分 ｜ 跑=八分 ｜ 快快跑=十六分</p>' +
+        '<div class="st-options" id="st-options" style="display:flex;flex-direction:column;gap:12px;max-width:360px;margin:0 auto"></div>' +
+        '<div class="compose-actions" style="justify-content:center">' +
+          '<button class="btn btn-ghost" id="st-replay" type="button">再听一次</button>' +
+        '</div>' +
+      '</div>';
+
+    const intro = $('#st-intro');
+    const progBox = $('#st-progress');
+    const optBox = $('#st-options');
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function playPattern(idx) {
+      MV.MusicCore.playSequence(patterns[idx].notes.map(n => ({ ...n })), {
+        bpm: 80, inst: 'piano',
+        onEnd: () => { if (!alive()) return; playing = false; cards.forEach(bt => bt.disabled = false); }
+      });
+    }
+
+    function buildRound() {
+      if (!alive()) return;
+      answered = false;
+      playing = true;
+      target = order[Math.min(round, order.length - 1)];
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 它走、跑，还是快快跑？';
+      optBox.innerHTML = '';
+      cards = [];
+      patterns.forEach((p, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'answer-btn';
+        b.innerHTML = '<b style="font-size:19px">' + p.label + '</b><small style="display:block;opacity:.85">' + p.desc + '</small>';
+        b.style.minHeight = '58px';
+        b.addEventListener('pointerdown', () => answer(i));
+        optBox.appendChild(b);
+        cards.push(b);
+      });
+      playPattern(target);
+    }
+
+    function answer(i) {
+      if (!alive() || playing || answered) return;
+      answered = true;
+      cards.forEach(bt => bt.disabled = true);
+      if (i === target) {
+        MV.MusicCore.sfx('correct');
+        correct++; wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(pick(MV.lines.sixteenth.correct), { done: () => {
+          if (!alive()) return;
+          if (correct >= C.correctToPass) {
+            MV.VoiceCore.say(MV.lines.sixteenth.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+          } else { round++; setTimeout(() => { if (alive()) buildRound(); }, 450); }
+        }});
+      } else {
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        const stumble = wrong >= 2;
+        if (stumble) wrong = 0;
+        MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.sixteenth) + ' ' : '') + pick(MV.lines.sixteenth.wrong), { done: () => {
+          if (!alive()) return;
+          setTimeout(() => { if (alive()) buildRound(); }, 400);
+        }});
+      }
+    }
+
+    $('#st-replay').addEventListener('pointerdown', () => { if (!playing) buildRound(); });
+    renderProgress();
+    setTimeout(() => { if (alive()) buildRound(); }, 600);
+  };
+
   runners.compose = function (lv, body) {
     const pitches = MV.gridPitches.slice();       // [60,62,64,65,67] 低→高
     const rows = pitches.length, cols = C.gridCols;

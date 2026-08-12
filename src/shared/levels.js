@@ -31,6 +31,14 @@ MV.locations = [
     memory: '晓声的梦',
     pos: [50, 84],
     levels: ['compose', 'timbre', 'quiz2']
+  },
+  {
+    id: 'rhythm',
+    name: '节奏小路',
+    subtitle: '动一动 · 身体打节奏',
+    memory: '晓声的脚步声',
+    pos: [18, 40],
+    levels: ['echo', 'sixteenth', 'quizr']
   }
 ];
 
@@ -126,6 +134,37 @@ MV.levels = [
     theory: '音程 · 距离'
   },
   {
+    id: 'echo',
+    loc: 'rhythm',
+    title: '回声谷',
+    type: 'echo',
+    icon: 'echo',
+    brief: '听节奏，拍出来',
+    lesson: '节奏课 第 1 课',
+    theory: '节奏 · 回声'
+  },
+  {
+    id: 'sixteenth',
+    loc: 'rhythm',
+    title: '十六分赛跑',
+    type: 'sixteenth',
+    icon: 'run2',
+    brief: '走、跑、快快跑，选对节奏',
+    lesson: '节奏课 第 2 课',
+    theory: '十六分 · 更快'
+  },
+  {
+    id: 'quizr',
+    loc: 'rhythm',
+    title: '乐理小测',
+    type: 'quiz',
+    icon: 'pencil',
+    brief: '3 题验收 · 节奏',
+    lesson: '复习课',
+    theory: '评估 · 节奏',
+    quiz: 'rhythm'
+  },
+  {
     id: 'compose',
     loc: 'meadow',
     title: '旋律田',
@@ -212,6 +251,10 @@ MV.theories = {
     title: '写你自己的歌',
     body: '把喜欢的音符排排队，就变成旋律——你的歌！写下来就是五线谱，谁都看得懂。歌有性格：跳来跳去是小鸟，缓缓流动是小溪，往高处飞是星星。',
     img: 'assets/theory_create.webp'
+  },
+  rhythm: {
+    title: '节奏小路',
+    body: '节奏就是声音走路的样子：走（四分）是一拍一步，跑（八分）快一倍，快快跑（十六分）再快一倍！身体跟得上节拍，就是最好的节拍器。'
   }
 };
 
@@ -241,6 +284,14 @@ MV.quizzes = {
       { q: '五线谱上越往上，音越？', options: ['高', '低', '一样'], ans: 0 },
       { q: '把歌存成图片，是为了？', options: ['带回家给爸爸妈妈看', '删掉', '藏起来'], ans: 0 },
       { q: '蹦蹦跳跳的旋律，是哪种音乐人格？', options: ['小鸟型', '小溪型', '星星型'], ans: 0 }
+    ]
+  },
+  rhythm: {
+    name: '节奏小路 · 乐理小测',
+    questions: [
+      { q: '「走」和「跑」，谁更慢？', options: ['走', '跑', '一样快'], ans: 0 },
+      { q: '十六分音符比八分音符？', options: ['更快', '更慢', '一样'], ans: 0 },
+      { q: '跟着节拍动身体，音乐里叫？', options: ['节奏感', '音高', '音色'], ans: 0 }
     ]
   }
 };

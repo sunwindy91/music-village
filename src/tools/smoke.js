@@ -89,7 +89,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelector('.splash-go'));
   await sleep(150);
   ok(window.MV.App.state.view === 'map', '点击开始后进入地图');
-  ok(document.querySelectorAll('.cluster-card').length === 3, '地图上有 3 个地点节点');
+  ok(document.querySelectorAll('.cluster-card').length === 4, '首页有 4 个聚类卡');
 
   console.log('== 2. 声音山谷 · 谁更高 ==');
   click(document.querySelector('.cluster-card'));
@@ -222,7 +222,29 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   ok(document.querySelectorAll('.qz-options .answer-btn').length === 3, '乐理小测：3 个选项就绪');
   click(document.querySelector('#stage-back'));
   await sleep(120);
-
+  console.log('== 6c. 节奏小路 · 新聚类（回声谷 + 十六分 + 小测） ==');
+  click(document.querySelectorAll('.cluster-card')[3]);
+  await sleep(80);
+  const rtGo = document.querySelector('#theory-go');
+  ok(!!rtGo, '节奏小路：理论卡出现');
+  click(rtGo);
+  await sleep(80);
+  const rtChips = document.querySelectorAll('.loc-level');
+  ok(rtChips.length === 3, '节奏小路有 3 个关卡入口（回声谷+十六分赛跑+乐理小测）');
+  click(rtChips[0]);
+  let ecPad = null;
+  for (let i = 0; i < 40; i++) { ecPad = document.querySelector('#ec-pad'); if (ecPad) break; await sleep(100); }
+  ok(!!ecPad, '回声谷：鼓面渲染');
+  click(document.querySelector('#stage-back'));
+  await sleep(120);
+  click(document.querySelectorAll('.cluster-card')[3]);
+  await sleep(80);
+  click(document.querySelectorAll('.loc-level')[1]);
+  let stOpts = [];
+  for (let i = 0; i < 40; i++) { stOpts = document.querySelectorAll('.st-options .answer-btn'); if (stOpts.length >= 3) break; await sleep(100); }
+  ok(stOpts.length === 3, '十六分赛跑：3 个节奏选项就绪');
+  click(document.querySelector('#stage-back'));
+  await sleep(120);
   console.log('== 6. 旋律草原 · 网格作曲 + 五线谱出口 ==');
   click(document.querySelectorAll('.cluster-card')[2]);
   await sleep(80);
