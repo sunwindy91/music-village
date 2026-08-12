@@ -6,7 +6,7 @@
       "id": "A-01",
       "title": "3分钟演示脚本 + 答辩材料",
       "owner": "cursor",
-      "status": "pending",
+      "status": "in_progress",
       "files": ["docs/演示视频脚本_3分钟.md", "docs/答辩材料.md"],
       "defOfDone": "脚本分开场30s/玩法60s/陪伴课堂60s/升华30s四段；答辩含5条亮点+10个Q&A",
       "review": null
