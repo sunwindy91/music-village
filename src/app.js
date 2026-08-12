@@ -156,6 +156,12 @@
     }
     tag.textContent = f.name + ' · 点亮 ' + stageNum() + '/5';
     tag.dataset.stage = String(stageNum());
+    // 小鹿乱撞故事线：消费通关时挂起的故事标记（晓声在地图上说出，形态已更新为初鹿/鹿）
+    if (App._pendingStory && MV.lines.story && MV.lines.story[App._pendingStory]) {
+      const key = App._pendingStory;
+      App._pendingStory = null;
+      MV.VoiceCore.say(pick(MV.lines.story[key]));
+    }
   }
   function bootMap() {
     mountXs('map-xs', { exp: 'calm', float: true, breathe: true });
@@ -995,9 +1001,14 @@
     showView('celebrate');
     const firstClear = !App.state.completed[lv.id];
     if (!App.state.completed[lv.id]) {
+      const beforeStage = Object.keys(App.state.completed).length; // 通关前点亮数
       App.state.completed[lv.id] = true;
       addPoints(C.pointsPerClear);
       MV.VoiceCore.applyGrowth(stageNum());
+      // 小鹿乱撞故事线：跨过形态阈值时挂起标记，回地图由晓声说出（仅通关瞬间触发一次，刷新不重放）
+      const afterStage = stageNum();
+      if (beforeStage < 4 && afterStage >= 4) App._pendingStory = 'fawn';
+      else if (beforeStage < 5 && afterStage >= 5) App._pendingStory = 'deer';
     }
     mountXs('celebrate-xs', { exp: 'happy', float: true, breathe: true });
     $('#celebrate-title').textContent = lv.title + ' · 通关啦！';
