@@ -59,3 +59,12 @@
 ## 第 6 步 · 小鹿乱撞故事线（新建 docs/小鹿乱撞故事线.md）
 - 5 句钩子文案，源自建议第 6 节（第 2 句「就有」润为「你每点亮…就有」，更贴第二人称陪伴口吻，其余一致）
 - 按建议要求：仅作文案资产，本轮未写入 lines.js
+- commit：16dcf1f「cursor: F-01 第6步: 新建小鹿乱撞故事线5句钩子文案」
+
+## 第 7 步 · 终验与收尾
+- `node --check shared/lines.js` → 通过（EXIT=0）
+- `node tools/smoke.js` → 27/27 PASS，无运行时错误（EXIT=0）
+- 红线自查：仅 src/shared/lines.js 字符串内容变更；key/对象结构/数组长度未动；{n}/{name}/{sol} 占位符完好；其余 src/ 文件零触碰
+- F-01 状态：pending → review（待导演验收，不改 done）
+- 落地统计：splash 3 / stumble 7 / grow 2 / personality 5（3 vision + 2 desc）/ celebrate 1 / 其它微调 7 / 故事线 5 句，共 25 处文案变更 + 1 个新文档
+- 未采纳项（均已在建议中标注可选或保留）：grow 扩写（涉结构）、levelIntro.compose、staffReady、celebrate.clear[1]、stream.desc、「叔叔说」改「山里的老师说」（建议明确未擅自替换）
