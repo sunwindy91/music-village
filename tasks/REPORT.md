@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-08-12 · [导演] F-04 审查通过 + 文件线统一修复（重大 bug）
+
+- **F-04 逐镜脚本**：Cursor 完成（26 镜 177s），导演审查 ok 置 done（REVIEW_FEEDBACK 顶部）
+- **重大 bug 修复**：`index.html` 一直引用带版本号后缀旧文件（`app_c20260812b.js` 等），导致 F-01/A1/B1 全部未上线（线上仍 1 关）——根因是主窗口「复制加后缀破缓存」策略遗留的双文件线
+- **修复**：index.html 全部改引用无后缀活文件（app.js/config.js/lines.js/levels.js/music-core.js/voice-core.js/staff.js），CSS 保持 main_c20260812h.css（最新全量）；`_headers` 已 no-cache 破缓存
+- **分支插曲**：Cursor 在 cursor/f-04 完成 F-04 后工作区短暂停在旧分支，导演已切回 main 并保全 F-04 脚本；两个 F-04 提交（4040d91 基于 56a87c2 / 2b463e6 基于 5584240）仅脚本相同，以 main 合入版为准
+- **状态**：main = 待提交（index.html 修复 + F-04 合入），部署后线上应为 2 关
+
+---
+
+# F-01 执行留痕 · 台词落地 lines.js（Cursor 记录，保留）
+
+> 用法：每次动作追加一节，标注 `[导演]` / `[cursor]`；阻塞用 `[阻塞]` 标头。
+
+---
+
 ## 2026-08-12 · [cursor] F-04 演示逐镜脚本完成（→ review）
 
 - 分支：`cursor/f-04`（已存在，直接 checkout；未动 main）
