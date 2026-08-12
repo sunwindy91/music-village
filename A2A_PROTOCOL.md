@@ -6,6 +6,15 @@
 
 ---
 
+## 0.5 复用 a2a-starter-kit（你已开源的标准 A2A 模板）★
+
+本项目 A2A 直接复用你已开源的 `a2a-starter-kit`（github.com/sunwindy91/a2a-starter-kit），不另发明格式：
+- **角色映射**：用户=Orchestrator（拍板/授权）· Copilot=Strategist/导演（审阅/战略/部署/轮询）· Cursor(Kimi)=Implementer（主开发）
+- **消息信封**：所有回合用 [`docs/A2A-HANDOFF-TEMPLATE.md`](docs/A2A-HANDOFF-TEMPLATE.md) 的 A2A-MSG 模板 A-D
+- **决策日志**：[`docs/A2A-DECISION-LOG.md`](docs/A2A-DECISION-LOG.md) 为断点唯一真源；新条目置顶，状态 开放/已拍板/已执行
+- **接入清单**：新 Agent 接入按 ONBOARDING 式清单（A2A_PROTOCOL + TASK_STATUS + DECISION-LOG 最新条目）
+- **授权门禁**：`我授权你 + 动作`。**本地 git commit 允许**（步骤留痕需要，Cursor 可直接 commit）；**push 远端 / 部署 / 建 remote 必须用户说「我授权你 push / 部署 / 建 remote」**——一次授权=一个动作，模糊词（上线吧/同步一下）不构成授权
+
 ## 1. 参与方与角色（谁干什么）
 
 | 角色 | 载体 | 职责 | 产出 |
@@ -125,3 +134,4 @@
 4. 改完必须 `node --check` + `node tools/smoke.js`（27 项 PASS）
 5. 素材一律 webp（`tools/webp_convert.py`），不直接提交大 PNG
 6. 谁破坏红线谁负责修，状态置 `rejected` 附原因
+7. **授权门禁**（复用 a2a-starter-kit）：本地 commit 可直接做（留痕）；**push / 部署 / 建 remote 必须先得到用户「我授权你 …」**，一次授权=一个动作
