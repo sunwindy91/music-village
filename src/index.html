@@ -6,10 +6,12 @@
   <title>大山里的音乐课 · 音乐寻宝</title>
   <meta name="description" content="给山区孩子的 AI 陪伴式乐理寻宝游戏 —— 把真实的音符、节奏、旋律，变成山谷里看得见、摸得着、玩得懂的宝藏。">
   <meta name="theme-color" content="#bfe3ff">
+  <!-- 字体：非阻塞加载（避免 Google Fonts 卡住页面渲染，先系统字体后替换） -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/main.css?v=20260812b">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet"></noscript>
+  <link rel="stylesheet" href="styles/main.css?v=20260812c">
   <!-- 音乐引擎 / 乐理引擎 / 记谱引擎（本地优先，离线可用） -->
   <script src="vendor/tonal.min.js?v=1"></script>
   <script src="vendor/tone.js?v=1"></script>
@@ -230,12 +232,12 @@
   <!-- 积分飘字 -->
   <div id="points-toast" class="points-toast" aria-hidden="true"></div>
 
-  <script src="config.js?v=20260812b"></script>
-  <script src="shared/lines.js?v=20260812b"></script>
-  <script src="shared/levels.js?v=20260812b"></script>
-  <script src="modules/audio/music-core.js?v=20260812b"></script>
-  <script src="modules/voice/voice-core.js?v=20260812b"></script>
-  <script src="modules/notation/staff.js?v=20260812b"></script>
-  <script src="app.js?v=20260812b"></script>
+  <script src="config.js?v=20260812c"></script>
+  <script src="shared/lines.js?v=20260812c"></script>
+  <script src="shared/levels.js?v=20260812c"></script>
+  <script src="modules/audio/music-core.js?v=20260812c"></script>
+  <script src="modules/voice/voice-core.js?v=20260812c"></script>
+  <script src="modules/notation/staff.js?v=20260812c"></script>
+  <script src="app.js?v=20260812c"></script>
 </body>
 </html>
