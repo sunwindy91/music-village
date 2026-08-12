@@ -39,6 +39,14 @@ MV.locations = [
     memory: '晓声的脚步声',
     pos: [18, 40],
     levels: ['echo', 'sixteenth', 'quizr']
+  },
+  {
+    id: 'chord',
+    name: '和弦花园',
+    subtitle: '听一听 · 声音的手拉手',
+    memory: '晓声的梦之桥',
+    pos: [82, 62],
+    levels: ['rainbow', 'chordbud', 'quizc']
   }
 ];
 
@@ -165,6 +173,37 @@ MV.levels = [
     quiz: 'rhythm'
   },
   {
+    id: 'rainbow',
+    loc: 'chord',
+    title: '彩虹和声',
+    type: 'rainbow',
+    icon: 'rainbow',
+    brief: '听一听，是一个音还是手拉手？',
+    lesson: '和声课 第 1 课',
+    theory: '和弦 · 叠音'
+  },
+  {
+    id: 'chordbud',
+    loc: 'chord',
+    title: '和声找朋友',
+    type: 'chordbud',
+    icon: 'friends',
+    brief: '三个音手拉手，找到它们',
+    lesson: '和声课 第 2 课',
+    theory: '三和弦 · 音群'
+  },
+  {
+    id: 'quizc',
+    loc: 'chord',
+    title: '乐理小测',
+    type: 'quiz',
+    icon: 'pencil',
+    brief: '3 题验收 · 和声',
+    lesson: '复习课',
+    theory: '评估 · 和声',
+    quiz: 'chord'
+  },
+  {
     id: 'compose',
     loc: 'meadow',
     title: '旋律田',
@@ -256,6 +295,10 @@ MV.theories = {
     title: '节奏小路',
     body: '节奏就是声音走路的样子：走（四分）是一拍一步，跑（八分）快一倍，快快跑（十六分）再快一倍！身体跟得上节拍，就是最好的节拍器。',
     img: 'assets/theory_rhythm.webp'
+  },
+  chord: {
+    title: '和弦花园',
+    body: '几个音手拉手一起唱，就是和弦——像彩虹把颜色叠在一起！do mi sol 手拉手是明亮的彩虹，la do mi 手拉手是温柔的月光。'
   }
 };
 
@@ -293,6 +336,14 @@ MV.quizzes = {
       { q: '「走」和「跑」，谁更慢？', options: ['走', '跑', '一样快'], ans: 0 },
       { q: '十六分音符比八分音符？', options: ['更快', '更慢', '一样'], ans: 0 },
       { q: '跟着节拍动身体，音乐里叫？', options: ['节奏感', '音高', '音色'], ans: 0 }
+    ]
+  },
+  chord: {
+    name: '和弦花园 · 乐理小测',
+    questions: [
+      { q: '几个音手拉手一起唱，叫？', options: ['和弦', '音高', '节奏'], ans: 0 },
+      { q: 'do mi sol 手拉手，像？', options: ['明亮的彩虹', '乌云', '石头'], ans: 0 },
+      { q: '和弦最少是几个音手拉手？', options: ['三个', '一个', '十个'], ans: 0 }
     ]
   }
 };

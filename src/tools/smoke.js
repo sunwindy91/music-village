@@ -89,7 +89,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelector('.splash-go'));
   await sleep(150);
   ok(window.MV.App.state.view === 'map', '点击开始后进入地图');
-  ok(document.querySelectorAll('.cluster-card').length === 4, '首页有 4 个聚类卡');
+  ok(document.querySelectorAll('.cluster-card').length === 5, '首页有 5 个聚类卡');
 
   console.log('== 2. 声音山谷 · 谁更高 ==');
   click(document.querySelector('.cluster-card'));
@@ -243,6 +243,30 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   let stOpts = [];
   for (let i = 0; i < 40; i++) { stOpts = document.querySelectorAll('.st-options .answer-btn'); if (stOpts.length >= 3) break; await sleep(100); }
   ok(stOpts.length === 3, '十六分赛跑：3 个节奏选项就绪');
+  click(document.querySelector('#stage-back'));
+  await sleep(120);
+
+  console.log('== 6d. 和弦花园 · 新聚类（彩虹和声 + 和声找朋友 + 小测） ==');
+  click(document.querySelectorAll('.cluster-card')[4]);
+  await sleep(80);
+  const cdGo = document.querySelector('#theory-go');
+  ok(!!cdGo, '和弦花园：理论卡出现');
+  click(cdGo);
+  await sleep(80);
+  const cdChips = document.querySelectorAll('.loc-level');
+  ok(cdChips.length === 3, '和弦花园有 3 个关卡入口（彩虹和声+和声找朋友+乐理小测）');
+  click(cdChips[0]);
+  let rbOpts = [];
+  for (let i = 0; i < 40; i++) { rbOpts = document.querySelectorAll('.rb-options .answer-btn'); if (rbOpts.length >= 2) break; await sleep(100); }
+  ok(rbOpts.length === 2, '彩虹和声：单音/和弦 2 选项就绪');
+  click(document.querySelector('#stage-back'));
+  await sleep(120);
+  click(document.querySelectorAll('.cluster-card')[4]);
+  await sleep(80);
+  click(document.querySelectorAll('.loc-level')[1]);
+  let cbOpts = [];
+  for (let i = 0; i < 40; i++) { cbOpts = document.querySelectorAll('.cb-options .answer-btn'); if (cbOpts.length >= 3) break; await sleep(100); }
+  ok(cbOpts.length === 3, '和声找朋友：3 个和弦选项就绪');
   click(document.querySelector('#stage-back'));
   await sleep(120);
   console.log('== 6. 旋律草原 · 网格作曲 + 五线谱出口 ==');

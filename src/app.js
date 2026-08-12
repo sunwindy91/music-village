@@ -1674,6 +1674,184 @@
     setTimeout(() => { if (alive()) buildRound(); }, 600);
   };
 
+  /* —— 关卡：彩虹和声（单音 vs 和弦 · 手拉手心智模型） —— */
+  runners.rainbow = function (lv, body) {
+    const order = [1, 0, 1, 0];                    // 0=单音 1=和弦（先宽后严）
+    let round = 0, correct = 0, wrong = 0, playing = false, answered = false;
+    let target = 0, cards;
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="rb-intro">第 1 题 · 一个人，还是手拉手？</div>' +
+        '<div id="rb-progress"></div>' +
+        '<p class="rb-legend" style="text-align:center;font-size:15px;color:#8a7a63;margin:6px 0 12px">一个音像一个人唱歌；几个音手拉手，声音就变厚啦</p>' +
+        '<div class="rb-options" id="rb-options" style="display:flex;justify-content:center;gap:14px;max-width:360px;margin:0 auto"></div>' +
+        '<div class="compose-actions" style="justify-content:center">' +
+          '<button class="btn btn-ghost" id="rb-replay" type="button">再听一次</button>' +
+        '</div>' +
+      '</div>';
+
+    const intro = $('#rb-intro');
+    const progBox = $('#rb-progress');
+    const optBox = $('#rb-options');
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function play() {
+      const notes = target === 1
+        ? [{ midi: 60, start: 0, dur: 1.2 }, { midi: 64, start: 0, dur: 1.2 }, { midi: 67, start: 0, dur: 1.2 }]
+        : [{ midi: 60, start: 0, dur: 1.2 }];
+      MV.MusicCore.playSequence(notes, { bpm: 70, inst: 'piano', onEnd: () => {
+        if (!alive()) return;
+        playing = false;
+        cards.forEach(bt => bt.disabled = false);
+      }});
+    }
+
+    function buildRound() {
+      if (!alive()) return;
+      answered = false;
+      playing = true;
+      target = order[Math.min(round, order.length - 1)];
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 一个音，还是手拉手？';
+      optBox.innerHTML = '';
+      cards = [];
+      [['1', '一个人', '清清地唱'], ['3', '手拉手', '声音变厚了']].forEach((o, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'answer-btn';
+        b.innerHTML = '<b style="font-size:22px">' + o[0] + '</b><small style="display:block;opacity:.85">' + o[1] + '</small>';
+        b.style.minWidth = '110px'; b.style.minHeight = '64px';
+        b.addEventListener('pointerdown', () => answer(i === 0 ? 0 : 1));
+        optBox.appendChild(b);
+        cards.push(b);
+      });
+      play();
+    }
+
+    function answer(v) {
+      if (!alive() || playing || answered) return;
+      answered = true;
+      cards.forEach(bt => bt.disabled = true);
+      if (v === target) {
+        MV.MusicCore.sfx('correct');
+        correct++; wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(pick(MV.lines.rainbow.correct), { done: () => {
+          if (!alive()) return;
+          if (correct >= C.correctToPass) {
+            MV.VoiceCore.say(MV.lines.rainbow.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+          } else { round++; setTimeout(() => { if (alive()) buildRound(); }, 450); }
+        }});
+      } else {
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        const stumble = wrong >= 2;
+        if (stumble) wrong = 0;
+        MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.rainbow) + ' ' : '') + pick(MV.lines.rainbow.wrong), { done: () => {
+          if (!alive()) return;
+          setTimeout(() => { if (alive()) buildRound(); }, 400);
+        }});
+      }
+    }
+
+    $('#rb-replay').addEventListener('pointerdown', () => { if (!playing) buildRound(); });
+    renderProgress();
+    setTimeout(() => { if (alive()) buildRound(); }, 600);
+  };
+
+  /* —— 关卡：和声找朋友（三和弦听辨） —— */
+  runners.chordbud = function (lv, body) {
+    const chords = [
+      { name: '明亮彩虹', notes: [{ midi: 60, start: 0, dur: 1.1 }, { midi: 64, start: 0, dur: 1.1 }, { midi: 67, start: 0, dur: 1.1 }] },
+      { name: '温柔月光', notes: [{ midi: 60, start: 0, dur: 1.1 }, { midi: 65, start: 0, dur: 1.1 }, { midi: 69, start: 0, dur: 1.1 }] },
+      { name: '星光闪耀', notes: [{ midi: 67, start: 0, dur: 1.1 }, { midi: 71, start: 0, dur: 1.1 }, { midi: 74, start: 0, dur: 1.1 }] }
+    ];
+    const order = [0, 1, 2];
+    let round = 0, correct = 0, wrong = 0, playing = false, answered = false;
+    let target = 0, cards;
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="cb-intro">第 1 题 · 哪个音群手拉手？</div>' +
+        '<div id="cb-progress"></div>' +
+        '<p class="cb-legend" style="text-align:center;font-size:15px;color:#8a7a63;margin:6px 0 12px">三个音手拉手，它像彩虹、月光，还是星光？</p>' +
+        '<div class="cb-options" id="cb-options" style="display:flex;flex-direction:column;gap:12px;max-width:340px;margin:0 auto"></div>' +
+        '<div class="compose-actions" style="justify-content:center">' +
+          '<button class="btn btn-ghost" id="cb-replay" type="button">再听一次</button>' +
+        '</div>' +
+      '</div>';
+
+    const intro = $('#cb-intro');
+    const progBox = $('#cb-progress');
+    const optBox = $('#cb-options');
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function play() {
+      MV.MusicCore.playSequence(chords[target].notes.map(n => ({ ...n })), { bpm: 70, inst: 'piano', onEnd: () => {
+        if (!alive()) return;
+        playing = false;
+        cards.forEach(bt => bt.disabled = false);
+      }});
+    }
+
+    function buildRound() {
+      if (!alive()) return;
+      answered = false;
+      playing = true;
+      target = order[Math.min(round, order.length - 1)];
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 哪个音群手拉手？';
+      optBox.innerHTML = '';
+      cards = [];
+      chords.forEach((c, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'answer-btn';
+        b.innerHTML = '<b style="font-size:19px">' + c.name + '</b><small style="display:block;opacity:.85">' + (i === 0 ? 'do mi sol' : i === 1 ? 'do fa la' : 'sol si re') + '</small>';
+        b.style.minHeight = '58px';
+        b.addEventListener('pointerdown', () => answer(i));
+        optBox.appendChild(b);
+        cards.push(b);
+      });
+      play();
+    }
+
+    function answer(i) {
+      if (!alive() || playing || answered) return;
+      answered = true;
+      cards.forEach(bt => bt.disabled = true);
+      if (i === target) {
+        MV.MusicCore.sfx('correct');
+        correct++; wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(pick(MV.lines.chordbud.correct), { done: () => {
+          if (!alive()) return;
+          if (correct >= C.correctToPass) {
+            MV.VoiceCore.say(MV.lines.chordbud.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+          } else { round++; setTimeout(() => { if (alive()) buildRound(); }, 450); }
+        }});
+      } else {
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        const stumble = wrong >= 2;
+        if (stumble) wrong = 0;
+        MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.chordbud) + ' ' : '') + pick(MV.lines.chordbud.wrong), { done: () => {
+          if (!alive()) return;
+          setTimeout(() => { if (alive()) buildRound(); }, 400);
+        }});
+      }
+    }
+
+    $('#cb-replay').addEventListener('pointerdown', () => { if (!playing) buildRound(); });
+    renderProgress();
+    setTimeout(() => { if (alive()) buildRound(); }, 600);
+  };
+
   runners.compose = function (lv, body) {
     const pitches = MV.gridPitches.slice();       // [60,62,64,65,67] 低→高
     const rows = pitches.length, cols = C.gridCols;
