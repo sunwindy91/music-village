@@ -68,7 +68,7 @@
                       "defOfDone":  "打磨建议落地+27PASS+不动key",
                       "title":  "台词落地到 lines.js（特批改文案）",
                       "status":  "in_progress",
-                      "note":  "第4步：personality vision 3型分化 + bird/star desc 微调已落地"
+                      "note":  "第5步：celebrate+map+levelIntro+关卡文案8处落地；node --check通过"
                   },
                   {
                       "id":  "F-02",

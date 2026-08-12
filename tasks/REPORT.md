@@ -40,3 +40,17 @@
 - star.desc（可选微调，采纳）：「闪闪发亮」→「一闪一闪亮」
 - stream.desc：建议保留，未动
 - 字数自查：三条 vision 均 ≤28 字（21/22/19 字），符合建议备注 3 的排版约束
+- commit：88222b9「cursor: F-01 第4步: personality人格卡vision三型分化+desc微调」
+
+## 第 5 步 · celebrate + 其它高价值微调（8 处落地）
+- celebrate.clear[0]：→「呀，宝藏找到啦！」（clear[1] 建议保留，未动）
+- mapHello[0]：→「顺着小路往上走呀，每个地方都藏着一点点声音的秘密。」
+- mapWelcomeBack：→「你回来啦！小路上又有新的声音，在冲我们招手呢。」
+- levelIntro.highlow：→「闭上眼睛听一听：两个声音，哪个高、哪个低？把耳朵竖得高高的～」
+- levelIntro.drum：→「跟我拍！走——走——走——停。鼓点落下时，你的手也落下去。」
+- highlow.correct[2]：→「就是这样！声音的高矮，音乐里叫它——音高。」
+- drum.pass：→「你跟上鼓点的脚步啦！这种走走停停，音乐里叫——节奏。」
+- notes.done：→「1 2 3 4 5 6 7 你都认识啦！叔叔说，这就是音符的名字。」（按建议备注 2，「叔叔说」未擅自替换）
+- compose.first：→「这是你自己的第一首歌耶！」
+- 保留项：levelIntro.compose、staffReady、celebrate.clear[1]（建议原文标注「保留」）
+- 验证：`node --check shared/lines.js` 通过（EXIT=0）；{n}/{name}/{sol} 占位符所在行未触碰
