@@ -87,6 +87,36 @@
 
 > 如果你想更进一步：**让 Cursor 做"主游戏开发"**（比如实现 L1 第 2 阶时值、难度曲线、新关卡），把任务加进 `TASK_STATUS.json`（owner: cursor），我审查后合入。这样你的 Cursor 额度被最大化利用，我专注导演+审查+部署。
 
+---
+
+## 6. 导演（Copilot）侧 A2A 标准范式（导演同样遵守，双向对齐）
+
+**导演的所有沟通也留痕、用标准格式，不搞口头约定。**
+
+### 6.1 任务下发 = 标准任务卡片（写进 `tasks/TASK_STATUS.json`）
+```json
+{ "id": "F-01", "title": "台词落地", "owner": "cursor", "status": "pending",
+  "files": ["src/shared/lines.js", "docs/小鹿乱撞故事线.md"],
+  "defOfDone": "可检查的验收项", "deadline": "2026-08-13 08:00" }
+```
+
+### 6.2 审查反馈 = 标准格式（追加到 `tasks/REVIEW_FEEDBACK.md`）
+```
+[导演] 任务 F-01 · 08-12 22:10
+- 结论：ok / 需修改 / 打回
+- 意见：① 可执行项 ② 可执行项（不许空泛）
+- 验收：27 PASS / 0 FAIL（附冒烟结果）
+```
+
+### 6.3 导演轮询承诺
+- 每次对话优先：`git log`（cursor 提交）→ `tasks/REPORT.md` 末尾 → `TASK_STATUS.json`
+- 对 `review` 状态任务 **24h 内给结论**（赛前 48h 即时响应）
+- 导演改 `src/` 前 `git pull`，提交信息注明「导演：xxx」
+
+### 6.4 冲突仲裁
+- 同一文件同一时间只有一个 owner；冲突由导演裁决（`rejected` + 原因）
+- 仲裁结论写进 REVIEW_FEEDBACK，双方以 git 记录为准，不扯皮
+
 ## 5. 红线（双方都必须遵守）
 
 1. 同一时间 `src/` 只有一个 owner 在改
