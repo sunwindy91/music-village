@@ -120,6 +120,19 @@
                       "status":  "done",
                       "note":  "08-13 导演验收通过：口径已对齐5聚类20入口(节奏小路+和弦花园)/50PASS；8/13 提交用 v4",
                       "branch":  "cursor/f-05"
+                  },
+                  {
+                      "id":  "F-06",
+                      "owner":  "cursor",
+                      "files":  [
+                                    "docs/首页节点布局设计.md"
+                                ],
+                      "review":  null,
+                      "defOfDone":  "节点拓扑+连线+圆形按钮规格+晓声拖拽细节+入场动画规范",
+                      "title":  "首页画布式任务节点布局设计规范",
+                      "status":  "pending",
+                      "note":  "08-13 导演已派活(信封B存档 tasks/envelope-B-F06.md)：画布节点+线穿着+圆形按钮+晓声拖拽桌宠；导演实现",
+                      "branch":  "cursor/f-06"
                   }
               ],
     "updated":  "2026-08-12"
