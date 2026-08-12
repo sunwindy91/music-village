@@ -153,7 +153,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelectorAll('.cluster-card')[1]);
   await sleep(80);
   const wsChips = document.querySelectorAll('.loc-level');
-  ok(wsChips.length === 6, '音阶山谷有 6 个关卡入口（认识音符+走走停停+旋律填空+看谱弹奏+节奏接龙+乐理小测）');
+  ok(wsChips.length === 7, '音阶山谷有 7 个关卡入口（乐理课 6 课 + 复习小测）');
   click(wsChips[1]);
   // 轮询等待渲染（levelIntro 打字机完成后才 startLevel，固定 sleep 有时序抖动）
   let wsCards = [];
@@ -200,11 +200,22 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelector('#stage-back'));
   await sleep(120);
 
+  console.log('== 5b5. 音阶山谷 · 音程梯子（两音距离） ==');
+  click(document.querySelectorAll('.cluster-card')[1]);
+  await sleep(80);
+  const ivChips = document.querySelectorAll('.loc-level');
+  click(ivChips[5]);
+  let ivOpts = [];
+  for (let i = 0; i < 40; i++) { ivOpts = document.querySelectorAll('.iv-options .answer-btn'); if (ivOpts.length >= 4) break; await sleep(100); }
+  ok(ivOpts.length === 4, '音程梯子：4 个台阶数选项就绪');
+  click(document.querySelector('#stage-back'));
+  await sleep(120);
+
   console.log('== 5c. 音阶山谷 · 乐理小测（聚类评估） ==');
   click(document.querySelectorAll('.cluster-card')[1]);
   await sleep(80);
   const qzChips = document.querySelectorAll('.loc-level');
-  click(qzChips[5]);
+  click(qzChips[6]);
   let qzQ = null;
   for (let i = 0; i < 40; i++) { qzQ = document.querySelector('#qz-question'); if (qzQ) break; await sleep(100); }
   ok(!!qzQ, '乐理小测：题目渲染');

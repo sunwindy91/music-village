@@ -1394,6 +1394,99 @@
     setTimeout(() => { if (alive()) buildRound(); }, 600);
   };
 
+  /* —— 关卡：音程梯子（两音距离=台阶 · 叔叔大纲第 5 阶） —— */
+  runners.interval = function (lv, body) {
+    const pairs = [
+      { a: 60, b: 67, gap: 5 },   // do→sol 5 级
+      { a: 60, b: 64, gap: 3 },   // do→mi 3 级
+      { a: 60, b: 62, gap: 2 },   // do→re 2 级
+      { a: 67, b: 60, gap: 5 }    // sol→do 5 级（下行）
+    ];
+    const order = [0, 2, 1];      // 5→2→3 先宽后严
+    let round = 0, correct = 0, wrong = 0, playing = false, answered = false;
+    let target = 0, cards;
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="iv-intro">第 1 题 · 数音程台阶</div>' +
+        '<div id="iv-progress"></div>' +
+        '<p class="iv-legend" style="text-align:center;font-size:15px;color:#8a7a63;margin:6px 0 12px">两个音之间隔了几级台阶？用耳朵数一数</p>' +
+        '<div class="iv-options" id="iv-options" style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;max-width:380px;margin:0 auto"></div>' +
+        '<div class="compose-actions" style="justify-content:center">' +
+          '<button class="btn btn-ghost" id="iv-replay" type="button">再听一次</button>' +
+        '</div>' +
+      '</div>';
+
+    const intro = $('#iv-intro');
+    const progBox = $('#iv-progress');
+    const optBox = $('#iv-options');
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function playPair() {
+      const p = pairs[target];
+      MV.MusicCore.playPair(p.a, p.b, { gap: .95, onDone: () => {
+        if (!alive()) return;
+        playing = false;
+        cards.forEach(bt => bt.disabled = false);
+      }});
+    }
+
+    function buildRound() {
+      if (!alive()) return;
+      answered = false;
+      playing = true;
+      target = order[Math.min(round, order.length - 1)];
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 数数它们隔了几级台阶';
+      optBox.innerHTML = '';
+      cards = [];
+      [2, 3, 4, 5].forEach(g => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'answer-btn';
+        b.innerHTML = '<b style="font-size:22px">' + g + '</b><small style="display:block;opacity:.85">级台阶</small>';
+        b.style.minWidth = '72px';
+        b.style.minHeight = '60px';
+        b.addEventListener('pointerdown', () => answer(g));
+        optBox.appendChild(b);
+        cards.push(b);
+      });
+      playPair();
+    }
+
+    function answer(g) {
+      if (!alive() || playing || answered) return;
+      answered = true;
+      cards.forEach(bt => bt.disabled = true);
+      if (g === pairs[target].gap) {
+        MV.MusicCore.sfx('correct');
+        correct++; wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(pick(MV.lines.interval.correct), { done: () => {
+          if (!alive()) return;
+          if (correct >= C.correctToPass) {
+            MV.VoiceCore.say(MV.lines.interval.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+          } else { round++; setTimeout(() => { if (alive()) buildRound(); }, 450); }
+        }});
+      } else {
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        const stumble = wrong >= 2;
+        if (stumble) wrong = 0;
+        MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.interval) + ' ' : '') + pick(MV.lines.interval.wrong), { done: () => {
+          if (!alive()) return;
+          setTimeout(() => { if (alive()) buildRound(); }, 400);
+        }});
+      }
+    }
+
+    $('#iv-replay').addEventListener('pointerdown', () => { if (!playing) buildRound(); });
+    renderProgress();
+    setTimeout(() => { if (alive()) buildRound(); }, 600);
+  };
+
   runners.compose = function (lv, body) {
     const pitches = MV.gridPitches.slice();       // [60,62,64,65,67] 低→高
     const rows = pitches.length, cols = C.gridCols;

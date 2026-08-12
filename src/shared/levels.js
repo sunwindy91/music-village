@@ -22,7 +22,7 @@ MV.locations = [
     subtitle: '认一认 · 音符的名字',
     memory: '晓声的歌喉',
     pos: [50, 56],
-    levels: ['notes', 'walkstop', 'fillgap', 'sightread', 'rhythmchain', 'quiz1']
+    levels: ['notes', 'walkstop', 'fillgap', 'sightread', 'rhythmchain', 'interval', 'quiz1']
   },
   {
     id: 'meadow',
@@ -114,6 +114,16 @@ MV.levels = [
     brief: '听一听，是走还是跑？',
     lesson: '乐理课 第 5 课',
     theory: '八分音符 · 快慢'
+  },
+  {
+    id: 'interval',
+    loc: 'scale',
+    title: '音程梯子',
+    type: 'interval',
+    icon: 'stairs',
+    brief: '听两个音，数数隔了几级台阶',
+    lesson: '乐理课 第 6 课',
+    theory: '音程 · 距离'
   },
   {
     id: 'compose',
