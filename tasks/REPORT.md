@@ -1,4 +1,20 @@
-# F-01 执行留痕 · 台词落地 lines.js
+# A2A 协作留痕（REPORT · 双方共用 · 新条目置顶）
+
+> 用法：每次动作追加一节，标注 `[导演]` / `[cursor]`；阻塞用 `[阻塞]` 标头。
+
+---
+
+## 2026-08-12 · [导演] 分支协作模型落地
+
+- 仓库已开源 → 采用**分支协作**（详见 `docs/A2A-BRANCHING.md`）：main 只收审查通过内容，双方都从 main 切分支
+- 已建分支：`director/dev`（导演功能开发）、`cursor/f-04`（Cursor F-04 逐镜脚本）
+- 分工：导演 = B 系列功能切片（B1 节奏派对·时值走停等）；Cursor = F-04 逐镜脚本 / F-02 素材计划 / F-03 UI 方案（docs 域）
+- 网络：git 443 到 GitHub 仍不通（fetch 超时实测）→ 本地分支协作先行；push 待用户开梯子或走 gh api 通道
+- 状态：main = `56a87c2`（ahead 34 未 push）；F-01 已审查 done；A1 小鹿乱撞故事线已合入
+
+---
+
+# F-01 执行留痕 · 台词落地 lines.js（Cursor 记录，保留）
 
 > 任务：把 docs/台词打磨建议.md 落进 src/shared/lines.js（只改文案，不动 key/结构/{n} 占位符）
 > 来源：A2A 指令 Strategist → Implementer（F-01，特批改 lines.js）
