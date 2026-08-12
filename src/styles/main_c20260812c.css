@@ -210,7 +210,7 @@ img, svg { display: block; }
 }
 .splash-sky {
   position: absolute;
-  inset: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: linear-gradient(180deg, #fdf3d7 0%, var(--gold-pale) 18%, var(--sky-top) 55%, var(--mist) 80%, var(--sky-low));
   overflow: hidden;
 }
@@ -286,7 +286,7 @@ img, svg { display: block; }
 .xs-png-wrap { position: relative; width: 100%; max-width: 190px; margin: 0 auto; }
 .xs-png { width: 100%; height: auto; display: block; border-radius: 50%;
   box-shadow: 0 14px 34px rgba(56, 94, 74, .24); }
-.xs-png-halo { position: absolute; inset: -18px; border-radius: 50%; pointer-events: none;
+.xs-png-halo { position: absolute; top: -18px; left: -18px; right: -18px; bottom: -18px; border-radius: 50%; pointer-events: none;
   background: radial-gradient(circle, rgba(243, 226, 164, .5) 0%, rgba(243, 226, 164, 0) 70%);
   opacity: .5; transition: opacity .6s var(--ease); }
 .xs-png-mark { position: absolute; top: 6%; right: 4%; font-size: 1.5rem; color: #e8b04b; opacity: 0;
@@ -440,7 +440,7 @@ img, svg { display: block; }
 @keyframes caretBlink { 50% { opacity: 0; } }
 
 /* 萤火粒子 */
-.firefly-layer { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.firefly-layer { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 3; }
 .firefly {
   position: absolute;
   width: 8px;
@@ -466,8 +466,8 @@ img, svg { display: block; }
 }
 .map-scene {
   position: relative;
+  width: 92vw;
   width: min(92vw, 560px);
-  aspect-ratio: 5 / 8;
   border-radius: var(--r-lg);
   overflow: hidden;
   box-shadow: var(--shadow);
@@ -476,12 +476,24 @@ img, svg { display: block; }
     linear-gradient(rgba(220, 239, 251, .06), rgba(232, 243, 216, .08)),
     url(../assets/valley.webp) center / cover;
 }
+/* 高度撑开：padding-top hack（5:8 → 160%），任何浏览器/WebView 都支持，
+   保证 .map-scene 有高度、关卡节点定位容器不塌陷 */
+.map-scene::before {
+  content: "";
+  display: block;
+  padding-top: 160%;
+}
+/* 支持 aspect-ratio 的新浏览器：用它替代 padding hack（更精确） */
+@supports (aspect-ratio: 5 / 8) {
+  .map-scene::before { display: none; }
+  .map-scene { aspect-ratio: 5 / 8; }
+}
 /* 旧 SVG 只保留寻宝小路，其余视觉元素隐藏（水彩画接管场景）
    注意：SVG 本身就带 class="map-bg"（<svg class="map-bg">），选择器必须是 svg.map-bg */
 svg.map-bg #trail,
 svg.map-bg #trail-core { display: block; }
 svg.map-bg > *:not(#trail):not(#trail-core) { display: none; }
-.map-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; }
 .map-scene .map-bg .map-clouds { animation: cloudPuff 12s ease-in-out infinite alternate; }
 @keyframes cloudPuff {
   from { transform: translateX(-6px); }
@@ -498,7 +510,7 @@ svg.map-bg > *:not(#trail):not(#trail-core) { display: none; }
 .map-xs .xs { filter: drop-shadow(0 10px 16px rgba(31, 74, 55, .25)); }
 
 /* 地点节点 */
-.locs { position: absolute; inset: 0; z-index: 8; }
+.locs { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 8; }
 .loc-node {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -708,7 +720,7 @@ svg.map-bg > *:not(#trail):not(#trail-core) { display: none; }
 .stage-panel::before {
   content: "";
   position: absolute;
-  inset: 9px;
+  top: 9px; left: 9px; right: 9px; bottom: 9px;
   border: 2px dashed rgba(154, 87, 24, .13);
   border-radius: 20px 14px 22px 16px;
   pointer-events: none;
@@ -834,7 +846,7 @@ svg.map-bg > *:not(#trail):not(#trail-core) { display: none; }
 .drum-pad::before {
   content: "";
   position: absolute;
-  inset: 8%;
+  top: 8%; left: 8%; right: 8%; bottom: 8%;
   border-radius: 50%;
   background: rgba(255, 248, 236, .28);
 }
@@ -1115,7 +1127,7 @@ svg.map-bg > *:not(#trail):not(#trail-core) { display: none; }
 /* ════════════ 五线谱出口 ════════════ */
 .overlay {
   position: fixed;
-  inset: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   z-index: 60;
   background: rgba(31, 74, 55, .42);
   display: flex;
@@ -1211,7 +1223,7 @@ svg.map-bg > *:not(#trail):not(#trail-core) { display: none; }
 }
 .celebrate-song-name { font-size: 18px; font-weight: 800; color: var(--forest-deep); }
 .celebrate-song-lyrics { margin-top: 4px; color: var(--ink); font-size: 15px; line-height: 1.9; }
-.confetti { position: absolute; inset: 0; pointer-events: none; }
+.confetti { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
 .confetti i {
   position: absolute;
   width: 10px;

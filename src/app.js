@@ -179,8 +179,23 @@
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'loc-node' + (allDone ? ' completed' : '');
+      // 内联定位兜底：不依赖 .loc-node 类样式，任何浏览器/任何 CSS 加载状态都能显示节点
+      btn.style.position = 'absolute';
       btn.style.left = loc.pos[0] + '%';
       btn.style.top = loc.pos[1] + '%';
+      btn.style.zIndex = '99';
+      btn.style.display = 'flex';
+      btn.style.flexDirection = 'column';
+      btn.style.alignItems = 'center';
+      btn.style.gap = '6px';
+      btn.style.width = '92px';
+      btn.style.margin = '0';
+      btn.style.padding = '0';
+      btn.style.background = 'transparent';
+      btn.style.border = 'none';
+      btn.style.cursor = 'pointer';
+      btn.style.webkitTransform = 'translate(-50%, -50%)';
+      btn.style.transform = 'translate(-50%, -50%)';
       btn.setAttribute('aria-label', loc.name + (allDone ? '（已完成）' : ''));
       btn.innerHTML =
         '<span class="loc-dot" aria-hidden="true">' + (allDone ? '✓' : '♪') + '</span>' +
