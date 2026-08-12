@@ -154,6 +154,7 @@ MV.VoiceCore = (() => {
   function say(text, opts = {}) {
     if (!textEl) return;
     stopTyping();
+    if (bubble) bubble.classList.remove('done');
     currentText = String(text || '');
     pos = 0;
     onDone = opts.done || null;
@@ -167,6 +168,7 @@ MV.VoiceCore = (() => {
       } else {
         textEl.textContent = currentText;
         stopTyping();
+        if (bubble) bubble.classList.add('done'); // 打完隐藏光标，避免一直闪烁
         if (onDone) { const cb = onDone; onDone = null; cb(); }
       }
     }, C().typeSpeed);

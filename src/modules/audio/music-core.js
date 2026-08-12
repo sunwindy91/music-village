@@ -114,7 +114,8 @@ MV.MusicCore = (() => {
     clearScheduled();
   }
   function resetTransport() {
-    try { Tone.getTransport().stop(); } catch (e) { /* noop */ }
+    // cancel() 清空全部事件并把 Transport position 归零，避免上一轮（如 countIn）残留导致鼓点/拍点时间错位
+    try { Tone.getTransport().cancel(); } catch (e) { try { Tone.getTransport().stop(); } catch (e2) { /* noop */ } }
     clearScheduled();
   }
 
@@ -125,7 +126,10 @@ MV.MusicCore = (() => {
     const dur = opts.dur != null ? opts.dur : 0.4;
     const inst = opts.inst || 'main';
     if (inst === 'main') mainSynth.triggerAttackRelease(mtof(midi), dur);
-    else if (instruments[inst]) instruments[inst].triggerAttackRelease(mtof(midi), dur);
+    else if (instruments[inst]) {
+      if (inst === 'water') instruments[inst].triggerAttack(mtof(midi)); // PluckSynth 无 triggerAttackRelease，只能用 triggerAttack
+      else instruments[inst].triggerAttackRelease(mtof(midi), dur);
+    }
   }
 
   /* —— 按拍序列（作曲/示范） notes: [{midi, start, dur}]（单位：拍） —— */
@@ -172,10 +176,10 @@ MV.MusicCore = (() => {
     const bpm = opts.bpm || 88;
     const beat = 60 / bpm;
     resetTransport();
-    const startT = Tone.getContext().currentTime;
     [...pattern].forEach((v, i) => {
       scheduleAt(i * beat, () => {
-        const abs = startT + i * beat;
+        // abs 用事件实际触发时刻的音频时间，与 tap(contextNow) 同一时钟基准，鼓点判定才准
+        const abs = Tone.getContext().currentTime;
         if (v === 'x') {
           drum.triggerAttackRelease('C2', .26);
           if (opts.onHit) opts.onHit(i, abs);

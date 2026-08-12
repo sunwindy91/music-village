@@ -443,7 +443,7 @@
 
   /* —— 关卡 2：小鼓手（节奏判拍 · 拍点窗口 ≤250ms） —— */
   runners.drum = function (lv, body) {
-    const bpm = 88;
+    let bpm = 88;
     const pattern = 'xxx-'.repeat(4);            // 走 走 走 停 × 4 轮
     const soundBeats = [...pattern].filter(v => v === 'x').length; // 12
     const win = C.drumWindowMs / 1000;
@@ -522,7 +522,13 @@
         MV.VoiceCore.say(MV.lines.drum.pass, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 350); } });
       } else {
         MV.MusicCore.sfx('wrong');
-        MV.VoiceCore.say(MV.lines.drum.fail, { done: () => { if (alive()) $('#drum-replay').disabled = false; } });
+        MV.VoiceCore.say(MV.lines.drum.fail, { done: () => {
+          if (alive()) {
+            $('#drum-replay').disabled = false;
+            if (bpm > 76) { bpm = Math.max(72, bpm - 12); $('#drum-replay').textContent = '慢一点再拍'; }
+            else { $('#drum-replay').textContent = '再拍一次'; }
+          }
+        }});
       }
     }
 
@@ -690,6 +696,7 @@
     const stages = [[0, 1, 2], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4, 5, 6]];
     let stage = 0, round = 0, correct = 0, wrong = 0;
     let playing = false, target = 0;
+    let pool = [];      // 当前 stage 剩余待认的音（认一个少一个，认全才升级，不重复）
     let fruits = [];
     const sess = MV._session;
     const alive = () => sess === MV._session;
@@ -714,7 +721,14 @@
     const progBox = $('#nt-progress');
     const fruitBox = $('#nt-fruits');
 
-    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+    function stagePool() {
+      pool = stages[stage].slice().sort(() => Math.random() - .5);
+    }
+    function renderProgress() {
+      // 本 stage 已认 N / 总 M 个音（认全才升级）
+      const m = stages[stage].length, n = m - pool.length;
+      progBox.replaceChildren(stepDots(m, n));
+    }
 
     function renderFruits() {
       fruitBox.innerHTML = '';
@@ -736,11 +750,11 @@
       if (!alive()) return;
       playing = true;
       if (generate) {
-        const set = stages[stage];
-        target = set[randInt(0, set.length - 1)];
+        if (!pool.length) stagePool();   // 首次或上一 stage 认完后重建
+        target = pool.pop();             // 认一个少一个，不重复
       }
       const s = solfa[target];
-      intro.textContent = '第 ' + (round + 1) + ' 题 · 这是谁的声音？';
+      intro.textContent = '第 ' + (correct + 1) + ' 题 · 认全' + stages[stage].length + '个音（' + s.sol + ' 等你）';
       fruits.forEach(f => f.classList.remove('correct', 'wrong'));
       MV.VoiceCore.say('听——', { done: () => {
         if (!alive()) return;
@@ -764,11 +778,18 @@
           pick(MV.lines.notes.correct).replace('{name}', '第' + s.num + '个果子').replace('{sol}', s.sol),
           { done: () => {
             if (!alive()) return;
-            if (correct >= C.correctToPass) {
-              MV.VoiceCore.say(MV.lines.notes.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+            if (!pool.length) {
+              // 本 stage 认全了 → 升级或通关
+              if (stage < stages.length - 1) {
+                stage++;
+                stagePool();
+                renderFruits();
+                const names = stages[stage].map(i => solfa[i].sol).join('、');
+                MV.VoiceCore.say('这组认全啦！接下来认：' + names, { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(true); }, 500); } });
+              } else {
+                MV.VoiceCore.say(MV.lines.notes.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+              }
             } else {
-              round++;
-              if (round >= 3 && stage < stages.length - 1) { stage++; renderFruits(); }
               setTimeout(() => { if (alive()) playRound(true); }, 500);
             }
           }});
@@ -791,6 +812,7 @@
     }
 
     $('#nt-replay').addEventListener('pointerdown', () => { if (!playing) playRound(false); });
+    stagePool();
     renderProgress();
     renderFruits();
     setTimeout(() => { if (alive()) playRound(true); }, 600);
@@ -952,6 +974,7 @@
         $$('[data-inst]', body).forEach(x => x.classList.remove('on'));
         chip.classList.add('on');
         inst = chip.dataset.inst;
+        gridBox.dataset.inst = inst; // 网格颜色随音色变化（绿=小鸟/金=风铃/蓝=溪水/红=木琴）
       });
     });
     $('#cz-play').addEventListener('pointerdown', play);
@@ -979,9 +1002,9 @@
     mountXs('celebrate-xs', { exp: 'happy', float: true, breathe: true });
     $('#celebrate-title').textContent = lv.title + ' · 通关啦！';
     const line = firstClear ? pick(MV.lines.grow.lit)
-      : (extra && extra.line ? extra.line : pick(MV.lines.grow.spark));
+      : (extra && extra.line ? extra.line : pick(MV.lines.celebrate.clear));
     $('#celebrate-line').textContent = line;
-    $('#celebrate-points').textContent = '积分 +' + C.pointsPerClear;
+    $('#celebrate-points').textContent = firstClear ? ('积分 +' + C.pointsPerClear) : '再玩一次也真棒！';
     spawnConfetti(26);
     MV.VoiceCore.say(line);
     // 主题曲：全部关卡点亮后自动响起（旋律/歌词由你谱好填进 config.themeSong）

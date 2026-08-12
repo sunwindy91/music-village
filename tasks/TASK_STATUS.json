@@ -1,51 +1,107 @@
-{
-  "protocol": "A2A_PROTOCOL.md",
-  "updated": "2026-08-12",
-  "tasks": [
-    {
-      "id": "A-01",
-      "title": "3分钟演示脚本 + 答辩材料",
-      "owner": "cursor",
-      "status": "review",
-      "files": ["docs/演示视频脚本_3分钟.md", "docs/答辩材料.md"],
-      "defOfDone": "脚本分开场30s/玩法60s/陪伴课堂60s/升华30s四段；答辩含5条亮点+10个Q&A",
-      "review": null
-    },
-    {
-      "id": "B-01",
-      "title": "台词与文案润色建议",
-      "owner": "cursor",
-      "status": "review",
-      "files": ["docs/台词打磨建议.md"],
-      "defOfDone": "逐条给出 现在→建议；覆盖 splash/陪伴/成长/人格卡；附小鹿乱撞故事线钩子3-5句",
-      "review": null
-    },
-    {
-      "id": "C-01",
-      "title": "UI/无障碍审查报告",
-      "owner": "cursor",
-      "status": "review",
-      "files": ["docs/UI审查报告.md"],
-      "defOfDone": "对照设计宪法逐页检查；每条含文件+行号+建议；按严重度排序",
-      "review": null
-    },
-    {
-      "id": "D-01",
-      "title": "代码审查报告（只读）",
-      "owner": "cursor",
-      "status": "review",
-      "files": ["docs/代码审查报告.md"],
-      "defOfDone": "找bug风险/内存泄漏/边界；每条含文件:行+问题+建议修法（不改代码）",
-      "review": null
-    },
-    {
-      "id": "E-01",
-      "title": "竞品与教学法调研",
-      "owner": "cursor",
-      "status": "review",
-      "files": ["docs/调研.md"],
-      "defOfDone": "3个对标产品各3条可借鉴点；三大教学法落地点验证",
-      "review": null
-    }
-  ]
+﻿{
+    "protocol":  "A2A_PROTOCOL.md",
+    "tasks":  [
+                  {
+                      "id":  "A-01",
+                      "owner":  "cursor",
+                      "files":  [
+                                    "docs/演示视频脚本_3分钟.md",
+                                    "docs/答辩材料.md"
+                                ],
+                      "review":  "ok：质量高，可直接用",
+                      "defOfDone":  "脚本四段式+5亮点+10Q\u0026A",
+                      "title":  "3分钟演示脚本+答辩材料",
+                      "status":  "done"
+                  },
+                  {
+                      "id":  "B-01",
+                      "owner":  "cursor",
+                      "files":  [
+                                    "docs/台词打磨建议.md"
+                                ],
+                      "review":  "ok：已立项 F-01 落地",
+                      "defOfDone":  "逐条现在→建议+故事线钩子",
+                      "title":  "台词与文案润色建议",
+                      "status":  "done"
+                  },
+                  {
+                      "id":  "C-01",
+                      "owner":  "cursor",
+                      "files":  [
+                                    "docs/UI审查报告.md"
+                                ],
+                      "review":  "ok：P0 两条导演已修（grid-cell 44px/跳过44px），P1-P2 立项 F-03",
+                      "defOfDone":  "对照宪法逐页+行号+严重度",
+                      "title":  "UI/无障碍审查报告",
+                      "status":  "done"
+                  },
+                  {
+                      "id":  "D-01",
+                      "owner":  "cursor",
+                      "files":  [
+                                    "docs/代码审查报告.md"
+                                ],
+                      "review":  "ok：重复通关文案/鼓关cleanup已采纳修复，其余纳入后续",
+                      "defOfDone":  "bug风险/泄漏/边界+建议",
+                      "title":  "代码审查报告(只读)",
+                      "status":  "done"
+                  },
+                  {
+                      "id":  "E-01",
+                      "owner":  "cursor",
+                      "files":  [
+                                    "docs/调研.md"
+                                ],
+                      "review":  "ok：可直接引用",
+                      "defOfDone":  "3产品×3借鉴+教学法落地验证",
+                      "title":  "竞品与教学法调研",
+                      "status":  "done"
+                  },
+                  {
+                      "id":  "F-01",
+                      "owner":  "cursor",
+                      "files":  [
+                                    "src/shared/lines.js",
+                                    "docs/小鹿乱撞故事线.md"
+                                ],
+                      "review":  null,
+                      "defOfDone":  "打磨建议落地+27PASS+不动key",
+                      "title":  "台词落地到 lines.js（特批改文案）",
+                      "status":  "pending"
+                  },
+                  {
+                      "id":  "F-02",
+                      "owner":  "cursor",
+                      "files":  [
+                                    "docs/素材协作计划.md"
+                                ],
+                      "review":  null,
+                      "defOfDone":  "现有盘点+新素材清单+提示词",
+                      "title":  "素材协作计划+生图提示词",
+                      "status":  "pending"
+                  },
+                  {
+                      "id":  "F-03",
+                      "owner":  "cursor",
+                      "files":  [
+                                    "docs/UI修复方案.md"
+                                ],
+                      "review":  null,
+                      "defOfDone":  "每条文件+行号+改法",
+                      "title":  "UI审查P1/P2修复方案",
+                      "status":  "pending"
+                  },
+                  {
+                      "id":  "F-04",
+                      "owner":  "cursor",
+                      "files":  [
+                                    "docs/演示逐镜脚本.md"
+                                ],
+                      "review":  null,
+                      "defOfDone":  "镜头级：画面/台词/操作/时长",
+                      "title":  "演示视频逐镜脚本",
+                      "status":  "pending"
+                  }
+              ],
+    "updated":  "2026-08-12"
 }

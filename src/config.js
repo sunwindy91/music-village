@@ -39,7 +39,7 @@ MV.config = {
   correctToPass: 3,       // 连对/累计对几题过关（谁更高·听音找家·认识音符）
   listenRange: { low: 60, high: 67 }, // C4-G4（MIDI）
   highlowSpans: [7, 5, 3],           // 难度递进：两音跨度（半音）
-  drumWindowMs: 250,       // 强拍判定的容差
+  drumWindowMs: 400,       // 强拍判定容差（儿童反应节奏，放宽到 ±400ms）
   drumHitRate: 0.6,        // 命中率达标线
 
   /* —— 网格作曲 —— */

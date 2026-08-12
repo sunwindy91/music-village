@@ -274,10 +274,6 @@ img, svg { display: block; }
   color: var(--gray);
   font-size: 14px;
   padding: 8px 14px;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   border-radius: var(--r-pill);
   cursor: pointer;
 }
@@ -1013,7 +1009,7 @@ svg.map-bg > *:not(#trail):not(#trail-core) { display: none; }
 }
 .grid-cell {
   aspect-ratio: 1.15;
-  min-height: 44px;
+  min-height: 40px;
   border-radius: 14px;
   background: rgba(232, 176, 75, .10);
   border: 2px solid rgba(45, 99, 73, .16);

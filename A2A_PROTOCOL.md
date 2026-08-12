@@ -46,6 +46,26 @@
   4. Cursor 收到 `rejected`：按意见改 → 重新 `in_progress → review`
 - **冲突规避**：同一时间一个任务只允许一个 owner 改 `src/`；文案类任务只碰 `docs/`；我改 `src/` 时会先 `git pull` 且 Cursor 该任务不在 `in_progress`
 
+## 2.5 步骤报告（每次都有信息回复 · 快速对齐颗粒度）★ 必读
+
+**为什么**：导演（我）需要知道 Cursor 每一步做到哪了，而不必等全部完成。Kimi 等模型在长任务里容易"闷头干完才发现方向偏"，步骤留痕能提前纠偏。
+
+**规则（Cursor 必须遵守）**：
+1. 每个任务至少 **3 次留痕**：① 开工 ② 中途 checkpoint（产出大纲/首稿/关键决策）③ 完成
+2. 每次留痕 = 三件套：
+   - `git commit -m "cursor: 任务X · 第N步：做了啥"`（提交信息写清楚"第几步+做了什么"）
+   - 更新 `tasks/TASK_STATUS.json`：`status` + `note` 字段（做了哪步 / 下一步 / 有无阻塞）
+   - 把**关键中间产物/决策/疑问**追加到 `tasks/REPORT.md`（每次 append，不覆盖）
+3. **导演轮询节奏**：我每次看 `git log`（cursor 提交）+ `tasks/REPORT.md` 末尾 → 快速对齐 → 必要时回复意见（写进 `tasks/REVIEW_FEEDBACK.md` 或直接在 REPORT 追加 `[导演]` 行）
+4. **阻塞立即上报**：任何卡点（依赖、素材缺失、需求不清）→ commit + REPORT 标注 `[阻塞]`，不要自己闷着改方向
+
+**颗粒度示例**（台词落地任务 F-01）：
+- 第 1 步：读 lines.js + 打磨建议 → commit "F-01 第1步：已对照完成映射清单"
+- 第 2 步：改 splash/stumble 两段 → commit "F-01 第2步：splash+stumble 已落地，其余待续"
+- 第 3 步：全部落地 + 冒烟 → commit "F-01 第3步：完成，27 PASS"
+
+---
+
 ## 3. 任务卡片模板（对齐颗粒度）
 
 每个任务必须写清：
