@@ -14,7 +14,7 @@ MV.locations = [
     subtitle: '先听一听 · 声音的高低长短',
     memory: '晓声最初的听觉',
     pos: [50, 21],          // 在地图场景中的百分比位置 [x%, y%]
-    levels: ['highlow', 'drum', 'same']
+    levels: ['highlow', 'drum', 'same', 'quiz0']
   },
   {
     id: 'scale',
@@ -22,7 +22,7 @@ MV.locations = [
     subtitle: '认一认 · 音符的名字',
     memory: '晓声的歌喉',
     pos: [50, 56],
-    levels: ['notes', 'walkstop']
+    levels: ['notes', 'walkstop', 'quiz1']
   },
   {
     id: 'meadow',
@@ -30,7 +30,7 @@ MV.locations = [
     subtitle: '做一做 · 种出你自己的歌',
     memory: '晓声的梦',
     pos: [50, 84],
-    levels: ['compose']
+    levels: ['compose', 'quiz2']
   }
 ];
 
@@ -88,6 +88,36 @@ MV.levels = [
     icon: 'seed',
     brief: '把音符种进田里，变成真五线谱',
     theory: '创作 · 记谱'
+  },
+  {
+    id: 'quiz0',
+    loc: 'valley',
+    title: '乐理小测',
+    type: 'quiz',
+    icon: 'pencil',
+    brief: '3 题验收 · 检验你的耳朵',
+    theory: '评估 · 听辨',
+    quiz: 'valley'
+  },
+  {
+    id: 'quiz1',
+    loc: 'scale',
+    title: '乐理小测',
+    type: 'quiz',
+    icon: 'pencil',
+    brief: '3 题验收 · 唱名与时值',
+    theory: '评估 · 乐理',
+    quiz: 'scale'
+  },
+  {
+    id: 'quiz2',
+    loc: 'meadow',
+    title: '乐理小测',
+    type: 'quiz',
+    icon: 'pencil',
+    brief: '3 题验收 · 创作与记谱',
+    theory: '评估 · 创造',
+    quiz: 'meadow'
   }
 ];
 
@@ -104,3 +134,51 @@ MV.solfa = [
 
 /* 网格作曲的行音高（低→高，C4..G4） */
 MV.gridPitches = [60, 62, 64, 65, 67];
+
+/* ============================================================
+ * 聚类课程：理论导入（每个大聚类首进的「晓声小课堂」）
+ * ============================================================ */
+MV.theories = {
+  valley: {
+    title: '声音的小秘密',
+    body: '声音有高有低——高的像小鸟飞上天，低的像溪水流下坡；还有长有短——短的叫「走」，长的叫「走——」。听的时候，耳朵就是最好的老师。'
+  },
+  scale: {
+    title: '音阶楼梯',
+    body: '音乐家把七个声音排成楼梯，就是音阶：do re mi fa sol la si。音符还会走路：走一步是四分，走两步是二分，走四步是全音符。'
+  },
+  meadow: {
+    title: '写你自己的歌',
+    body: '把喜欢的音符排排队，就变成旋律——你的歌！写下来就是五线谱，谁都看得懂。歌有性格：跳来跳去是小鸟，缓缓流动是小溪，往高处飞是星星。'
+  }
+};
+
+/* ============================================================
+ * 聚类课程：乐理小测（形成性评估 · 乐理小达人式选择题）
+ * ============================================================ */
+MV.quizzes = {
+  valley: {
+    name: '声音山谷 · 乐理小测',
+    questions: [
+      { q: '高的音，像什么？', options: ['小鸟飞得高', '溪水流得低', '都一样'], ans: 0 },
+      { q: '鼓点「走——走——走——停」，停的时候要？', options: ['拍手', '休息不动', '唱歌'], ans: 1 },
+      { q: '声音的高和低，音乐里叫？', options: ['音高', '音色', '拍子'], ans: 0 }
+    ]
+  },
+  scale: {
+    name: '音阶山谷 · 乐理小测',
+    questions: [
+      { q: 'do re mi 之后，下一个是？', options: ['fa', 'sol', 'la'], ans: 0 },
+      { q: '「走——」比「走」长？', options: ['一样长', '长一倍', '长三倍'], ans: 1 },
+      { q: '1 2 3 4 5 6 7，最后一个数字是？', options: ['6', '7', '8'], ans: 1 }
+    ]
+  },
+  meadow: {
+    name: '旋律草原 · 乐理小测',
+    questions: [
+      { q: '五线谱上越往上，音越？', options: ['高', '低', '一样'], ans: 0 },
+      { q: '把歌存成图片，是为了？', options: ['带回家给爸爸妈妈看', '删掉', '藏起来'], ans: 0 },
+      { q: '蹦蹦跳跳的旋律，是哪种音乐人格？', options: ['小鸟型', '小溪型', '星星型'], ans: 0 }
+    ]
+  }
+};

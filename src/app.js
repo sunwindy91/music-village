@@ -245,6 +245,28 @@
     $('.loc-panel-close', overlay).addEventListener('pointerdown', () => overlay.remove());
 
     const list = $('.loc-levels', overlay);
+    const theory = MV.theories && MV.theories[loc.id];
+    if (theory && !theorySeen(loc.id)) {
+      // 聚类理论导入：先「晓声小课堂」再关卡（教学闭环：理论→练习）
+      list.innerHTML =
+        '<div class="theory-card" style="padding:6px 4px 2px">' +
+          '<h3 style="font-size:20px;margin:0 0 10px;color:#5b4632">' + theory.title + '</h3>' +
+          '<p style="font-size:16px;line-height:1.7;margin:0 0 16px;color:#3d2f1f">' + theory.body + '</p>' +
+          '<button class="btn btn-gold" id="theory-go" type="button" style="width:100%;min-height:48px">我知道了，开始闯关！</button>' +
+        '</div>';
+      $('#theory-go', list).addEventListener('pointerdown', () => {
+        markTheorySeen(loc.id);
+        renderLevelChips(loc, list);
+      });
+    } else {
+      renderLevelChips(loc, list);
+    }
+    // 面板自带记忆文案，避免地图气泡被遮罩遮挡
+  }
+
+  /* 渲染聚类关卡列表（含乐理小测入口） */
+  function renderLevelChips(loc, list) {
+    list.innerHTML = '';
     loc.levels.forEach(id => {
       const lv = MV.levels.find(x => x.id === id);
       if (!lv) return;
@@ -253,15 +275,21 @@
       chip.type = 'button';
       chip.className = 'loc-level' + (done ? ' done' : '');
       chip.innerHTML =
-        '<span class="loc-level-ico" aria-hidden="true">' + (done ? '✓' : '♪') + '</span>' +
+        '<span class="loc-level-ico" aria-hidden="true">' + (done ? '✓' : (lv.type === 'quiz' ? '✎' : '♪')) + '</span>' +
         '<span class="loc-level-txt"><b>' + lv.title + '</b><small>' + lv.brief + '</small></span>' +
         '<span class="loc-level-theory">' + lv.theory + '</span>' +
         '<span class="loc-level-go" aria-hidden="true">→</span>';
       chip.addEventListener('pointerdown', () => openLevel(id));
       list.appendChild(chip);
     });
+  }
 
-    // 面板自带记忆文案，避免地图气泡被遮罩遮挡
+  /* 聚类理论已读标记（localStorage，独立 key，不污染进度） */
+  function theorySeen(id) {
+    try { const d = JSON.parse(localStorage.getItem('mv-theory-seen') || '{}'); return !!d[id]; } catch (e) { return false; }
+  }
+  function markTheorySeen(id) {
+    try { const d = JSON.parse(localStorage.getItem('mv-theory-seen') || '{}'); d[id] = 1; localStorage.setItem('mv-theory-seen', JSON.stringify(d)); } catch (e) { /* 隐私模式忽略 */ }
   }
 
   /* ---------------- 关卡舞台 ---------------- */
@@ -922,6 +950,80 @@
     $('#ws-replay').addEventListener('pointerdown', () => { if (!playing) playRound(); });
     renderProgress();
     setTimeout(() => { if (alive()) playRound(); }, 600);
+  };
+
+  /* —— 关卡：乐理小测（聚类形成性评估 · 乐理小达人式选择题） —— */
+  runners.quiz = function (lv, body) {
+    const quiz = MV.quizzes && MV.quizzes[lv.quiz];
+    if (!quiz) { body.innerHTML = '<p class="stage-intro">题目还在路上，先去别的山谷玩吧！</p>'; return; }
+    let round = 0, correct = 0, wrong = 0, answered = false;
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="qz-intro">' + quiz.name + '</div>' +
+        '<div id="qz-progress"></div>' +
+        '<p class="qz-question" id="qz-question" style="font-size:18px;line-height:1.6;margin:10px 0 16px;text-align:center;min-height:56px"></p>' +
+        '<div class="qz-options" id="qz-options" style="display:flex;flex-direction:column;gap:12px;max-width:360px;margin:0 auto"></div>' +
+      '</div>';
+
+    const intro = $('#qz-intro');
+    const qBox = $('#qz-question');
+    const optBox = $('#qz-options');
+    const progBox = $('#qz-progress');
+
+    function renderProgress() { progBox.replaceChildren(stepDots(quiz.questions.length, correct)); }
+
+    function renderRound() {
+      if (!alive()) return;
+      answered = false;
+      const item = quiz.questions[round];
+      intro.textContent = '第 ' + (round + 1) + ' 题 · ' + quiz.name;
+      qBox.textContent = item.q;
+      optBox.innerHTML = '';
+      item.options.forEach((opt, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'answer-btn';
+        b.textContent = opt;
+        b.style.minHeight = '52px';
+        b.addEventListener('pointerdown', () => answer(i));
+        optBox.appendChild(b);
+      });
+    }
+
+    function answer(i) {
+      if (!alive() || answered) return;
+      answered = true;
+      const item = quiz.questions[round];
+      const ok = i === item.ans;
+      [...optBox.children].forEach(bt => bt.disabled = true);
+      if (ok) {
+        MV.MusicCore.sfx('correct');
+        addPoints(C.pointsPerCorrect);
+        correct++; wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(pick(MV.lines.quiz.correct), { done: () => {
+          if (!alive()) return;
+          if (correct >= quiz.questions.length) {
+            MV.VoiceCore.say(MV.lines.quiz.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+          } else { round++; setTimeout(() => { if (alive()) renderRound(); }, 450); }
+        }});
+      } else {
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        const ansText = item.options[item.ans];
+        MV.VoiceCore.say(MV.lines.quiz.wrong.replace('{ans}', ansText), { done: () => {
+          if (!alive()) return;
+          wrong = 0;
+          setTimeout(() => { if (alive()) renderRound(); }, 400); // 不判死：看答案后重来本题
+        }});
+      }
+    }
+
+    renderProgress();
+    renderRound();
   };
 
   runners.compose = function (lv, body) {

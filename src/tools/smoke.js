@@ -94,8 +94,12 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   console.log('== 2. 声音山谷 · 谁更高 ==');
   click(document.querySelector('.loc-node'));
   await sleep(80);
+  const tGo0 = document.querySelector('#theory-go');
+  ok(!!tGo0, '声音山谷：理论导入卡先出现（教学闭环第一步）');
+  click(tGo0);
+  await sleep(80);
   const chips = document.querySelectorAll('.loc-level');
-  ok(chips.length === 3, '声音山谷有 3 个关卡入口');
+  ok(chips.length === 4, '声音山谷有 4 个关卡入口（含乐理小测）');
   click(chips[0]);
   await sleep(500);
   ok(window.MV.App.state.view === 'stage', '进入关卡舞台');
@@ -131,6 +135,8 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   console.log('== 5. 音阶山谷 · 认识音符 ==');
   click(document.querySelectorAll('.loc-node')[1]);
   await sleep(80);
+  const tGo1 = document.querySelector('#theory-go');
+  if (tGo1) { click(tGo1); await sleep(80); }
   const ntChip = document.querySelector('.loc-level');
   if (!ntChip) { console.error('  ✗ FAIL 打开音阶山谷失败'); process.exit(1); }
   click(ntChip);
@@ -147,20 +153,35 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelectorAll('.loc-node')[1]);
   await sleep(80);
   const wsChips = document.querySelectorAll('.loc-level');
-  ok(wsChips.length === 2, '音阶山谷有 2 个关卡入口（认识音符 + 走走停停）');
+  ok(wsChips.length === 3, '音阶山谷有 3 个关卡入口（认识音符 + 走走停停 + 乐理小测）');
   click(wsChips[1]);
-  await sleep(500);
+  // 轮询等待渲染（levelIntro 打字机完成后才 startLevel，固定 sleep 有时序抖动）
+  let wsCards = [];
+  for (let i = 0; i < 40; i++) { wsCards = document.querySelectorAll('.ws-card'); if (wsCards.length >= 3) break; await sleep(100); }
   ok(window.MV.App.state.view === 'stage', '走走停停：进入关卡舞台');
-  const wsCards = document.querySelectorAll('.ws-card');
   ok(wsCards.length === 3, '走走停停：三张时值卡渲染（走/走——/走————）');
-  await sleep(600);
+  await sleep(400);
   ok(!wsCards[0].disabled, '走走停停：播放结束后可作答');
+  click(document.querySelector('#stage-back'));
+  await sleep(120);
+
+  console.log('== 5c. 音阶山谷 · 乐理小测（聚类评估） ==');
+  click(document.querySelectorAll('.loc-node')[1]);
+  await sleep(80);
+  const qzChips = document.querySelectorAll('.loc-level');
+  click(qzChips[2]);
+  let qzQ = null;
+  for (let i = 0; i < 40; i++) { qzQ = document.querySelector('#qz-question'); if (qzQ) break; await sleep(100); }
+  ok(!!qzQ, '乐理小测：题目渲染');
+  ok(document.querySelectorAll('.qz-options .answer-btn').length === 3, '乐理小测：3 个选项就绪');
   click(document.querySelector('#stage-back'));
   await sleep(120);
 
   console.log('== 6. 旋律草原 · 网格作曲 + 五线谱出口 ==');
   click(document.querySelectorAll('.loc-node')[2]);
   await sleep(80);
+  const tGo2 = document.querySelector('#theory-go');
+  if (tGo2) { click(tGo2); await sleep(80); }
   click(document.querySelector('.loc-level'));
   await sleep(500);
   const cells = document.querySelectorAll('.grid-cell');
