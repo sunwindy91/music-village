@@ -117,8 +117,8 @@
                       "review":  null,
                       "defOfDone":  "补齐聚类架构/教学闭环/新关卡/动画首页 + 亮点5条升级 + Q&A 12+",
                       "title":  "答辩材料 v4（对齐最新功能）",
-                      "status":  "pending",
-                      "note":  "08-13 导演已派活(信封B存档 tasks/envelope-B-F05.md)：v4 新文件不覆盖 v3；8/13 提交择一",
+                      "status":  "review",
+                      "note":  "08-13 Cursor完成(→review)：v4新文件不覆盖v3；教学闭环(理论→关卡→小测)入亮点；Q&A扩至13个(含如何证明教会了/聚类是什么/关卡口径)；口径核自src：±400ms/88→76→72/8关+3小测=11入口/3聚类；冒烟38PASS本机实测复核",
                       "branch":  "cursor/f-05"
                   }
               ],
