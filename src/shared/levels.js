@@ -42,6 +42,7 @@ MV.levels = [
     type: 'highlow',
     icon: 'bird',
     brief: '听两个声音，谁高谁低',
+    lesson: '第 1 课',
     theory: '音高 · 听辨'
   },
   {
@@ -51,6 +52,7 @@ MV.levels = [
     type: 'drum',
     icon: 'drum',
     brief: '跟着走——走——走——停',
+    lesson: '第 2 课',
     theory: '节奏 · 时值'
   },
   {
@@ -60,6 +62,7 @@ MV.levels = [
     type: 'same',
     icon: 'nest',
     brief: '两个声音，一样还是不一样',
+    lesson: '第 3 课',
     theory: '音色 · 同异'
   },
   {
@@ -69,6 +72,7 @@ MV.levels = [
     type: 'notes',
     icon: 'fruit',
     brief: '听音摘果，认识 1 2 3 4 5 6 7',
+    lesson: '乐理课 第 1 课',
     theory: '唱名 · 音高对应'
   },
   {
@@ -78,6 +82,7 @@ MV.levels = [
     type: 'walkstop',
     icon: 'foot',
     brief: '听声音长短，走了几步？',
+    lesson: '乐理课 第 2 课',
     theory: '时值 · 音符长短'
   },
   {
@@ -87,6 +92,7 @@ MV.levels = [
     type: 'fillgap',
     icon: 'puzzle',
     brief: '听旋律，补上缺的音',
+    lesson: '乐理课 第 3 课',
     theory: '旋律 · 音高序列'
   },
   {
@@ -96,6 +102,7 @@ MV.levels = [
     type: 'compose',
     icon: 'seed',
     brief: '把音符种进田里，变成真五线谱',
+    lesson: '创作课 第 1 课',
     theory: '创作 · 记谱'
   },
   {
@@ -105,6 +112,7 @@ MV.levels = [
     type: 'quiz',
     icon: 'pencil',
     brief: '3 题验收 · 检验你的耳朵',
+    lesson: '复习课',
     theory: '评估 · 听辨',
     quiz: 'valley'
   },
@@ -115,6 +123,7 @@ MV.levels = [
     type: 'quiz',
     icon: 'pencil',
     brief: '3 题验收 · 唱名与时值',
+    lesson: '复习课',
     theory: '评估 · 乐理',
     quiz: 'scale'
   },
@@ -125,6 +134,7 @@ MV.levels = [
     type: 'quiz',
     icon: 'pencil',
     brief: '3 题验收 · 创作与记谱',
+    lesson: '复习课',
     theory: '评估 · 创造',
     quiz: 'meadow'
   },
@@ -135,6 +145,7 @@ MV.levels = [
     type: 'timbre',
     icon: 'ear',
     brief: '听一听，是哪个乐器的声音？',
+    lesson: '创作课 第 2 课',
     theory: '音色 · 乐器性格'
   }
 ];

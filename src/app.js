@@ -267,7 +267,7 @@
       chip.innerHTML =
         '<span class="loc-level-ico" aria-hidden="true">' + (done ? '✓' : (lv.type === 'quiz' ? '✎' : '♪')) + '</span>' +
         '<span class="loc-level-txt"><b>' + lv.title + '</b><small>' + lv.brief + '</small></span>' +
-        '<span class="loc-level-theory">' + lv.theory + '</span>' +
+        '<span class="loc-level-theory">' + (lv.lesson ? lv.lesson + ' · ' : '') + lv.theory + '</span>' +
         '<span class="loc-level-go" aria-hidden="true">→</span>';
       chip.addEventListener('pointerdown', () => openLevel(id));
       list.appendChild(chip);
