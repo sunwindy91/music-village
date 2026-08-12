@@ -68,7 +68,7 @@
                       "defOfDone":  "打磨建议落地+27PASS+不动key",
                       "title":  "台词落地到 lines.js（特批改文案）",
                       "status":  "in_progress",
-                      "note":  "第5步：celebrate+map+levelIntro+关卡文案8处落地；node --check通过"
+                      "note":  "第6步：docs/小鹿乱撞故事线.md 已建（5句钩子）"
                   },
                   {
                       "id":  "F-02",

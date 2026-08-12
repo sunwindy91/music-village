@@ -54,3 +54,8 @@
 - compose.first：→「这是你自己的第一首歌耶！」
 - 保留项：levelIntro.compose、staffReady、celebrate.clear[1]（建议原文标注「保留」）
 - 验证：`node --check shared/lines.js` 通过（EXIT=0）；{n}/{name}/{sol} 占位符所在行未触碰
+- commit：a2c32c5「cursor: F-01 第5步: celebrate+map+levelIntro+关卡内文案8处微调落地」
+
+## 第 6 步 · 小鹿乱撞故事线（新建 docs/小鹿乱撞故事线.md）
+- 5 句钩子文案，源自建议第 6 节（第 2 句「就有」润为「你每点亮…就有」，更贴第二人称陪伴口吻，其余一致）
+- 按建议要求：仅作文案资产，本轮未写入 lines.js
