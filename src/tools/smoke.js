@@ -217,6 +217,18 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   ok(!!document.querySelector('.personality-card'), '音乐人格卡已显示');
   ok(document.querySelector('#staff-overlay').hidden === false, '五线谱出口覆盖层可见');
 
+  console.log('== 6b. 旋律草原 · 音色捉迷藏（听音色辨乐器） ==');
+  click(document.querySelectorAll('.loc-node')[2]);
+  await sleep(80);
+  const tbChips = document.querySelectorAll('.loc-level');
+  ok(tbChips.length === 3, '旋律草原有 3 个关卡入口（旋律田+音色捉迷藏+乐理小测）');
+  click(tbChips[1]);
+  let tbOpts = [];
+  for (let i = 0; i < 40; i++) { tbOpts = document.querySelectorAll('.tb-options .answer-btn'); if (tbOpts.length >= 4) break; await sleep(100); }
+  ok(tbOpts.length === 4, '音色捉迷藏：4 个乐器选项就绪');
+  click(document.querySelector('#stage-back'));
+  await sleep(120);
+
   console.log('== 7. 事件兼容层（无 PointerEvent → click 兜底） ==');
   {
     const dom2 = new JSDOM('<html><head></head><body><button id="b">x</button></body></html>',

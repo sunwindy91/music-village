@@ -30,7 +30,7 @@ MV.locations = [
     subtitle: '做一做 · 种出你自己的歌',
     memory: '晓声的梦',
     pos: [50, 84],
-    levels: ['compose', 'quiz2']
+    levels: ['compose', 'timbre', 'quiz2']
   }
 ];
 
@@ -127,6 +127,15 @@ MV.levels = [
     brief: '3 题验收 · 创作与记谱',
     theory: '评估 · 创造',
     quiz: 'meadow'
+  },
+  {
+    id: 'timbre',
+    loc: 'meadow',
+    title: '音色捉迷藏',
+    type: 'timbre',
+    icon: 'ear',
+    brief: '听一听，是哪个乐器的声音？',
+    theory: '音色 · 乐器性格'
   }
 ];
 
