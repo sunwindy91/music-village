@@ -127,11 +127,11 @@
                       "files":  [
                                     "docs/首页节点布局设计.md"
                                 ],
-                      "review":  null,
+                      "review":  "ok：S形动线消除共线/贴trail/移动端间距核验达标/晓声拖拽参考白小纯/红线全守",
                       "defOfDone":  "节点拓扑+连线+圆形按钮规格+晓声拖拽细节+入场动画规范",
                       "title":  "首页画布式任务节点布局设计规范",
-                      "status":  "pending",
-                      "note":  "08-13 导演已派活(信封B存档 tasks/envelope-B-F06.md)：画布节点+线穿着+圆形按钮+晓声拖拽桌宠；导演实现",
+                      "status":  "done",
+                      "note":  "08-13 导演验收通过：规范已合入 main；首页实现按规范（renderLocs改造+连线层+晓声拖拽）",
                       "branch":  "cursor/f-06"
                   }
               ],
