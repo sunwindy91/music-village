@@ -48,7 +48,10 @@ MV.MusicCore = (() => {
       oscillator: { type: 'sine' },
       envelope: { attack: .002, decay: .55, sustain: 0, release: .6 }
     }));
-    instruments.water = guard('water', () => new Tone.PolySynth(Tone.PluckSynth, { resonance: .7, dampening: 6000 }));
+    instruments.water = guard('water', () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine' },
+      envelope: { attack: .002, decay: .12, sustain: 0, release: .2 }   // 水滴感：快速衰减，保证发声（原 PluckSynth 在 PolySynth 下不可靠）
+    }));
     instruments.piano = guard('piano', () => new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'triangle' },
       envelope: { attack: .008, decay: .5, sustain: .22, release: .9 }
