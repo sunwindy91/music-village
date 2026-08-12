@@ -22,7 +22,7 @@ MV.locations = [
     subtitle: '认一认 · 音符的名字',
     memory: '晓声的歌喉',
     pos: [50, 56],
-    levels: ['notes', 'walkstop', 'fillgap', 'quiz1']
+    levels: ['notes', 'walkstop', 'fillgap', 'sightread', 'quiz1']
   },
   {
     id: 'meadow',
@@ -94,6 +94,16 @@ MV.levels = [
     brief: '听旋律，补上缺的音',
     lesson: '乐理课 第 3 课',
     theory: '旋律 · 音高序列'
+  },
+  {
+    id: 'sightread',
+    loc: 'scale',
+    title: '看谱弹奏',
+    type: 'sightread',
+    icon: 'staff',
+    brief: '看五线谱上的音符，把它弹出来',
+    lesson: '乐理课 第 4 课',
+    theory: '视谱 · 弹奏'
   },
   {
     id: 'compose',

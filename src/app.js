@@ -1214,6 +1214,97 @@
     setTimeout(() => { if (alive()) buildRound(); }, 600);
   };
 
+  /* —— 关卡：看谱弹奏（视谱启蒙 · 叔叔大纲第 3 阶：VexFlow 真实五线谱 → 按序点唱名） —— */
+  runners.sightread = function (lv, body) {
+    const solfa = MV.solfa;
+    const pool = [
+      [0, 1, 2],          // do re mi
+      [0, 2, 4],          // do mi sol
+      [4, 2, 0],          // sol mi do
+      [0, 1, 2, 3]        // do re mi fa
+    ];
+    let round = 0, correct = 0, wrong = 0, pos = 0, seq = [];
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="sr-intro">第 1 题 · 看谱弹奏</div>' +
+        '<div id="sr-progress"></div>' +
+        '<div class="sr-staff" id="sr-staff" style="background:#fffdf7;border-radius:14px;padding:10px;margin:10px auto;max-width:440px;min-height:130px"></div>' +
+        '<p class="sr-hint" id="sr-hint" style="text-align:center;font-size:15px;color:#8a7a63;margin:6px 0 10px">谱上越高，音越高——按顺序点出它们！</p>' +
+        '<div class="sr-keys" id="sr-keys" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:440px;margin:0 auto"></div>' +
+      '</div>';
+
+    const intro = $('#sr-intro');
+    const progBox = $('#sr-progress');
+    const staffBox = $('#sr-staff');
+    const hint = $('#sr-hint');
+    const keyBox = $('#sr-keys');
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function renderStaff(seqArr) {
+      const notes = seqArr.map((sIdx, i) => ({ midi: solfa[sIdx].midi, start: i, dur: 1 }));
+      staffBox.innerHTML = '';
+      try { MV.Staff.render(notes, staffBox, { compact: true }); } catch (e) { staffBox.textContent = '（谱面渲染中…）'; }
+    }
+
+    function buildRound() {
+      if (!alive()) return;
+      seq = pool[Math.min(round, pool.length - 1)];
+      pos = 0;
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 看谱弹奏（' + seq.length + ' 个音）';
+      renderStaff(seq);
+      keyBox.innerHTML = '';
+      const used = [...new Set(seq)].sort((a, b) => a - b);
+      used.forEach(sIdx => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'answer-btn';
+        b.innerHTML = '<b style="font-size:20px">' + solfa[sIdx].sol + '</b><small style="display:block;opacity:.85">' + solfa[sIdx].num + '</small>';
+        b.style.minWidth = '64px';
+        b.style.minHeight = '56px';
+        b.addEventListener('pointerdown', () => tap(sIdx));
+        keyBox.appendChild(b);
+      });
+      hint.textContent = '第 1 个音：看看谱上第一个音符在哪个位置？';
+    }
+
+    function tap(sIdx) {
+      if (!alive() || pos >= seq.length) return;
+      if (sIdx === seq[pos]) {
+        MV.MusicCore.sfx('correct');
+        MV.MusicCore.playMidi(solfa[sIdx].midi, { dur: .4, inst: 'piano' });
+        pos++;
+        if (pos >= seq.length) {
+          correct++; wrong = 0;
+          renderProgress();
+          hint.textContent = '弹对啦！听——你弹的旋律！';
+          const notes = seq.map((s, i) => ({ midi: solfa[s].midi, start: i, dur: .8 }));
+          MV.MusicCore.playSequence(notes, { bpm: 80, inst: 'piano' });
+          MV.VoiceCore.say(pick(MV.lines.sightread.correct), { done: () => {
+            if (!alive()) return;
+            if (correct >= C.correctToPass) {
+              MV.VoiceCore.say(MV.lines.sightread.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+            } else { round++; setTimeout(() => { if (alive()) buildRound(); }, 500); }
+          }});
+        } else {
+          hint.textContent = '第 ' + (pos + 1) + ' 个音：谱上第 ' + (pos + 1) + ' 个音符在哪儿？';
+        }
+      } else {
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        const stumble = wrong >= 2;
+        if (stumble) wrong = 0;
+        MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.sightread) + ' ' : '') + pick(MV.lines.sightread.wrong), {});
+      }
+    }
+
+    renderProgress();
+    buildRound();
+  };
+
   runners.compose = function (lv, body) {
     const pitches = MV.gridPitches.slice();       // [60,62,64,65,67] 低→高
     const rows = pitches.length, cols = C.gridCols;
