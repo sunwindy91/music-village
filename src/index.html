@@ -137,7 +137,17 @@
         <!-- 晓声 -->
         <div class="xs-holder map-xs" id="map-xs"></div>
 
-        <!-- 地点节点（JS 按 MV.locations 生成） -->
+        <!-- 背景漂浮音符（程序化动画层，一致性不变） -->
+        <div class="note-float" id="note-float" aria-hidden="true">
+          <span class="nf" style="left:12%;top:16%;animation-delay:0s;font-size:22px">♪</span>
+          <span class="nf" style="left:80%;top:24%;animation-delay:1.1s;font-size:18px">♫</span>
+          <span class="nf" style="left:22%;top:50%;animation-delay:2s;font-size:20px">♪</span>
+          <span class="nf" style="left:72%;top:58%;animation-delay:.6s;font-size:16px">♩</span>
+          <span class="nf" style="left:44%;top:10%;animation-delay:1.6s;font-size:24px">♬</span>
+          <span class="nf" style="left:64%;top:38%;animation-delay:2.6s;font-size:15px">♪</span>
+        </div>
+
+        <!-- 地点节点（JS 按 MV.locations 生成聚类卡） -->
         <div class="locs" id="map-locs"></div>
 
         <!-- 萤火层 -->
@@ -231,6 +241,20 @@
 
   <!-- 积分飘字 -->
   <div id="points-toast" class="points-toast" aria-hidden="true"></div>
+
+  <!-- 首页聚类选择页样式（内嵌，避免 CSS 文件线改动） -->
+  <style>
+    #map-locs { position: relative; z-index: 22; display: flex; flex-direction: column; align-items: center; padding: 10px 0 4px; }
+    .cluster-card { width: min(92%, 380px); border-radius: 18px; overflow: hidden; background: #fffdf7; border: none; cursor: pointer; padding: 0; box-shadow: 0 6px 18px rgba(93,74,50,.18); text-align: left; margin: 0 auto 16px; animation: ccFloat 3.4s ease-in-out infinite; touch-action: manipulation; }
+    .cluster-card:nth-child(2) { animation-delay: .4s; }
+    .cluster-card:nth-child(3) { animation-delay: .8s; }
+    .cluster-card.completed { box-shadow: 0 6px 18px rgba(232,176,75,.35); }
+    @keyframes ccFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    .note-float { position: absolute; inset: 0; pointer-events: none; z-index: 15; }
+    .nf { position: absolute; color: #e8b04b; opacity: .55; animation: nfFloat 6s ease-in-out infinite; text-shadow: 0 0 8px rgba(232,176,75,.4); }
+    @keyframes nfFloat { 0%,100% { transform: translateY(0) rotate(0deg); opacity: .35; } 50% { transform: translateY(-20px) rotate(10deg); opacity: .8; } }
+    @media (prefers-reduced-motion: reduce) { .cluster-card, .nf { animation: none; } }
+  </style>
 
   <script src="config.js"></script>
   <script src="shared/lines.js"></script>

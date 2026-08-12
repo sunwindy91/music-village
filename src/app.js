@@ -182,33 +182,20 @@
     wrap.innerHTML = '';
     MV.locations.forEach(loc => {
       const allDone = loc.levels.every(id => App.state.completed[id]);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'loc-node' + (allDone ? ' completed' : '');
-      // 内联定位兜底：不依赖 .loc-node 类样式，任何浏览器/任何 CSS 加载状态都能显示节点
-      btn.style.position = 'absolute';
-      btn.style.left = loc.pos[0] + '%';
-      btn.style.top = loc.pos[1] + '%';
-      btn.style.zIndex = '99';
-      btn.style.display = 'flex';
-      btn.style.flexDirection = 'column';
-      btn.style.alignItems = 'center';
-      btn.style.gap = '6px';
-      btn.style.width = '92px';
-      btn.style.margin = '0';
-      btn.style.padding = '0';
-      btn.style.background = 'transparent';
-      btn.style.border = 'none';
-      btn.style.cursor = 'pointer';
-      btn.style.webkitTransform = 'translate(-50%, -50%)';
-      btn.style.transform = 'translate(-50%, -50%)';
-      btn.setAttribute('aria-label', loc.name + (allDone ? '（已完成）' : ''));
-      btn.innerHTML =
-        '<span class="loc-dot" aria-hidden="true">' + (allDone ? '✓' : '♪') + '</span>' +
-        '<span class="loc-label">' + loc.name + '</span>' +
-        '<span class="loc-sub">' + loc.subtitle + '</span>';
-      btn.addEventListener('pointerdown', () => openLocation(loc.id));
-      wrap.appendChild(btn);
+      const doneCount = loc.levels.filter(id => App.state.completed[id]).length;
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'cluster-card' + (allDone ? ' completed' : '');
+      card.setAttribute('aria-label', loc.name + (allDone ? '（已全部点亮）' : ''));
+      card.innerHTML =
+        '<img src="assets/cluster_' + loc.id + '.webp" alt="" loading="lazy" onerror="this.style.display=\'none\'" style="width:100%;height:112px;object-fit:cover;display:block">' +
+        '<div style="padding:10px 14px 12px;display:flex;flex-direction:column;gap:2px">' +
+          '<b style="font-size:19px;color:#5b4632">' + loc.name + '</b>' +
+          '<small style="font-size:13px;color:#8a7a63">' + loc.subtitle + '</small>' +
+          '<span style="font-size:12px;color:#9a5718;font-weight:bold;margin-top:4px">' + (allDone ? '✓ 已全部点亮' : '点亮 ' + doneCount + ' / ' + loc.levels.length) + '</span>' +
+        '</div>';
+      card.addEventListener('pointerdown', () => openLocation(loc.id));
+      wrap.appendChild(card);
     });
 
     // 底部：我的音乐会入口

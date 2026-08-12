@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
  * 冒烟测试 · jsdom 运行时（内联 <script> 执行，贴近真实浏览器）
  * 驱动 Splash→地图→各关卡→作曲 主流程，捕获 window error，
  * 断言关键 UI 出现。
@@ -89,10 +89,10 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelector('.splash-go'));
   await sleep(150);
   ok(window.MV.App.state.view === 'map', '点击开始后进入地图');
-  ok(document.querySelectorAll('.loc-node').length === 3, '地图上有 3 个地点节点');
+  ok(document.querySelectorAll('.cluster-card').length === 3, '地图上有 3 个地点节点');
 
   console.log('== 2. 声音山谷 · 谁更高 ==');
-  click(document.querySelector('.loc-node'));
+  click(document.querySelector('.cluster-card'));
   await sleep(80);
   const tGo0 = document.querySelector('#theory-go');
   ok(!!tGo0, '声音山谷：理论导入卡先出现（教学闭环第一步）');
@@ -115,7 +115,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   ok(window.MV.App.state.view === 'map', '返回地图');
 
   console.log('== 3. 小鼓手（渲染不崩溃） ==');
-  click(document.querySelector('.loc-node'));
+  click(document.querySelector('.cluster-card'));
   await sleep(80);
   click(document.querySelectorAll('.loc-level')[1]);
   await sleep(650);
@@ -124,7 +124,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 4. 听音找家 ==');
-  click(document.querySelector('.loc-node'));
+  click(document.querySelector('.cluster-card'));
   await sleep(80);
   click(document.querySelectorAll('.loc-level')[2]);
   await sleep(500);
@@ -133,7 +133,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 5. 音阶山谷 · 认识音符 ==');
-  click(document.querySelectorAll('.loc-node')[1]);
+  click(document.querySelectorAll('.cluster-card')[1]);
   await sleep(80);
   const tGo1 = document.querySelector('#theory-go');
   if (tGo1) { click(tGo1); await sleep(80); }
@@ -150,7 +150,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 5b. 音阶山谷 · 走走停停（时值听辨） ==');
-  click(document.querySelectorAll('.loc-node')[1]);
+  click(document.querySelectorAll('.cluster-card')[1]);
   await sleep(80);
   const wsChips = document.querySelectorAll('.loc-level');
   ok(wsChips.length === 4, '音阶山谷有 4 个关卡入口（认识音符+走走停停+旋律填空+乐理小测）');
@@ -166,7 +166,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 5b2. 音阶山谷 · 旋律填空（听→补全） ==');
-  click(document.querySelectorAll('.loc-node')[1]);
+  click(document.querySelectorAll('.cluster-card')[1]);
   await sleep(80);
   const fgChips = document.querySelectorAll('.loc-level');
   click(fgChips[2]);
@@ -178,7 +178,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 5c. 音阶山谷 · 乐理小测（聚类评估） ==');
-  click(document.querySelectorAll('.loc-node')[1]);
+  click(document.querySelectorAll('.cluster-card')[1]);
   await sleep(80);
   const qzChips = document.querySelectorAll('.loc-level');
   click(qzChips[3]);
@@ -190,7 +190,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 6. 旋律草原 · 网格作曲 + 五线谱出口 ==');
-  click(document.querySelectorAll('.loc-node')[2]);
+  click(document.querySelectorAll('.cluster-card')[2]);
   await sleep(80);
   const tGo2 = document.querySelector('#theory-go');
   if (tGo2) { click(tGo2); await sleep(80); }
@@ -218,7 +218,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   ok(document.querySelector('#staff-overlay').hidden === false, '五线谱出口覆盖层可见');
 
   console.log('== 6b. 旋律草原 · 音色捉迷藏（听音色辨乐器） ==');
-  click(document.querySelectorAll('.loc-node')[2]);
+  click(document.querySelectorAll('.cluster-card')[2]);
   await sleep(80);
   const tbChips = document.querySelectorAll('.loc-level');
   ok(tbChips.length === 3, '旋律草原有 3 个关卡入口（旋律田+音色捉迷藏+乐理小测）');
