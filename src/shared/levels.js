@@ -22,7 +22,7 @@ MV.locations = [
     subtitle: '认一认 · 音符的名字',
     memory: '晓声的歌喉',
     pos: [50, 56],
-    levels: ['notes', 'walkstop', 'quiz1']
+    levels: ['notes', 'walkstop', 'fillgap', 'quiz1']
   },
   {
     id: 'meadow',
@@ -79,6 +79,15 @@ MV.levels = [
     icon: 'foot',
     brief: '听声音长短，走了几步？',
     theory: '时值 · 音符长短'
+  },
+  {
+    id: 'fillgap',
+    loc: 'scale',
+    title: '旋律填空',
+    type: 'fillgap',
+    icon: 'puzzle',
+    brief: '听旋律，补上缺的音',
+    theory: '旋律 · 音高序列'
   },
   {
     id: 'compose',

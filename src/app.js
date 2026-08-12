@@ -1026,6 +1026,115 @@
     renderRound();
   };
 
+  /* —— 关卡：旋律填空（听旋律→补缺音 · 测音高序列记忆 · 蓝图 07） —— */
+  runners.fillgap = function (lv, body) {
+    const solfa = MV.solfa;                       // do re mi fa sol la si
+    const pool = [                                 // 旋律池（solfa 索引）
+      [0, 1, 2, 4],                                // do re mi sol
+      [0, 2, 4, 5],                                // do mi sol la
+      [4, 2, 0, 1],                                // sol mi do re
+      [0, 1, 2, 3, 4]                              // do re mi fa sol（5 音）
+    ];
+    const gapAt = [999, 1, 2];                     // 挖空位置：首轮末尾，之后中间
+    let round = 0, correct = 0, wrong = 0, playing = false, answered = false;
+    let seq, gapIdx, target, cards;
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="fg-intro">第 1 题 · 听旋律，找缺口</div>' +
+        '<div id="fg-progress"></div>' +
+        '<div class="fg-melody" id="fg-melody" style="display:flex;justify-content:center;gap:10px;margin:16px auto;flex-wrap:wrap;max-width:420px"></div>' +
+        '<div class="fg-options" id="fg-options" style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;max-width:420px;margin:0 auto"></div>' +
+        '<div class="compose-actions" style="justify-content:center">' +
+          '<button class="btn btn-ghost" id="fg-replay" type="button">再听一次</button>' +
+        '</div>' +
+      '</div>';
+
+    const intro = $('#fg-intro');
+    const progBox = $('#fg-progress');
+    const melBox = $('#fg-melody');
+    const optBox = $('#fg-options');
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function buildRound() {
+      if (!alive()) return;
+      answered = false;
+      playing = true;
+      seq = pool[Math.min(round, pool.length - 1)];
+      const gp = gapAt[Math.min(round, gapAt.length - 1)];
+      gapIdx = (gp === 999) ? seq.length - 1 : gp;
+      target = seq[gapIdx];
+      // 旋律小格（缺口显示 ？）
+      melBox.innerHTML = '';
+      seq.forEach((sIdx, i) => {
+        const d = document.createElement('span');
+        d.className = 'fg-note' + (i === gapIdx ? ' gap' : '');
+        d.textContent = (i === gapIdx) ? '？' : solfa[sIdx].sol;
+        d.style.cssText = 'width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:20px;' +
+          (i === gapIdx ? 'background:#f3e7d3;color:#9a5718;font-weight:bold' : 'background:#ffffff;color:#3d2f1f');
+        melBox.appendChild(d);
+      });
+      // 选项：正确答案 + 3 干扰（do re mi fa sol 中取）
+      const choices = [target];
+      [0, 1, 2, 3, 4].filter(i => i !== target).sort(() => Math.random() - .5).slice(0, 3).forEach(i => choices.push(i));
+      choices.sort(() => Math.random() - .5);
+      optBox.innerHTML = '';
+      cards = [];
+      choices.forEach((sIdx) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'answer-btn';
+        b.innerHTML = '<b style="font-size:22px">' + solfa[sIdx].sol + '</b><small style="display:block;opacity:.85">' + solfa[sIdx].num + '</small>';
+        b.style.minWidth = '80px';
+        b.style.minHeight = '60px';
+        b.addEventListener('pointerdown', () => answer(sIdx));
+        optBox.appendChild(b);
+        cards.push(b);
+      });
+      // 播放旋律（缺口处静音）
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 听旋律，补上缺的音';
+      const notes = seq.map((sIdx, i) => ({ midi: solfa[sIdx].midi, start: i, dur: i === gapIdx ? 0 : 0.9 })).filter(n => n.dur > 0);
+      MV.MusicCore.playSequence(notes, { bpm: 90, inst: 'piano', onEnd: () => {
+        if (!alive()) return;
+        playing = false;
+        cards.forEach(bt => bt.disabled = false);
+      }});
+    }
+
+    function answer(sIdx) {
+      if (!alive() || playing || answered) return;
+      answered = true;
+      cards.forEach(bt => bt.disabled = true);
+      if (sIdx === target) {
+        MV.MusicCore.sfx('correct');
+        correct++; wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(pick(MV.lines.fillgap.correct), { done: () => {
+          if (!alive()) return;
+          if (correct >= C.correctToPass) {
+            MV.VoiceCore.say(MV.lines.fillgap.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+          } else { round++; setTimeout(() => { if (alive()) buildRound(); }, 450); }
+        }});
+      } else {
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        const stumble = wrong >= 2;
+        if (stumble) wrong = 0;
+        MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.fillgap) + ' ' : '') + pick(MV.lines.fillgap.wrong), { done: () => {
+          if (!alive()) return;
+          setTimeout(() => { if (alive()) buildRound(); }, 400);
+        }});
+      }
+    }
+
+    $('#fg-replay').addEventListener('pointerdown', () => { if (!playing) buildRound(); });
+    renderProgress();
+    setTimeout(() => { if (alive()) buildRound(); }, 600);
+  };
+
   runners.compose = function (lv, body) {
     const pitches = MV.gridPitches.slice();       // [60,62,64,65,67] 低→高
     const rows = pitches.length, cols = C.gridCols;
