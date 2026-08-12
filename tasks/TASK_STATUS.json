@@ -107,6 +107,19 @@
                       "title":  "演示视频逐镜脚本",
                       "status":  "done",
                       "note":  "导演验收通过(08-12)：177s达标；走走停停已备注为可选补充镜头；分支cursor/f-04"
+                  },
+                  {
+                      "id":  "F-05",
+                      "owner":  "cursor",
+                      "files":  [
+                                    "docs/答辩材料_v4.md"
+                                ],
+                      "review":  null,
+                      "defOfDone":  "补齐聚类架构/教学闭环/新关卡/动画首页 + 亮点5条升级 + Q&A 12+",
+                      "title":  "答辩材料 v4（对齐最新功能）",
+                      "status":  "pending",
+                      "note":  "08-13 导演已派活(信封B存档 tasks/envelope-B-F05.md)：v4 新文件不覆盖 v3；8/13 提交择一",
+                      "branch":  "cursor/f-05"
                   }
               ],
     "updated":  "2026-08-12"

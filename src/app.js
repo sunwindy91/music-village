@@ -952,6 +952,7 @@
 
     body.innerHTML =
       '<div class="stage-panel stage-scene">' +
+        '<img src="assets/quiz_badge.webp" alt="" loading="lazy" onerror="this.style.display=\'none\'" style="width:72px;height:72px;object-fit:contain;margin:0 auto 6px;display:block;border-radius:50%">' +
         '<div class="stage-intro" id="qz-intro">' + quiz.name + '</div>' +
         '<div id="qz-progress"></div>' +
         '<p class="qz-question" id="qz-question" style="font-size:18px;line-height:1.6;margin:10px 0 16px;text-align:center;min-height:56px"></p>' +
@@ -1171,7 +1172,8 @@
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'answer-btn';
-        b.innerHTML = '<b style="font-size:18px">' + ins.label + '</b><small style="display:block;opacity:.85">' + ins.desc + '</small>';
+        b.innerHTML = '<img src="assets/inst_' + ins.id + '.webp" alt="" loading="lazy" onerror="this.style.display=\'none\'" style="width:56px;height:56px;object-fit:contain;display:block;margin:0 auto 4px;border-radius:50%">' +
+          '<b style="font-size:18px">' + ins.label + '</b><small style="display:block;opacity:.85">' + ins.desc + '</small>';
         b.style.minWidth = '150px';
         b.style.minHeight = '64px';
         b.addEventListener('pointerdown', () => answer(i));
