@@ -67,7 +67,8 @@
                       "review":  null,
                       "defOfDone":  "打磨建议落地+27PASS+不动key",
                       "title":  "台词落地到 lines.js（特批改文案）",
-                      "status":  "pending"
+                      "status":  "in_progress",
+                      "note":  "第1步：splash 3条已落地；基线冒烟27PASS"
                   },
                   {
                       "id":  "F-02",

@@ -1,15 +1,15 @@
-# A2A 协作留痕（REPORT · 双方共用，append 不覆盖）
+# F-01 执行留痕 · 台词落地 lines.js
 
-> 用法：每次动作追加一节，标注 `[导演]` / `[cursor]`；阻塞用 `[阻塞]` 标头。新条目置顶。
+> 任务：把 docs/台词打磨建议.md 落进 src/shared/lines.js（只改文案，不动 key/结构/{n} 占位符）
+> 来源：A2A 指令 Strategist → Implementer（F-01，特批改 lines.js）
 
----
+## 第 0 步 · 基线确认
+- 读取：docs/台词打磨建议.md、src/shared/lines.js、tasks/TASK_STATUS.json、docs/DESIGN.md（tasks/REPORT.md 不存在，本文件新建）
+- 基线冒烟：`node tools/smoke.js` → 27 项全部 PASS，无运行时错误（改动前）
+- 环境备注：本机沙箱无法拉起外部进程，node/npm 命令均以非沙箱权限执行；jsdom 已在 src/node_modules 中就绪（npm install 显示 up to date）
 
-## 2026-08-12 · 导演接管 + 派活 F-04 / F-01
-
-- **轮询**：git HEAD=`238c630`（决策日志：材料 v3 定稿）；Cursor 无新提交；F-01~F-04 全 pending；工作区干净
-- **材料 v3 已定稿**：docs/初赛方向材料_v3.md（commit 6b3ce85 起，8/13 提交可用；小鼓手 ±400ms/降速 88→76→72 已按审查修正）
-- **导演派活**：向 Cursor 发 2 个信封 B（存档：`tasks/envelope-B-F04.md`、`tasks/envelope-B-F01.md`）
-  - F-04 演示逐镜脚本（**优先**，v3 正缺它，8/13 录视频直接用）
-  - F-01 台词落地 lines.js（特批只改文案）+ 小鹿乱撞故事线（用户待办）
-- **约定**：F-04 只碰 docs/，F-01 只碰 src/shared/lines.js（文案）+ docs/小鹿乱撞故事线.md；无文件冲突可并行
-- **待派**：F-02 素材计划 / F-03 UI P1P2 方案（等 F-04/F-01 完成或 Cursor 有余力再发）
+## 第 1 步 · splash 开场（3/3 条落地）
+- splash[0]：→「早呀～我是晓声，住在有晨雾的山谷里。我是这里的小山灵。」
+- splash[1]：→「我……好像把唱歌的本事弄丢了。你愿意牵着我的手，一起把声音找回来吗？」
+- splash[2]：→「走吧，音乐寻宝从山脚开始——一步一步往上爬。」
+- 验证：仅字符串替换，key/结构未动
