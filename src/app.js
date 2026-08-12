@@ -229,6 +229,7 @@
     App.state.currentLoc = loc;
     $('#loc-overlay') && $('#loc-overlay').remove();
 
+    const clusterImg = 'assets/cluster_' + loc.id + '.webp';
     const overlay = document.createElement('div');
     overlay.className = 'overlay';
     overlay.id = 'loc-overlay';
@@ -239,6 +240,7 @@
           '<p class="loc-panel-sub">' + loc.memory + '</p></div>' +
           '<button class="icon-btn loc-panel-close" type="button" aria-label="关闭">✕</button>' +
         '</div>' +
+        '<img src="' + clusterImg + '" alt="" loading="lazy" onerror="this.style.display=\'none\'" style="width:100%;max-height:150px;object-fit:cover;border-radius:14px;margin-bottom:12px">' +
         '<div class="loc-levels"></div>' +
       '</div>';
     $('#view-map').appendChild(overlay);
@@ -250,6 +252,7 @@
       // 聚类理论导入：先「晓声小课堂」再关卡（教学闭环：理论→练习）
       list.innerHTML =
         '<div class="theory-card" style="padding:6px 4px 2px">' +
+          (theory.img ? '<img src="' + theory.img + '" alt="" loading="lazy" onerror="this.style.display=\'none\'" style="width:100%;max-height:160px;object-fit:cover;border-radius:16px;margin-bottom:12px">' : '') +
           '<h3 style="font-size:20px;margin:0 0 10px;color:#5b4632">' + theory.title + '</h3>' +
           '<p style="font-size:16px;line-height:1.7;margin:0 0 16px;color:#3d2f1f">' + theory.body + '</p>' +
           '<button class="btn btn-gold" id="theory-go" type="button" style="width:100%;min-height:48px">我知道了，开始闯关！</button>' +
