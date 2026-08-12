@@ -64,11 +64,11 @@
                                     "src/shared/lines.js",
                                     "docs/小鹿乱撞故事线.md"
                                 ],
-                      "review":  null,
+                      "review":  "ok：25处文案+故事线5句全部落地；vision三型分化≤28字；27PASS；key/结构/占位符未动",
                       "defOfDone":  "打磨建议落地+27PASS+不动key",
                       "title":  "台词落地到 lines.js（特批改文案）",
-                      "status":  "review",
-                      "note":  "全部切片落地：splash3/stumble7/grow2/personality5/celebrate+微调8+故事线5句；node --check过；冒烟27PASS；未动key/结构/占位符；待导演验收"
+                      "status":  "done",
+                      "note":  "导演验收通过(08-12)：diff核验44行纯文案替换+冒烟27PASS复核"
                   },
                   {
                       "id":  "F-02",
