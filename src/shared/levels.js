@@ -298,7 +298,8 @@ MV.theories = {
   },
   chord: {
     title: '和弦花园',
-    body: '几个音手拉手一起唱，就是和弦——像彩虹把颜色叠在一起！do mi sol 手拉手是明亮的彩虹，la do mi 手拉手是温柔的月光。'
+    body: '几个音手拉手一起唱，就是和弦——像彩虹把颜色叠在一起！do mi sol 手拉手是明亮的彩虹，la do mi 手拉手是温柔的月光。',
+    img: 'assets/theory_chord.webp'
   }
 };
 
