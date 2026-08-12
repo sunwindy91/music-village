@@ -33,7 +33,7 @@
       "id": "D-01",
       "title": "代码审查报告（只读）",
       "owner": "cursor",
-      "status": "pending",
+      "status": "in_progress",
       "files": ["docs/代码审查报告.md"],
       "defOfDone": "找bug风险/内存泄漏/边界；每条含文件:行+问题+建议修法（不改代码）",
       "review": null
