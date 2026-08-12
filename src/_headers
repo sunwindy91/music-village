@@ -1,0 +1,12 @@
+# Cloudflare Pages 响应头：禁止 HTML/CSS/JS 被边缘 CDN 长期缓存
+# 背景：旧 main.css 被边缘节点按路径缓存（忽略 ?v= query），导致部分用户拿到旧样式
+# 规则：HTML/CSS/JS no-cache（每次重新验证），图片等静态资产可短缓存
+
+/index.html
+  Cache-Control: no-cache
+
+/*.css
+  Cache-Control: no-cache
+
+/*.js
+  Cache-Control: no-cache
