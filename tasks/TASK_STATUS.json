@@ -15,7 +15,7 @@
       "id": "B-01",
       "title": "台词与文案润色建议",
       "owner": "cursor",
-      "status": "in_progress",
+      "status": "review",
       "files": ["docs/台词打磨建议.md"],
       "defOfDone": "逐条给出 现在→建议；覆盖 splash/陪伴/成长/人格卡；附小鹿乱撞故事线钩子3-5句",
       "review": null
@@ -24,7 +24,7 @@
       "id": "C-01",
       "title": "UI/无障碍审查报告",
       "owner": "cursor",
-      "status": "pending",
+      "status": "in_progress",
       "files": ["docs/UI审查报告.md"],
       "defOfDone": "对照设计宪法逐页检查；每条含文件+行号+建议；按严重度排序",
       "review": null
