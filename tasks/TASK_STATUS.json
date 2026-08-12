@@ -24,7 +24,7 @@
       "id": "C-01",
       "title": "UI/无障碍审查报告",
       "owner": "cursor",
-      "status": "in_progress",
+      "status": "review",
       "files": ["docs/UI审查报告.md"],
       "defOfDone": "对照设计宪法逐页检查；每条含文件+行号+建议；按严重度排序",
       "review": null
