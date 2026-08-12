@@ -22,7 +22,7 @@ MV.locations = [
     subtitle: '认一认 · 音符的名字',
     memory: '晓声的歌喉',
     pos: [50, 56],
-    levels: ['notes', 'walkstop', 'fillgap', 'sightread', 'quiz1']
+    levels: ['notes', 'walkstop', 'fillgap', 'sightread', 'rhythmchain', 'quiz1']
   },
   {
     id: 'meadow',
@@ -104,6 +104,16 @@ MV.levels = [
     brief: '看五线谱上的音符，把它弹出来',
     lesson: '乐理课 第 4 课',
     theory: '视谱 · 弹奏'
+  },
+  {
+    id: 'rhythmchain',
+    loc: 'scale',
+    title: '节奏接龙',
+    type: 'rhythmchain',
+    icon: 'run',
+    brief: '听一听，是走还是跑？',
+    lesson: '乐理课 第 5 课',
+    theory: '八分音符 · 快慢'
   },
   {
     id: 'compose',

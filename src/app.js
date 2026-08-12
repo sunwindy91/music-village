@@ -1305,6 +1305,95 @@
     buildRound();
   };
 
+  /* —— 关卡：节奏接龙（走=四分/跑=八分 · 叔叔大纲第 4 阶） —— */
+  runners.rhythmchain = function (lv, body) {
+    const patterns = [
+      { id: 'walk',    label: '走 · 走 · 走',      notes: [{ midi: 60, start: 0, dur: 1 }, { midi: 60, start: 1, dur: 1 }, { midi: 60, start: 2, dur: 1 }] },
+      { id: 'runwalk', label: '跑 · 跑 · 走',      notes: [{ midi: 60, start: 0, dur: .5 }, { midi: 60, start: .5, dur: .5 }, { midi: 60, start: 1, dur: 1 }] },
+      { id: 'run',     label: '跑 · 跑 · 跑 · 跑', notes: [{ midi: 60, start: 0, dur: .5 }, { midi: 60, start: .5, dur: .5 }, { midi: 60, start: 1, dur: .5 }, { midi: 60, start: 1.5, dur: .5 }] }
+    ];
+    const order = [0, 1, 2];
+    let round = 0, correct = 0, wrong = 0, playing = false, answered = false;
+    let target = 0, cards = [];
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="rc-intro">第 1 题 · 听节奏，是走还是跑？</div>' +
+        '<div id="rc-progress"></div>' +
+        '<p class="rc-legend" style="text-align:center;font-size:14px;color:#8a7a63;margin:6px 0 12px">走 = 一拍一步 ｜ 跑 = 半拍一步（快一倍）</p>' +
+        '<div class="rc-options" id="rc-options" style="display:flex;flex-direction:column;gap:12px;max-width:360px;margin:0 auto"></div>' +
+        '<div class="compose-actions" style="justify-content:center">' +
+          '<button class="btn btn-ghost" id="rc-replay" type="button">再听一次</button>' +
+        '</div>' +
+      '</div>';
+
+    const intro = $('#rc-intro');
+    const progBox = $('#rc-progress');
+    const optBox = $('#rc-options');
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function playPattern(idx) {
+      MV.MusicCore.playSequence(patterns[idx].notes.map(n => ({ ...n })), {
+        bpm: 80, inst: 'piano',
+        onEnd: () => { if (!alive()) return; playing = false; cards.forEach(bt => bt.disabled = false); }
+      });
+    }
+
+    function buildRound() {
+      if (!alive()) return;
+      answered = false;
+      playing = true;
+      target = order[Math.min(round, order.length - 1)];
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 听节奏，它像走还是跑？';
+      optBox.innerHTML = '';
+      cards = [];
+      patterns.forEach((p, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'answer-btn';
+        b.innerHTML = '<b style="font-size:19px">' + p.label + '</b><small style="display:block;opacity:.85">' + (i === 0 ? '稳稳地走' : i === 1 ? '快一步慢一步' : '快快地跑') + '</small>';
+        b.style.minHeight = '58px';
+        b.addEventListener('pointerdown', () => answer(i));
+        optBox.appendChild(b);
+        cards.push(b);
+      });
+      playPattern(target);
+    }
+
+    function answer(i) {
+      if (!alive() || playing || answered) return;
+      answered = true;
+      cards.forEach(bt => bt.disabled = true);
+      if (i === target) {
+        MV.MusicCore.sfx('correct');
+        correct++; wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(pick(MV.lines.rhythmchain.correct), { done: () => {
+          if (!alive()) return;
+          if (correct >= C.correctToPass) {
+            MV.VoiceCore.say(MV.lines.rhythmchain.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+          } else { round++; setTimeout(() => { if (alive()) buildRound(); }, 450); }
+        }});
+      } else {
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        const stumble = wrong >= 2;
+        if (stumble) wrong = 0;
+        MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.rhythmchain) + ' ' : '') + pick(MV.lines.rhythmchain.wrong), { done: () => {
+          if (!alive()) return;
+          setTimeout(() => { if (alive()) buildRound(); }, 400);
+        }});
+      }
+    }
+
+    $('#rc-replay').addEventListener('pointerdown', () => { if (!playing) buildRound(); });
+    renderProgress();
+    setTimeout(() => { if (alive()) buildRound(); }, 600);
+  };
+
   runners.compose = function (lv, body) {
     const pitches = MV.gridPitches.slice();       // [60,62,64,65,67] 低→高
     const rows = pitches.length, cols = C.gridCols;
