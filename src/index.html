@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet"></noscript>
-  <link rel="stylesheet" href="styles/main_c20260812h.css?v=20260813c">
+  <link rel="stylesheet" href="styles/main_c20260812h.css?v=20260813d">
   <!-- 音乐引擎 / 乐理引擎 / 记谱引擎（本地优先，离线可用） -->
   <script src="vendor/tonal.min.js?v=1"></script>
   <script src="vendor/tone.js?v=1"></script>
@@ -263,6 +263,7 @@
       <div class="qa-hints">可以问：音高 · 节奏 · 五线谱 · 下一关去哪</div>
       <div class="qa-input">
         <input id="qa-input" type="text" placeholder="问问我，比如：什么是音高？" aria-label="问晓声问题">
+        <button class="icon-btn qa-mic" id="qa-mic" type="button" aria-label="语音提问" title="语音提问">🎤</button>
         <button class="btn btn-gold" id="qa-send" type="button">问</button>
       </div>
     </div>
@@ -304,6 +305,7 @@
     .qa-input { display: flex; gap: 8px; padding: 10px 12px 14px; border-top: 1px solid #efe6d2; }
     .qa-input input { flex: 1; min-width: 0; border: 2px solid #e3d9c2; border-radius: 12px; padding: 10px 12px; font-size: 15px; background: #fffdf7; }
     .qa-input input:focus { outline: none; border-color: #e8b04b; }
+    .qa-input .qa-mic { flex: 0 0 auto; width: 46px; height: 46px; font-size: 20px; border-radius: 12px; }
     #map-footer { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
     @keyframes ccFloat { 0%,100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.03); } }
     .xs-dragging { animation: none !important; }
@@ -314,13 +316,13 @@
     @media (prefers-reduced-motion: reduce) { .map-node, .nf { animation: none; } }
   </style>
 
-  <script src="config.js?v=20260813c"></script>
-  <script src="shared/lines.js?v=20260813c"></script>
-  <script src="shared/levels.js?v=20260813c"></script>
-  <script src="modules/audio/music-core.js?v=20260813c"></script>
-  <script src="modules/voice/voice-core.js?v=20260813c"></script>
-  <script src="modules/notation/staff.js?v=20260813c"></script>
-  <script src="app.js?v=20260813c"></script>
+  <script src="config.js?v=20260813d"></script>
+  <script src="shared/lines.js?v=20260813d"></script>
+  <script src="shared/levels.js?v=20260813d"></script>
+  <script src="modules/audio/music-core.js?v=20260813d"></script>
+  <script src="modules/voice/voice-core.js?v=20260813d"></script>
+  <script src="modules/notation/staff.js?v=20260813d"></script>
+  <script src="app.js?v=20260813d"></script>
 </body>
 </html>
 

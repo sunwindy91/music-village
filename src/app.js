@@ -273,17 +273,21 @@
   function enableDrag(el) {
     if (!el) return;
     let sx = 0, sy = 0, dragging = false;
+    let startX = 0, startY = 0, moved = false;
     const scene = el.parentElement;
     el.addEventListener('pointerdown', e => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       const r = el.getBoundingClientRect();
       sx = e.clientX - r.left;
       sy = e.clientY - r.top;
+      startX = e.clientX; startY = e.clientY;
+      moved = false;
       dragging = true;
       if (el.setPointerCapture) { try { el.setPointerCapture(e.pointerId); } catch (err) { /* noop */ } }
     });
     el.addEventListener('pointermove', e => {
       if (!dragging || !scene) return;
+      if (Math.abs(e.clientX - startX) + Math.abs(e.clientY - startY) > 8) moved = true;
       const sr = scene.getBoundingClientRect();
       const nx = e.clientX - sr.left - sx;
       const ny = e.clientY - sr.top - sy;
@@ -291,9 +295,12 @@
       el.style.top = Math.max(0, Math.min(sr.height - 30, ny)) + 'px';
       el.classList.add('xs-dragging');
     });
-    const end = () => { dragging = false; el.classList.remove('xs-dragging'); };
-    el.addEventListener('pointerup', end);
-    el.addEventListener('pointercancel', end);
+    el.addEventListener('pointerup', () => {
+      dragging = false;
+      el.classList.remove('xs-dragging');
+      if (!moved) openQa(); // 轻点晓声 → 打开对话盘（白小纯式）
+    });
+    el.addEventListener('pointercancel', () => { dragging = false; el.classList.remove('xs-dragging'); });
   }
 
   /* ---------------- 地点总览（关卡 chips） ---------------- */
@@ -2328,6 +2335,7 @@
       mountXs('qa-xs', { exp: 'happy', breathe: true });
       $('#qa-close').onclick = () => { ov.hidden = true; };
       $('#qa-send').addEventListener('pointerdown', sendQa);
+      $('#qa-mic').addEventListener('pointerdown', toggleMic);
       $('#qa-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendQa(); });
       addQa('晓声', '你好呀！问我音高、节奏、五线谱，或者下一步去哪，都可以～');
     }
@@ -2343,18 +2351,70 @@
     chat.appendChild(b);
     chat.scrollTop = chat.scrollHeight;
   }
-  function sendQa() {
+  let qaHistory = [];
+  let recog = null;
+  /* 语音播报（浏览器内置中文语音 · 白小纯同款） */
+  function speak(text) {
+    if (!('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text.slice(0, 120));
+      u.lang = 'zh-CN'; u.rate = 1.02; u.pitch = 1.15;
+      const vs = window.speechSynthesis.getVoices();
+      const zh = vs.find(v => /zh[-_]CN/i.test(v.lang));
+      if (zh) u.voice = zh;
+      window.speechSynthesis.speak(u);
+    } catch (e) { /* noop */ }
+  }
+  /* 语音提问（webkitSpeechRecognition，Chrome/Edge） */
+  function toggleMic() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { addQa('晓声', '这个浏览器还不支持语音输入，用 Chrome 或 Edge 就可以啦。'); return; }
+    if (recog && recog.listening) { recog.stop(); return; }
+    recog = new SR();
+    recog.lang = 'zh-CN';
+    recog.interimResults = false;
+    recog.onresult = e => {
+      const t = Array.from(e.results).map(r => r[0].transcript).join('');
+      $('#qa-input').value = t;
+      sendQa();
+    };
+    recog.onerror = () => {};
+    try { recog.start(); } catch (e) { /* noop */ }
+  }
+  async function sendQa() {
     const inp = $('#qa-input');
     const q = (inp.value || '').trim();
     if (!q) return;
     addQa('me', q);
     inp.value = '';
+    // ① 真实 AI（Cloudflare 函数代理；未配 key 返回 null → 回落本地规则）
+    try {
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: q, history: qaHistory.slice(-6) })
+      });
+      if (r.ok) {
+        const j = await r.json();
+        if (j.reply) {
+          const ans = j.reply;
+          qaHistory.push({ role: 'user', content: q });
+          qaHistory.push({ role: 'assistant', content: ans });
+          addQa('晓声', ans);
+          speak(ans);
+          return;
+        }
+      }
+    } catch (e) { /* 回落本地 */ }
+    // ② 本地规则回落（离线可用）
     let ans = null;
     for (const item of (MV.lines.qa || [])) {
       if (item.keys.some(k => q.indexOf(k) >= 0)) { ans = item.a; break; }
     }
     if (!ans) ans = '这个问题我还不会呢。试试问我：音高、节奏、五线谱，或者“下一关去哪”。';
-    setTimeout(() => { addQa('晓声', ans); MV.VoiceCore.say(ans); }, 350);
+    addQa('晓声', ans);
+    speak(ans);
   }
 
   function openConcert() {
