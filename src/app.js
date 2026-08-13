@@ -140,7 +140,13 @@
 
   /* ---------------- 山谷地图 ---------------- */
   function stageNum() {
-    return Math.min(5, Object.keys(App.state.completed).length);
+    // 主线成长：每完成一个聚类，晓声进阶一档（0 种子 → 5 鹿全盛）
+    // 修复：原按累计关卡数，5 关即满级导致第二关就全盛；改为按聚类完成数，里程碑式成长
+    let done = 0;
+    for (const loc of MV.locations) {
+      if (loc.levels.every(id => !!App.state.completed[id])) done++;
+    }
+    return Math.min(5, done);
   }
   /* 地图晓声脚下：当前成长形态小标签 */
   function updateXsForm() {
@@ -2159,7 +2165,7 @@
     showView('celebrate');
     const firstClear = !App.state.completed[lv.id];
     if (!App.state.completed[lv.id]) {
-      const beforeStage = Object.keys(App.state.completed).length; // 通关前点亮数
+      const beforeStage = stageNum(); // 通关前形态档（聚类进度）
       App.state.completed[lv.id] = true;
       addPoints(C.pointsPerClear);
       MV.VoiceCore.applyGrowth(stageNum());
@@ -2180,7 +2186,7 @@
     const song = MV.config.themeSong;
     const songBox = $('#celebrate-song');
     if (songBox) {
-      if (Object.keys(App.state.completed).length >= 5 && song) {
+      if (stageNum() >= 5 && song) { // 全部 5 聚类点亮后才响主题曲
         songBox.classList.remove('hidden');
         $('#celebrate-song-name').textContent = song.name;
         const lyr = $('#celebrate-song-lyrics');
