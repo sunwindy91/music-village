@@ -118,6 +118,8 @@
       if (App.state.view !== 'splash') return; // 防重复触发
       try { MV.MusicCore.start(); } catch (e) { /* 音频初始化失败也不能卡住进入地图 */ }
       MV.VoiceCore.stopTyping();
+      MV.VoiceCore.stopVoice(); // 停掉首屏欢迎语音，避免进地图后重复
+      try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* noop */ }
       showView('map');
       bootMap();
       try { MV.MusicCore.playMidi(60, { dur: .3 }); } catch (e) { /* 欢迎音失败不阻塞 */ }

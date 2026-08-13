@@ -525,7 +525,7 @@ svg.map-bg > *:not(#trail):not(#trail-core) { display: none; }
   position: absolute;
   z-index: 6;
   width: 21%;
-  left: 6%;
+  left: 72%;   /* 右下角默认位，不挡中央/顶部关卡节点 */
   bottom: 12%;
 }
 .map-xs .xs { filter: drop-shadow(0 10px 16px rgba(31, 74, 55, .25)); }

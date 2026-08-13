@@ -260,6 +260,12 @@ MV.VoiceCore = (() => {
   }
   let poseTimer = null;
   let stickyPose = false;
+  let activeVoice = null;
+  /* 停止正在播的语音包（进地图时停掉首屏欢迎，避免重复） */
+  function stopVoice() {
+    if (activeVoice) { try { activeVoice.pause(); activeVoice = null; } catch (e) { /* noop */ } }
+    if (poseTimer) { clearTimeout(poseTimer); poseTimer = null; }
+  }
   /* 姿态切换（F-07）：短暂覆盖 img.src，holdMs 后回 idle；sticky 不自动回 */
   function setPose(pose, opts = {}) {
     if (!root || !root.querySelector('.xs-png')) return;  // SVG 回退 no-op
@@ -362,10 +368,11 @@ MV.VoiceCore = (() => {
     const finish = () => { if (opts.done) { const cb = opts.done; opts.done = null; cb(); } };
     try {
       const a = new Audio('assets/voices/' + key + '.mp3');
+      activeVoice = a;
       a.volume = 0.9;
-      a.onended = finish;
-      a.onerror = () => setTimeout(finish, 900 + currentText.length * 90);
-      a.play().catch(() => setTimeout(finish, 900 + currentText.length * 90)); // 浏览器自动播放拦截：模拟语音时长
+      a.onended = () => { activeVoice = null; finish(); };
+      a.onerror = () => { activeVoice = null; setTimeout(finish, 900 + currentText.length * 90); };
+      a.play().catch(() => { activeVoice = null; setTimeout(finish, 900 + currentText.length * 90); }); // 浏览器自动播放拦截：模拟语音时长
     } catch (e) { setTimeout(finish, 900 + currentText.length * 90); }
   }
 
@@ -381,7 +388,7 @@ MV.VoiceCore = (() => {
   function allForms() { return FORMS.map(f => ({ key: f.key, name: f.name, src: f.src })); }
 
   return {
-    mount, say, sayVoice, finish, stopTyping, hideBubble, clear,
+    mount, say, sayVoice, stopVoice, finish, stopTyping, hideBubble, clear,
     setExpression, fireflies, applyGrowth, setPose, flash, allForms, currentForm, isSpeaking
   };
 })();
