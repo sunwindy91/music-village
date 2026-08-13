@@ -24,9 +24,20 @@ export default {
       return json({ reply: null, err: 'method' }, 405);
     }
     try {
+      const body = await request.json();
+      // TTS 自然音色（Google 免费中文女声，无 key）
+      if (body.type === 'tts') {
+        const text = String(body.text || '').slice(0, 120);
+        const url = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=zh-CN&ttsspeed=1&q=' + encodeURIComponent(text);
+        const r = await fetch(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36' }
+        });
+        if (!r.ok) return json({ reply: null, err: 'tts-' + r.status });
+        const buf = await r.arrayBuffer();
+        return new Response(buf, { headers: { 'Content-Type': 'audio/mpeg', ...CORS } });
+      }
       const key = env.DEEPSEEK_API_KEY;
       if (!key) return json({ reply: null, note: 'no-key' });
-      const body = await request.json();
       const messages = [
         { role: 'system', content: SYSTEM },
         ...((body.history || []).slice(-6)),

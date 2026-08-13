@@ -2354,8 +2354,29 @@
   }
   let qaHistory = [];
   let recog = null;
-  /* 语音播报（浏览器内置中文语音 · 白小纯同款） */
-  function speak(text) {
+  const XS_WORKER = 'https://music-village-chat.2301740254.workers.dev';
+  /* 语音播报：① Worker TTS 自然女声 → ② 浏览器语音回落 */
+  async function speak(text) {
+    try {
+      const ctl = new AbortController();
+      const to = setTimeout(() => ctl.abort(), 12000);
+      const r = await fetch(XS_WORKER, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'tts', text: text }),
+        signal: ctl.signal
+      });
+      clearTimeout(to);
+      if (r.ok) {
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const a = new Audio(url);
+        a.volume = 0.9;
+        a.onended = () => { try { URL.revokeObjectURL(url); } catch (e) { /* noop */ } };
+        await a.play().catch(() => {});
+        return;
+      }
+    } catch (e) { /* 回落浏览器语音 */ }
     if (!('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
@@ -2393,7 +2414,7 @@
     try {
       const ctl = new AbortController();
       const to = setTimeout(() => ctl.abort(), 8000);
-      const r = await fetch('https://music-village-chat.2301740254.workers.dev', {
+      const r = await fetch(XS_WORKER, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: q, history: qaHistory.slice(-6) }),
