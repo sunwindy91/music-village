@@ -215,11 +215,17 @@
 
   function renderLocs() {
     updateXsForm(); // 每次回到地图都刷新晓声形态
-    // 通关聚类后回地图：晓声主动引导去下一站
-    if (App._pendingNext && MV.lines.nextStop[App._pendingNext]) {
+    // 通关聚类后回地图：晓声主动引导下一站（动态按解锁链生成，永不串台）
+    if (App._pendingNext) {
       const nextKey = App._pendingNext;
       App._pendingNext = null;
-      MV.VoiceCore.sayVoice('next_' + nextKey, pick(MV.lines.nextStop[nextKey]));
+      const idx = CLUSTER_CHAIN.indexOf(nextKey);
+      const curLoc = MV.locations.find(l => l.id === nextKey);
+      const nextLoc = idx >= 0 && idx < CLUSTER_CHAIN.length - 1 ? MV.locations.find(l => l.id === CLUSTER_CHAIN[idx + 1]) : null;
+      const text = nextLoc
+        ? (curLoc.name + '点亮啦！下一站是' + nextLoc.name + '，我们继续往上爬吧。')
+        : '五片山谷全点亮啦！你让整个山谷，都唱起了歌。';
+      MV.VoiceCore.sayVoice('next_' + nextKey, text);
     }
     const wrap = $('#map-locs');
     wrap.innerHTML = '';
