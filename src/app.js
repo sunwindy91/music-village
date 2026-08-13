@@ -156,18 +156,25 @@
   function stageNum() {
     // 真实进度：每过 1 关，晓声进阶一档（0种子→1小芽→2开花→3星光→4初鹿→5鹿）
     let done = Math.min(5, Object.keys(App.state.completed).length);
-    // 演示模式：形态跟随已解锁的聚类进度（解锁越多越高级，配合皮肤可切回任意形态）
+    // 演示模式：形态自动跟随当前游玩的聚类——到哪个山谷就变哪个形态（录制零手动切换）
     if (allUnlocked()) {
-      let n = 0;
-      try { for (const loc of MV.locations) if (clusterUnlocked(loc.id)) n++; } catch (e) { /* noop */ }
-      done = Math.max(done, n);
+      const locId = App.state.currentLevel && App.state.currentLevel.loc ? App.state.currentLevel.loc
+        : (App.state.currentLoc && App.state.currentLoc.id ? App.state.currentLoc.id : null);
+      if (locId) {
+        const idx = CLUSTER_CHAIN.indexOf(locId);
+        if (idx >= 0) done = Math.max(done, idx); // valley=0种子 · scale=1小芽 · rhythm=2开花 · chord=3星光 · meadow=4初鹿
+      } else {
+        let n = 0;
+        try { for (const loc of MV.locations) if (clusterUnlocked(loc.id)) n++; } catch (e) { /* noop */ }
+        done = Math.max(done, n);
+      }
     }
     // 皮肤切换：已解锁形态可任选（演示模式全开）
     try {
       const s = parseInt(localStorage.getItem('mv-skin'), 10);
       if (s >= 0 && s <= 5 && (allUnlocked() || s <= done)) return s;
     } catch (e) { /* noop */ }
-    return done;
+    return Math.min(5, done);
   }
   /* 形态皮肤：已解锁形态可选（演示模式全开），入口=地图标签/对话盘按钮 */
   function openSkin() {
