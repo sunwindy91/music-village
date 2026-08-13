@@ -116,7 +116,7 @@
 
     if (had) {
       // 老朋友：简短招呼后进入
-      MV.VoiceCore.say('欢迎回来，音乐寻宝家。', { done: () => setTimeout(go, 700) });
+      MV.VoiceCore.sayVoice('back1', '欢迎回来，音乐寻宝家。', { done: () => setTimeout(go, 700) });
       setTimeout(go, 2200);
     } else {
       // 新朋友：开场白 + 手动/自动进入
@@ -124,7 +124,7 @@
       const lines = MV.lines.splash;
       const next = () => {
         if (i < lines.length && App.state.view === 'splash') {
-          MV.VoiceCore.say(lines[i], { done: () => setTimeout(() => { i++; next(); }, 420) });
+          MV.VoiceCore.sayVoice('welcome' + (i + 1), lines[i], { done: () => setTimeout(() => { i++; next(); }, 420) });
         } else if (i >= lines.length) {
           setTimeout(go, 700);
         }
@@ -181,7 +181,8 @@
 
     if (!sessionStorage.getItem('mv-greeted')) {
       sessionStorage.setItem('mv-greeted', '1');
-      MV.VoiceCore.say(Object.keys(App.state.completed).length ? MV.lines.mapWelcomeBack : pick(MV.lines.mapHello));
+      const hadAny = Object.keys(App.state.completed).length;
+      MV.VoiceCore.sayVoice(hadAny ? 'back1' : 'welcome3', hadAny ? MV.lines.mapWelcomeBack : pick(MV.lines.mapHello));
     }
     refreshPoints();
   }
@@ -192,7 +193,7 @@
     if (App._pendingNext && MV.lines.nextStop[App._pendingNext]) {
       const nextKey = App._pendingNext;
       App._pendingNext = null;
-      MV.VoiceCore.say(pick(MV.lines.nextStop[nextKey]));
+      MV.VoiceCore.sayVoice('next_' + nextKey, pick(MV.lines.nextStop[nextKey]));
     }
     const wrap = $('#map-locs');
     wrap.innerHTML = '';
@@ -2280,7 +2281,9 @@
     const ov = $('#encourage-overlay');
     if (!ov) return;
     mountXs('encourage-xs', { exp: 'happy', breathe: true, pose: 'happy' });
-    $('#encourage-text').textContent = pick(MV.lines.encourage);
+    const encText = pick(MV.lines.encourage);
+    $('#encourage-text').textContent = encText;
+    MV.VoiceCore.sayVoice('enc' + (1 + Math.floor(Math.random() * 3)), encText);
     ov.hidden = false;
     $('#encourage-close').onclick = () => { ov.hidden = true; };
   }

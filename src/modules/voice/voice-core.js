@@ -329,8 +329,18 @@ MV.VoiceCore = (() => {
     return FORMS.find(f => f.key === key) || FORMS[0];
   }
 
+  /* 语音包播放（晓声真说话）：mp3 + 气泡文字，语音失败不阻塞 */
+  function sayVoice(key, text, opts = {}) {
+    say(text, opts);
+    try {
+      const a = new Audio('assets/voices/' + key + '.mp3');
+      a.volume = 0.9;
+      a.play().catch(function () { /* noop */ });
+    } catch (e) { /* 语音失败不阻塞 */ }
+  }
+
   return {
-    mount, say, finish, stopTyping, hideBubble, clear,
+    mount, say, sayVoice, finish, stopTyping, hideBubble, clear,
     setExpression, fireflies, applyGrowth, setPose, currentForm, isSpeaking
   };
 })();
