@@ -348,14 +348,25 @@ MV.VoiceCore = (() => {
     return FORMS.find(f => f.key === key) || FORMS[0];
   }
 
-  /* 语音包播放（晓声真说话）：mp3 + 气泡文字，语音失败不阻塞 */
+  /* 语音包播放（晓声真说话）：文字整句显示与语音同步，不抢台词；
+   * 语音播完才触发 done；自动播放被拦时按文本长度模拟时长，流程不阻塞。 */
   function sayVoice(key, text, opts = {}) {
-    say(text, opts);
+    stopTyping();
+    if (bubble) bubble.classList.remove('done');
+    currentText = String(text || '');
+    pos = currentText.length;
+    bubble.style.display = 'flex';
+    textEl.textContent = currentText;
+    requestAnimationFrame(() => bubble.classList.add('show'));
+    if (bubble) bubble.classList.add('done');
+    const finish = () => { if (opts.done) { const cb = opts.done; opts.done = null; cb(); } };
     try {
       const a = new Audio('assets/voices/' + key + '.mp3');
       a.volume = 0.9;
-      a.play().catch(function () { /* noop */ });
-    } catch (e) { /* 语音失败不阻塞 */ }
+      a.onended = finish;
+      a.onerror = () => setTimeout(finish, 900 + currentText.length * 90);
+      a.play().catch(() => setTimeout(finish, 900 + currentText.length * 90)); // 浏览器自动播放拦截：模拟语音时长
+    } catch (e) { setTimeout(finish, 900 + currentText.length * 90); }
   }
 
   /* 金色光爆（进化仪式/通关成长闪光） */

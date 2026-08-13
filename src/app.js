@@ -106,6 +106,13 @@
     refreshPoints();
     mountXs('splash-xs', { exp: had ? 'happy' : 'calm', breathe: true, pose: had ? 'idle' : 'welcome' });
 
+    // 浏览器自动播放策略：首次交互解锁音频上下文（之后欢迎语音/音效可正常播放）
+    const unlock = () => {
+      try { MV.MusicCore.start(); } catch (e) { /* noop */ }
+      document.removeEventListener('pointerdown', unlock, true);
+    };
+    document.addEventListener('pointerdown', unlock, true);
+
     const go = () => {
       if (App.state.view !== 'splash') return; // 防重复触发
       try { MV.MusicCore.start(); } catch (e) { /* 音频初始化失败也不能卡住进入地图 */ }
@@ -1419,7 +1426,7 @@
     setTimeout(() => { if (alive()) buildRound(); }, 600);
   };
 
-  /* —— 关卡：音色捉迷藏（听音色辨乐器 · 教学点=音色性格） —— */
+  /* —— 关卡：音色捉迷藏（听音色猜声音 · 自然声音伙伴，不称乐器） —— */
   runners.timbre = function (lv, body) {
     const insts = C.instruments;                   // 小鸟/风铃/溪水/木琴
     const order = [0, 1, 2, 3];                    // 四种音色各一轮
@@ -1458,7 +1465,7 @@
       answered = false;
       playing = true;
       target = order[Math.min(round, order.length - 1)];
-      intro.textContent = '第 ' + (round + 1) + ' 题 · 听声音，它是哪种乐器？';
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 听声音，是谁在唱歌？';
       optBox.innerHTML = '';
       cards = [];
       insts.forEach((ins, i) => {
@@ -2383,7 +2390,10 @@
       try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* noop */ }
       if (App._evolveTimers) { App._evolveTimers.forEach(t => clearTimeout(t)); App._evolveTimers = null; }
       try { MV.MusicCore.stopAll(); } catch (e) { /* noop */ }
-      showView('map'); renderLocs();
+      showView('map');
+      renderLocs();
+      // 直接回到该聚类的关卡列表，方便选下一关（少点一步）
+      if (lv.loc) openLocation(lv.loc);
     };
   }
 

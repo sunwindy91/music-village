@@ -71,11 +71,11 @@ MV.config = {
   /* —— 本地存储 —— */
   storageKey: 'mv-progress-v2',
 
-  /* —— 音色 —— */
+  /* —— 音色（自然声音伙伴，不是乐器——避免「拿小鸟当乐器」的生态误导） —— */
   instruments: [
-    { id: 'bird',  label: '小鸟',  desc: '轻快啾啾' },
-    { id: 'bell',  label: '风铃',  desc: '叮咚亮晶晶' },
-    { id: 'water', label: '溪水',  desc: '咕噜咕噜流' },
-    { id: 'piano', label: '木琴',  desc: '圆润咚咚' }
+    { id: 'bird',  label: '小鸟唱歌', desc: '轻快啾啾' },
+    { id: 'bell',  label: '风铃叮咚', desc: '叮咚亮晶晶' },
+    { id: 'water', label: '溪水流淌', desc: '咕噜咕噜流' },
+    { id: 'piano', label: '木琴咚咚', desc: '圆润咚咚' }
   ]
 };

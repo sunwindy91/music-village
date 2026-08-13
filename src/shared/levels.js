@@ -265,9 +265,9 @@ MV.levels = [
     title: '音色捉迷藏',
     type: 'timbre',
     icon: 'ear',
-    brief: '听一听，是哪个乐器的声音？',
+    brief: '听一听，是谁在唱歌？（小鸟/风铃/溪水/木琴）',
     lesson: '创作课 第 2 课',
-    theory: '音色 · 乐器性格'
+    theory: '音色 · 声音性格'
   }
 ];
 
