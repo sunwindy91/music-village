@@ -39,22 +39,22 @@ MV.MusicCore = (() => {
     }));
     if (mainSynth) { try { mainSynth.connect(chain); } catch (e) { /* noop */ } }
 
-    // 创作四音色（逐个独立，失败不影响其他）
-    instruments.bird = guard('bird', () => new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'triangle' },
-      envelope: { attack: .005, decay: .16, sustain: .04, release: .28 }
+    // 创作四音色（贴近自然：FM鸟鸣 / 金属风铃 / 水滴 / 木琴）
+    instruments.bird = guard('bird', () => new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 4.4, modulationIndex: 24,
+      envelope: { attack: .004, decay: .14, sustain: 0, release: .22 }
     }));
-    instruments.bell = guard('bell', () => new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'sine' },
-      envelope: { attack: .002, decay: .55, sustain: 0, release: .6 }
+    instruments.bell = guard('bell', () => new Tone.PolySynth(Tone.MetalSynth, {
+      harmonicity: 5.2, modulationIndex: 26, resonance: 2400, octaves: 1.2,
+      envelope: { attack: .002, decay: .7, sustain: 0, release: 1.1 }
     }));
     instruments.water = guard('water', () => new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'sine' },
-      envelope: { attack: .002, decay: .12, sustain: 0, release: .2 }   // 水滴感：快速衰减，保证发声（原 PluckSynth 在 PolySynth 下不可靠）
+      envelope: { attack: .012, decay: .22, sustain: 0, release: .24 }   // 水滴咕噜感
     }));
     instruments.piano = guard('piano', () => new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'triangle' },
-      envelope: { attack: .008, decay: .5, sustain: .22, release: .9 }
+      oscillator: { type: 'sine' },
+      envelope: { attack: .003, decay: .34, sustain: .06, release: .6 }   // 木琴圆润短音
     }));
     for (const k in instruments) {
       if (!instruments[k]) continue;

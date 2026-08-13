@@ -299,7 +299,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelector('.loc-level'));
   let cells = [];
   for (let i = 0; i < 40; i++) { cells = document.querySelectorAll('.grid-cell'); if (cells.length >= 40) break; await sleep(100); }
-  ok(cells.length === 40, '作曲网格：5 行 × 8 拍 = 40 格');
+  ok(cells.length === 56, '作曲网格：7 行 × 8 拍 = 56 格（七音阶，每格可填不同音）');
   [0, 9, 18, 27].forEach(i => click(cells[i]));
   ok(document.querySelectorAll('.grid-cell.on').length === 4, '种下 4 个音符');
   click(document.querySelector('#cz-play'));
