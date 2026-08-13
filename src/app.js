@@ -181,37 +181,10 @@
     updateXsForm(); // 每次回到地图都刷新晓声形态
     const wrap = $('#map-locs');
     wrap.innerHTML = '';
-    // —— 连线层：S 形动线（valley→rhythm→scale→chord→meadow），通关点亮 ——
+    // 流程模式：去掉虚线连线层，节点用序号徽章①→⑤沿主线流程走（见下方 .step-num）
     const links = $('#map-links');
-    if (links) {
-      links.innerHTML = '';
-      // 动态 viewBox：与画布实际尺寸 1:1 对齐（修复 meet 留边导致的连线错位）
-      const sceneEl = $('#map-scene');
-      const sr = sceneEl ? sceneEl.getBoundingClientRect() : { width: 400, height: 640 };
-      links.setAttribute('viewBox', '0 0 ' + sr.width + ' ' + sr.height);
-      links.setAttribute('preserveAspectRatio', 'none');
-      const order = ['valley', 'rhythm', 'scale', 'chord', 'meadow'];
-      const pts = order.map(id => {
-        const l = MV.locations.find(x => x.id === id);
-        return l ? [l.pos[0] / 100 * sr.width, l.pos[1] / 100 * sr.height] : [0, 0];
-      });
-      for (let i = 0; i < pts.length - 1; i++) {
-        const x1 = pts[i][0], y1 = pts[i][1], x2 = pts[i + 1][0], y2 = pts[i + 1][1];
-        const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
-        const d = 'M' + x1 + ' ' + y1 + ' Q' + cx + ' ' + y1 + ' ' + cx + ' ' + cy + ' T' + x2 + ' ' + y2;
-        const lit = !!(App.state.completed[order[i]] && App.state.completed[order[i + 1]]);
-        const reachable = clusterUnlocked(order[i + 1]);   // 下一站是否已解锁
-        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        p.setAttribute('d', d);
-        p.setAttribute('fill', 'none');
-        p.setAttribute('stroke', lit ? '#e8b04b' : (reachable ? '#f3d9a4' : '#d8d2c8'));
-        p.setAttribute('stroke-width', lit ? '5' : '4');
-        p.setAttribute('stroke-dasharray', lit ? '1 0' : '3 14');
-        p.setAttribute('stroke-linecap', 'round');
-        p.setAttribute('opacity', lit ? '.95' : (reachable ? '.6' : '.2'));
-        links.appendChild(p);
-      }
-    }
+    if (links) links.innerHTML = '';
+    const ORDER = ['valley', 'rhythm', 'scale', 'chord', 'meadow']; // 主线流程顺序
     // —— 圆形节点按钮（画布式布局：山谷背景上散布 + 线穿着） ——
     MV.locations.forEach(loc => {
       const allDone = loc.levels.every(id => App.state.completed[id]);
@@ -225,10 +198,12 @@
       btn.style.transform = 'translate(-50%, -50%)';
       btn.style.filter = unlocked ? '' : 'grayscale(.55)';
       btn.setAttribute('aria-label', loc.name + (allDone ? '（已全部点亮）' : (unlocked ? '' : '（未解锁）')));
+      const stepNo = ORDER.indexOf(loc.id) + 1; // 流程第几步（1→5）
       btn.innerHTML =
+        '<span class="step-num" aria-hidden="true">' + stepNo + '</span>' +
         '<img src="assets/cluster_' + loc.id + '.webp" alt="" loading="lazy" onerror="this.style.display=\'none\'" style="width:100%;height:100%;object-fit:cover;display:block">' +
         '<span style="position:absolute;left:0;right:0;bottom:0;padding:3px 0;font-size:12px;font-weight:bold;color:#5b4632;background:rgba(255,253,247,.88);text-align:center">' + loc.name + '</span>' +
-        (unlocked ? '' : '<span style="position:absolute;top:-4px;right:-4px;font-size:16px;background:#fff8ec;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(93,74,50,.3)">🔒</span>');
+        (unlocked ? '' : '<span class="step-lock" aria-hidden="true">🔒</span>');
       btn.addEventListener('pointerdown', () => {
         if (unlocked) openLocation(loc.id);
         else MV.VoiceCore.say('先点亮前面的山谷，小路才会通到这里哦！');
