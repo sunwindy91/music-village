@@ -117,6 +117,7 @@
     const go = () => {
       if (App.state.view !== 'splash') return; // 防重复触发
       try { MV.MusicCore.start(); } catch (e) { /* 音频初始化失败也不能卡住进入地图 */ }
+      if (seqTimer) { clearTimeout(seqTimer); seqTimer = null; }
       MV.VoiceCore.stopTyping();
       MV.VoiceCore.stopVoice(); // 停掉首屏欢迎语音，避免进地图后重复
       try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* noop */ }
@@ -125,15 +126,18 @@
       try { MV.MusicCore.playMidi(60, { dur: .3 }); } catch (e) { /* 欢迎音失败不阻塞 */ }
     };
 
-    // 欢迎语音：自动尝试一次（可能被浏览器拦截）；首次点击补播（手势内必成功）
+    // 欢迎语音：自动尝试一次（可能被拦截）；首次点击补播前彻底停止旧序列（防“话赶话”）
     let i = 0;
+    let seqTimer = null;
     const lines = MV.lines.splash;
     const next = () => {
       if (i < lines.length && App.state.view === 'splash') {
-        MV.VoiceCore.sayVoice('welcome' + (i + 1), lines[i], { typeSpeed: 55, done: () => setTimeout(() => { i++; next(); }, 1000) });
+        MV.VoiceCore.sayVoice('welcome' + (i + 1), lines[i], { done: () => { seqTimer = setTimeout(() => { i++; next(); }, 1000); } });
       }
     };
+    const stopSeq = () => { if (seqTimer) { clearTimeout(seqTimer); seqTimer = null; } MV.VoiceCore.stopVoice(); };
     const speakWelcome = () => {
+      stopSeq();
       if (had) MV.VoiceCore.sayVoice('back1', '欢迎回来，音乐寻宝家。');
       else { i = 0; next(); }
     };

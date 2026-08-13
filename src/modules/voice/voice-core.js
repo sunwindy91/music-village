@@ -261,9 +261,11 @@ MV.VoiceCore = (() => {
   let poseTimer = null;
   let stickyPose = false;
   let activeVoice = null;
-  /* 停止正在播的语音包（进地图时停掉首屏欢迎，避免重复） */
+  let blockTimer = null; // 自动播放被拦时的模拟时长 timer
+  /* 停止正在播的语音包与模拟时长（防止“话赶话”） */
   function stopVoice() {
     if (activeVoice) { try { activeVoice.pause(); activeVoice = null; } catch (e) { /* noop */ } }
+    if (blockTimer) { clearTimeout(blockTimer); blockTimer = null; }
     if (poseTimer) { clearTimeout(poseTimer); poseTimer = null; }
   }
   /* 姿态切换（F-07）：短暂覆盖 img.src，holdMs 后回 idle；sticky 不自动回 */
@@ -365,19 +367,19 @@ MV.VoiceCore = (() => {
     textEl.textContent = currentText;
     requestAnimationFrame(() => bubble.classList.add('show'));
     if (bubble) bubble.classList.add('done');
-    const finish = () => { if (opts.done) { const cb = opts.done; opts.done = null; cb(); } };
+    const scheduleFinish = () => { if (blockTimer) clearTimeout(blockTimer); blockTimer = setTimeout(finish, 900 + currentText.length * 90); };
     try {
       const a = new Audio('assets/voices/' + key + '.mp3');
       activeVoice = a;
       a.volume = 0.9;
-      a.onended = () => { activeVoice = null; finish(); };
-      a.onerror = () => { activeVoice = null; setTimeout(finish, 900 + currentText.length * 90); };
+      a.onended = () => { activeVoice = null; blockTimer = null; finish(); };
+      a.onerror = () => { activeVoice = null; scheduleFinish(); };
       a.play().then(() => { window.__voiceBlocked = false; }).catch(() => {
         window.__voiceBlocked = true;
         activeVoice = null;
-        setTimeout(finish, 900 + currentText.length * 90); // 浏览器自动播放拦截：模拟语音时长
+        scheduleFinish(); // 浏览器自动播放拦截：模拟语音时长
       });
-    } catch (e) { setTimeout(finish, 900 + currentText.length * 90); }
+    } catch (e) { scheduleFinish(); }
   }
 
   /* 金色光爆（进化仪式/通关成长闪光） */
