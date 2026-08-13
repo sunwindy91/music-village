@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet"></noscript>
-  <link rel="stylesheet" href="styles/main_c20260812h.css?v=20260813o">
+  <link rel="stylesheet" href="styles/main_c20260812h.css?v=20260813p">
   <!-- 音乐引擎 / 乐理引擎 / 记谱引擎（本地优先，离线可用） -->
   <script src="vendor/tonal.min.js?v=1"></script>
   <script src="vendor/tone.js?v=1"></script>
@@ -39,6 +39,14 @@
         <p class="splash-tag">没有音乐老师的山里，孩子也能学会真乐理</p>
         <button class="btn btn-gold splash-go" type="button">开始寻宝</button>
         <p class="splash-skip" role="button" tabindex="0" data-skip>点这里跳过 →</p>
+      </div>
+      <!-- 首屏漂浮音符动效（与地图同款，程序化动画层） -->
+      <div class="note-float" id="splash-notes" aria-hidden="true">
+        <span class="nf" style="left:10%;top:22%;animation-delay:0s;font-size:22px">♪</span>
+        <span class="nf" style="left:78%;top:30%;animation-delay:.8s;font-size:18px">♫</span>
+        <span class="nf" style="left:22%;top:48%;animation-delay:1.5s;font-size:16px">♩</span>
+        <span class="nf" style="left:70%;top:58%;animation-delay:.4s;font-size:20px">♪</span>
+        <span class="nf" style="left:44%;top:64%;animation-delay:2.1s;font-size:15px">♬</span>
       </div>
     </div>
   </section>
@@ -256,7 +264,10 @@
     <div class="qa-panel">
       <div class="qa-head">
         <h2>问问晓声</h2>
-        <button class="icon-btn" id="qa-close" type="button" aria-label="关闭">✕</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost qa-skin-btn" id="qa-skin" type="button" style="padding:6px 12px;font-size:13px">🎭 换形态</button>
+          <button class="icon-btn" id="qa-close" type="button" aria-label="关闭">✕</button>
+        </div>
       </div>
       <div class="xs-holder qa-xs" id="qa-xs"></div>
       <div class="qa-chat" id="qa-chat"></div>
@@ -347,6 +358,7 @@
     .skin-options { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
     .skin-opt { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 88px; padding: 8px 4px; border: 2px solid #e3d9c2; border-radius: 14px; background: #fffdf7; cursor: pointer; font-weight: 700; color: #5b4632; font-size: 13px; }
     .skin-opt.on { border-color: #e8b04b; background: #fdf6e3; }
+    .skin-opt.locked { opacity: .45; filter: grayscale(.6); }
     /* 关卡加载页 */
     .level-loading { background: rgba(255,252,244,.97); display: flex; align-items: center; justify-content: center; z-index: 55; }
     .load-panel { text-align: center; }
@@ -363,13 +375,13 @@
     @media (prefers-reduced-motion: reduce) { .map-node, .nf { animation: none; } }
   </style>
 
-  <script src="config.js?v=20260813o"></script>
-  <script src="shared/lines.js?v=20260813o"></script>
-  <script src="shared/levels.js?v=20260813o"></script>
-  <script src="modules/audio/music-core.js?v=20260813o"></script>
-  <script src="modules/voice/voice-core.js?v=20260813o"></script>
-  <script src="modules/notation/staff.js?v=20260813o"></script>
-  <script src="app.js?v=20260813o"></script>
+  <script src="config.js?v=20260813p"></script>
+  <script src="shared/lines.js?v=20260813p"></script>
+  <script src="shared/levels.js?v=20260813p"></script>
+  <script src="modules/audio/music-core.js?v=20260813p"></script>
+  <script src="modules/voice/voice-core.js?v=20260813p"></script>
+  <script src="modules/notation/staff.js?v=20260813p"></script>
+  <script src="app.js?v=20260813p"></script>
 </body>
 </html>
 

@@ -213,7 +213,10 @@ img, svg { display: block; }
   top: 0; left: 0; right: 0; bottom: 0;
   background: url(../assets/hero.webp) center 32% / cover no-repeat;
   overflow: hidden;
+  animation: heroDrift 18s ease-in-out infinite alternate; /* 缓慢呼吸缩放动效 */
 }
+@keyframes heroDrift { from { transform: scale(1); } to { transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .splash-sky { animation: none; } }
 /* hero 全景接管后隐藏程序化太阳/云/山（水彩画自带这些元素） */
 .splash-sky .sun, .splash-sky .cloud, .splash-sky .splash-range { display: none; }
 .splash-sky::after {

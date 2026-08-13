@@ -106,9 +106,10 @@
     refreshPoints();
     mountXs('splash-xs', { exp: had ? 'happy' : 'calm', breathe: true, pose: had ? 'idle' : 'welcome' });
 
-    // 浏览器自动播放策略：首次交互解锁音频上下文（之后欢迎语音/音效可正常播放）
+    // 浏览器自动播放策略：首次交互解锁音频，并补播欢迎语音（自动播被拦时保证有声音）
     const unlock = () => {
       try { MV.MusicCore.start(); } catch (e) { /* noop */ }
+      if (App.state.view === 'splash') speakWelcome();
       document.removeEventListener('pointerdown', unlock, true);
     };
     document.addEventListener('pointerdown', unlock, true);
@@ -122,20 +123,20 @@
       try { MV.MusicCore.playMidi(60, { dur: .3 }); } catch (e) { /* 欢迎音失败不阻塞 */ }
     };
 
-    if (had) {
-      // 老朋友：简短招呼，等点击进入
-      MV.VoiceCore.sayVoice('back1', '欢迎回来，音乐寻宝家。', { typeSpeed: 55 });
-    } else {
-      // 新朋友：开场白播完停在首屏（慢速打字 + 长间隔，避免字幕太快/声音重叠）
-      let i = 0;
-      const lines = MV.lines.splash;
-      const next = () => {
-        if (i < lines.length && App.state.view === 'splash') {
-          MV.VoiceCore.sayVoice('welcome' + (i + 1), lines[i], { typeSpeed: 55, done: () => setTimeout(() => { i++; next(); }, 1000) });
-        }
-      };
-      setTimeout(next, 600);
-    }
+    // 欢迎语音：自动尝试一次（可能被浏览器拦截）；首次点击补播（手势内必成功）
+    let i = 0;
+    const lines = MV.lines.splash;
+    const next = () => {
+      if (i < lines.length && App.state.view === 'splash') {
+        MV.VoiceCore.sayVoice('welcome' + (i + 1), lines[i], { typeSpeed: 55, done: () => setTimeout(() => { i++; next(); }, 1000) });
+      }
+    };
+    const speakWelcome = () => {
+      if (had) MV.VoiceCore.sayVoice('back1', '欢迎回来，音乐寻宝家。');
+      else { i = 0; next(); }
+    };
+    if (had) speakWelcome();
+    else setTimeout(next, 600);
 
     $('.splash-go').addEventListener('pointerdown', go);
     const skipEl = $('.splash-skip');
@@ -149,30 +150,29 @@
   function stageNum() {
     // 主线成长：每点亮 3 关，晓声进阶一档（0种子→1小芽→2开花→3星光→4初鹿→5鹿全盛）
     const done = Math.min(5, Math.floor(Object.keys(App.state.completed).length / 3));
-    // 全通关后可换皮肤：任意切换形态（mv-skin 0-5）
-    if (done >= 5) {
-      try {
-        const s = parseInt(localStorage.getItem('mv-skin'), 10);
-        if (s >= 0 && s <= 5) return s;
-      } catch (e) { /* noop */ }
-    }
+    // 皮肤切换：已解锁形态可任选（演示模式全开）
+    try {
+      const s = parseInt(localStorage.getItem('mv-skin'), 10);
+      if (s >= 0 && s <= 5 && (allUnlocked() || s <= done)) return s;
+    } catch (e) { /* noop */ }
     return done;
   }
-  /* 形态皮肤：全通关后点晓声标签可任意切换形态（像换皮肤） */
+  /* 形态皮肤：已解锁形态可选（演示模式全开），入口=地图标签/对话盘按钮 */
   function openSkin() {
-    const base = Math.min(5, Math.floor(Object.keys(App.state.completed).length / 3));
-    if (base < 5) { MV.VoiceCore.say('把五片山谷全点亮，就能给我换新衣服啦！'); return; }
     const ov = $('#skin-overlay');
     if (!ov) return;
+    const base = Math.min(5, Math.floor(Object.keys(App.state.completed).length / 3));
     const box = $('#skin-options');
     box.innerHTML = '';
     MV.VoiceCore.allForms().forEach((f, i) => {
+      const unlocked = allUnlocked() || i <= base;
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'skin-opt' + (i === stageNum() ? ' on' : '');
+      b.className = 'skin-opt' + (i === stageNum() ? ' on' : '') + (unlocked ? '' : ' locked');
       b.innerHTML = '<img src="' + f.src + '" alt="' + f.name + '" onerror="this.style.display=\'none\'" style="width:64px;height:64px;object-fit:contain">' +
-        '<span>' + f.name + '</span>';
+        '<span>' + f.name + (unlocked ? '' : ' 🔒') + '</span>';
       b.addEventListener('pointerdown', () => {
+        if (!unlocked) { MV.VoiceCore.say('再点亮几关，这个形态就解锁啦！'); return; }
         try { localStorage.setItem('mv-skin', String(i)); } catch (e) { /* noop */ }
         MV.VoiceCore.applyGrowth(stageNum());
         updateXsForm();
@@ -2435,6 +2435,7 @@
       $('#qa-close').onclick = () => { ov.hidden = true; };
       $('#qa-send').addEventListener('pointerdown', sendQa);
       $('#qa-mic').addEventListener('pointerdown', toggleMic);
+      $('#qa-skin').addEventListener('pointerdown', openSkin);
       $('#qa-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendQa(); });
       addQa('晓声', '你好呀！问我音高、节奏、五线谱，或者下一步去哪，都可以～');
     }
