@@ -195,32 +195,39 @@
         const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
         const d = 'M' + x1 + ' ' + y1 + ' Q' + cx + ' ' + y1 + ' ' + cx + ' ' + cy + ' T' + x2 + ' ' + y2;
         const lit = !!(App.state.completed[order[i]] && App.state.completed[order[i + 1]]);
+        const reachable = clusterUnlocked(order[i + 1]);   // 下一站是否已解锁
         const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         p.setAttribute('d', d);
         p.setAttribute('fill', 'none');
-        p.setAttribute('stroke', lit ? '#e8b04b' : '#f3d9a4');
+        p.setAttribute('stroke', lit ? '#e8b04b' : (reachable ? '#f3d9a4' : '#d8d2c8'));
         p.setAttribute('stroke-width', lit ? '4' : '3');
-        p.setAttribute('stroke-dasharray', '2 12');
+        p.setAttribute('stroke-dasharray', lit ? '1 0' : '2 12');
         p.setAttribute('stroke-linecap', 'round');
-        p.setAttribute('opacity', lit ? '.95' : '.5');
+        p.setAttribute('opacity', lit ? '.95' : (reachable ? '.5' : '.18'));
         links.appendChild(p);
       }
     }
     // —— 圆形节点按钮（画布式布局：山谷背景上散布 + 线穿着） ——
     MV.locations.forEach(loc => {
       const allDone = loc.levels.every(id => App.state.completed[id]);
+      const unlocked = clusterUnlocked(loc.id);
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'map-node' + (allDone ? ' completed' : '');
+      btn.className = 'map-node' + (allDone ? ' completed' : '') + (unlocked ? '' : ' locked');
       btn.style.left = loc.pos[0] + '%';
       btn.style.top = loc.pos[1] + '%';
       btn.style.position = 'absolute';
       btn.style.transform = 'translate(-50%, -50%)';
-      btn.setAttribute('aria-label', loc.name + (allDone ? '（已全部点亮）' : ''));
+      btn.style.filter = unlocked ? '' : 'grayscale(.55)';
+      btn.setAttribute('aria-label', loc.name + (allDone ? '（已全部点亮）' : (unlocked ? '' : '（未解锁）')));
       btn.innerHTML =
         '<img src="assets/cluster_' + loc.id + '.webp" alt="" loading="lazy" onerror="this.style.display=\'none\'" style="width:100%;height:100%;object-fit:cover;display:block">' +
-        '<span style="position:absolute;left:0;right:0;bottom:0;padding:3px 0;font-size:12px;font-weight:bold;color:#5b4632;background:rgba(255,253,247,.88);text-align:center">' + loc.name + '</span>';
-      btn.addEventListener('pointerdown', () => openLocation(loc.id));
+        '<span style="position:absolute;left:0;right:0;bottom:0;padding:3px 0;font-size:12px;font-weight:bold;color:#5b4632;background:rgba(255,253,247,.88);text-align:center">' + loc.name + '</span>' +
+        (unlocked ? '' : '<span style="position:absolute;top:-4px;right:-4px;font-size:16px;background:#fff8ec;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(93,74,50,.3)">🔒</span>');
+      btn.addEventListener('pointerdown', () => {
+        if (unlocked) openLocation(loc.id);
+        else MV.VoiceCore.say('先点亮前面的山谷，小路才会通到这里哦！');
+      });
       wrap.appendChild(btn);
     });
 
@@ -307,6 +314,28 @@
     // 面板自带记忆文案，避免地图气泡被遮罩遮挡
   }
 
+  /* —— 主线解锁链（聚类链沿 S 形动线 + 聚类内关卡链 + 演示全开） —— */
+  const CLUSTER_CHAIN = ['valley', 'rhythm', 'scale', 'chord', 'meadow'];
+  function allUnlocked() {
+    try { return localStorage.getItem('mv-unlock-all') === '1'; } catch (e) { return false; }
+  }
+  function clusterUnlocked(id) {
+    if (allUnlocked()) return true;
+    const i = CLUSTER_CHAIN.indexOf(id);
+    if (i <= 0) return true; // 声音山谷 = 起点
+    const prev = CLUSTER_CHAIN[i - 1];
+    const loc = MV.locations.find(l => l.id === prev);
+    return loc.levels.every(lvId => !!App.state.completed[lvId]);
+  }
+  function levelUnlocked(lv) {
+    if (allUnlocked()) return true;
+    if (!clusterUnlocked(lv.loc)) return false;
+    const loc = MV.locations.find(l => l.id === lv.loc);
+    const idx = loc.levels.indexOf(lv.id);
+    if (idx <= 0) return true; // 聚类内第一关
+    return !!App.state.completed[loc.levels[idx - 1]];
+  }
+
   /* 渲染聚类关卡列表（含乐理小测入口） */
   function renderLevelChips(loc, list) {
     list.innerHTML = '';
@@ -314,15 +343,19 @@
       const lv = MV.levels.find(x => x.id === id);
       if (!lv) return;
       const done = !!App.state.completed[id];
+      const unlocked = levelUnlocked(lv);
       const chip = document.createElement('button');
       chip.type = 'button';
-      chip.className = 'loc-level' + (done ? ' done' : '');
+      chip.className = 'loc-level' + (done ? ' done' : '') + (unlocked ? '' : ' locked');
       chip.innerHTML =
         '<span class="loc-level-ico" aria-hidden="true">' + (done ? '✓' : (lv.type === 'quiz' ? '✎' : '♪')) + '</span>' +
         '<span class="loc-level-txt"><b>' + lv.title + '</b><small>' + lv.brief + '</small></span>' +
         '<span class="loc-level-theory">' + (lv.lesson ? lv.lesson + ' · ' : '') + lv.theory + '</span>' +
-        '<span class="loc-level-go" aria-hidden="true">→</span>';
-      chip.addEventListener('pointerdown', () => openLevel(id));
+        (unlocked ? '<span class="loc-level-go" aria-hidden="true">→</span>' : '<span class="loc-level-go" aria-hidden="true">🔒</span>');
+      chip.addEventListener('pointerdown', () => {
+        if (unlocked) openLevel(id);
+        else MV.VoiceCore.say('先完成前面的课，小路才会通到这里哦！');
+      });
       list.appendChild(chip);
     });
   }
