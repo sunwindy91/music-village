@@ -1189,15 +1189,24 @@
       playing = true;
       cards.forEach(bt => bt.disabled = true);
       const dur = order[Math.min(round, order.length - 1)];
-      intro.textContent = '第 ' + (round + 1) + ' 题 · 听这个声音走了几步';
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 数一数，鼓点敲了几下？';
       MV.MusicCore.playSequence([{ midi: 60, start: 0, dur: dur }], {
         bpm: 88, inst: 'piano',
         onEnd: () => {
           if (!alive()) return;
           playing = false;
+          intro.textContent = '第 ' + (round + 1) + ' 题 · 数一数，鼓点敲了几下？';
           cards.forEach(bt => bt.disabled = false);
         }
       });
+      // 节拍鼓点提示：每拍一个木鱼"嗒" + 文字计数，孩子数拍子分得清 1/2/4 拍
+      const spb = 60 / 88;
+      for (let i = 0; i < dur; i++) {
+        setTimeout(() => {
+          try { MV.MusicCore.sfx('click'); } catch (e) { /* noop */ }
+          if (alive()) intro.textContent = '数到 ' + (i + 1) + ' 下…';
+        }, Math.round(i * spb * 1000) + 40);
+      }
     }
 
     function answer(dur) {
