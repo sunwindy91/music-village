@@ -211,8 +211,17 @@ img, svg { display: block; }
 .splash-sky {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(180deg, #fdf3d7 0%, var(--gold-pale) 18%, var(--sky-top) 55%, var(--mist) 80%, var(--sky-low));
+  background: url(../assets/hero.webp) center 32% / cover no-repeat;
   overflow: hidden;
+}
+/* hero 全景接管后隐藏程序化太阳/云/山（水彩画自带这些元素） */
+.splash-sky .sun, .splash-sky .cloud, .splash-sky .splash-range { display: none; }
+.splash-sky::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 36%;
+  background: linear-gradient(180deg, rgba(253, 243, 215, 0), rgba(253, 243, 215, .94));
 }
 .sun {
   position: absolute;
