@@ -282,9 +282,9 @@ img, svg { display: block; }
 /* ════════════ 晓声（角色 + 气泡） ════════════ */
 .xs-holder { position: relative; }
 
-/* ===== 晓声 PNG 素材模式（水彩质感） ===== */
+/* ===== 晓声 PNG 素材模式（3D 竖版手办：完整显示不裁切） ===== */
 .xs-png-wrap { position: relative; width: 100%; max-width: 190px; margin: 0 auto; }
-.xs-png { width: 100%; height: auto; display: block; border-radius: 50%;
+.xs-png { height: auto; max-height: 150px; max-width: 100%; width: auto; display: block; margin: 0 auto; border-radius: 14px;
   box-shadow: 0 14px 34px rgba(56, 94, 74, .24); }
 .xs-png-halo { position: absolute; inset: -18px; border-radius: 50%; pointer-events: none;
   background: radial-gradient(circle, rgba(243, 226, 164, .5) 0%, rgba(243, 226, 164, 0) 70%);
