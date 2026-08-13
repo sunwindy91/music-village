@@ -149,12 +149,24 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelector('#stage-back'));
   await sleep(120);
 
+  console.log('== 5b0. 音阶山谷 · 音符住址（认谱·视谱链） ==');
+  click(document.querySelectorAll('.map-node')[1]);
+  await sleep(80);
+  const snChips = document.querySelectorAll('.loc-level');
+  click(snChips[1]);
+  let snStaff = null;
+  for (let i = 0; i < 40; i++) { snStaff = document.querySelector('#sn-staff'); if (snStaff && snStaff.children.length >= 1) break; await sleep(100); }
+  ok(!!snStaff && snStaff.children.length >= 1, '音符住址：五线谱渲染');
+  ok(document.querySelectorAll('#sn-keys .answer-btn').length >= 3, '音符住址：唱名键就绪');
+  click(document.querySelector('#stage-back'));
+  await sleep(120);
+
   console.log('== 5b. 音阶山谷 · 走走停停（时值听辨） ==');
   click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const wsChips = document.querySelectorAll('.loc-level');
-  ok(wsChips.length === 7, '音阶山谷有 7 个关卡入口（乐理课 6 课 + 复习小测）');
-  click(wsChips[1]);
+  ok(wsChips.length === 8, '音阶山谷有 8 个关卡入口（乐理课 7 课 + 复习小测）');
+  click(wsChips[2]);
   // 轮询等待渲染（levelIntro 打字机完成后才 startLevel，固定 sleep 有时序抖动）
   let wsCards = [];
   for (let i = 0; i < 40; i++) { wsCards = document.querySelectorAll('.ws-card'); if (wsCards.length >= 3) break; await sleep(100); }
@@ -169,7 +181,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const fgChips = document.querySelectorAll('.loc-level');
-  click(fgChips[2]);
+  click(fgChips[3]);
   let fgMel = null;
   for (let i = 0; i < 40; i++) { fgMel = document.querySelector('#fg-melody'); if (fgMel && fgMel.children.length >= 3) break; await sleep(100); }
   ok(!!fgMel && fgMel.children.length >= 3, '旋律填空：旋律格渲染');
@@ -181,7 +193,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const srChips = document.querySelectorAll('.loc-level');
-  click(srChips[3]);
+  click(srChips[4]);
   let srStaff = null;
   for (let i = 0; i < 40; i++) { srStaff = document.querySelector('#sr-staff'); if (srStaff && srStaff.children.length >= 1) break; await sleep(100); }
   ok(!!srStaff && srStaff.children.length >= 1, '看谱弹奏：五线谱渲染');
@@ -193,7 +205,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const rcChips = document.querySelectorAll('.loc-level');
-  click(rcChips[4]);
+  click(rcChips[5]);
   let rcOpts = [];
   for (let i = 0; i < 40; i++) { rcOpts = document.querySelectorAll('.rc-options .answer-btn'); if (rcOpts.length >= 3) break; await sleep(100); }
   ok(rcOpts.length === 3, '节奏接龙：3 个节奏选项就绪');
@@ -204,7 +216,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const ivChips = document.querySelectorAll('.loc-level');
-  click(ivChips[5]);
+  click(ivChips[6]);
   let ivOpts = [];
   for (let i = 0; i < 40; i++) { ivOpts = document.querySelectorAll('.iv-options .answer-btn'); if (ivOpts.length >= 4) break; await sleep(100); }
   ok(ivOpts.length === 4, '音程梯子：4 个台阶数选项就绪');
@@ -215,7 +227,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const qzChips = document.querySelectorAll('.loc-level');
-  click(qzChips[6]);
+  click(qzChips[7]);
   let qzQ = null;
   for (let i = 0; i < 40; i++) { qzQ = document.querySelector('#qz-question'); if (qzQ) break; await sleep(100); }
   ok(!!qzQ, '乐理小测：题目渲染');

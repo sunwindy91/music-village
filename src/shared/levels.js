@@ -22,7 +22,7 @@ MV.locations = [
     subtitle: '认一认 · 音符的名字',
     memory: '晓声的歌喉',
     pos: [56, 52],
-    levels: ['notes', 'walkstop', 'fillgap', 'sightread', 'rhythmchain', 'interval', 'quiz1']
+    levels: ['notes', 'stavenote', 'walkstop', 'fillgap', 'sightread', 'rhythmchain', 'interval', 'quiz1']
   },
   {
     id: 'meadow',
@@ -92,13 +92,23 @@ MV.levels = [
     theory: '唱名 · 音高对应'
   },
   {
+    id: 'stavenote',
+    loc: 'scale',
+    title: '音符住址',
+    type: 'stavenote',
+    icon: 'home',
+    brief: '看五线谱上的音符，认出它是谁',
+    lesson: '乐理课 第 2 课',
+    theory: '认谱 · 五线谱位置'
+  },
+  {
     id: 'walkstop',
     loc: 'scale',
     title: '走走停停',
     type: 'walkstop',
     icon: 'foot',
     brief: '听声音长短，走了几步？',
-    lesson: '乐理课 第 2 课',
+    lesson: '乐理课 第 3 课',
     theory: '时值 · 音符长短'
   },
   {
@@ -108,7 +118,7 @@ MV.levels = [
     type: 'fillgap',
     icon: 'puzzle',
     brief: '听旋律，补上缺的音',
-    lesson: '乐理课 第 3 课',
+    lesson: '乐理课 第 4 课',
     theory: '旋律 · 音高序列'
   },
   {
@@ -118,7 +128,7 @@ MV.levels = [
     type: 'sightread',
     icon: 'staff',
     brief: '看五线谱上的音符，把它弹出来',
-    lesson: '乐理课 第 4 课',
+    lesson: '乐理课 第 5 课',
     theory: '视谱 · 弹奏'
   },
   {
@@ -128,7 +138,7 @@ MV.levels = [
     type: 'rhythmchain',
     icon: 'run',
     brief: '听一听，是走还是跑？',
-    lesson: '乐理课 第 5 课',
+    lesson: '乐理课 第 6 课',
     theory: '八分音符 · 快慢'
   },
   {
@@ -138,7 +148,7 @@ MV.levels = [
     type: 'interval',
     icon: 'stairs',
     brief: '听两个音，数数隔了几级台阶',
-    lesson: '乐理课 第 6 课',
+    lesson: '乐理课 第 7 课',
     theory: '音程 · 距离'
   },
   {

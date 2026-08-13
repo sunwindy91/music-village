@@ -913,6 +913,88 @@
     return 'stream';                              // 缓缓流动
   }
 
+  /* —— 关卡：音符住址（认谱 · 看五线谱位置→认出唱名 · 补足视谱渐进链） —— */
+  runners.stavenote = function (lv, body) {
+    const solfa = MV.solfa;
+    const order = [0, 2, 4, 1, 3];               // do→mi→sol→re→fa（先易后难，跨度递减）
+    let round = 0, correct = 0, wrong = 0, answered = false;
+    let target = 0;
+    const sess = MV._session;
+    const alive = () => sess === MV._session;
+
+    body.innerHTML =
+      '<div class="stage-panel stage-scene">' +
+        '<div class="stage-intro" id="sn-intro">第 1 题 · 认认它住在几楼</div>' +
+        '<div id="sn-progress"></div>' +
+        '<div class="sn-staff" id="sn-staff" style="background:#fffdf7;border-radius:14px;padding:10px;margin:10px auto;max-width:300px;min-height:110px"></div>' +
+        '<p class="sn-hint" id="sn-hint" style="text-align:center;font-size:14px;color:#8a7a63;margin:6px 0 10px">五线谱的小楼：越往上，音越高</p>' +
+        '<div class="sn-keys" id="sn-keys" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:420px;margin:0 auto"></div>' +
+      '</div>';
+
+    const intro = $('#sn-intro');
+    const progBox = $('#sn-progress');
+    const staffBox = $('#sn-staff');
+    const hint = $('#sn-hint');
+    const keyBox = $('#sn-keys');
+
+    function renderProgress() { progBox.replaceChildren(stepDots(3, correct)); }
+
+    function renderStaff(idx) {
+      const notes = [{ midi: solfa[idx].midi, start: 0, dur: 1 }];
+      staffBox.innerHTML = '';
+      try { MV.Staff.render(notes, staffBox, { compact: true }); } catch (e) { staffBox.textContent = '（谱面渲染中…）'; }
+    }
+
+    function buildRound() {
+      if (!alive()) return;
+      answered = false;
+      target = order[Math.min(round, order.length - 1)];
+      intro.textContent = '第 ' + (round + 1) + ' 题 · 认出这个音符是谁';
+      renderStaff(target);
+      keyBox.innerHTML = '';
+      [0, 1, 2, 3, 4].forEach(idx => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'answer-btn';
+        b.innerHTML = '<b style="font-size:20px">' + solfa[idx].sol + '</b><small style="display:block;opacity:.85">' + solfa[idx].num + '</small>';
+        b.style.minWidth = '64px';
+        b.style.minHeight = '56px';
+        b.addEventListener('pointerdown', () => answer(idx));
+        keyBox.appendChild(b);
+      });
+      hint.textContent = '这个音符住在几楼？';
+    }
+
+    function answer(idx) {
+      if (!alive() || answered) return;
+      answered = true;
+      if (idx === target) {
+        MV.MusicCore.sfx('correct');
+        MV.MusicCore.playMidi(solfa[idx].midi, { dur: .5, inst: 'piano' });
+        correct++; wrong = 0;
+        renderProgress();
+        MV.VoiceCore.say(pick(MV.lines.stavenote.correct), { done: () => {
+          if (!alive()) return;
+          if (correct >= C.correctToPass) {
+            MV.VoiceCore.say(MV.lines.stavenote.done, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 400); } });
+          } else { round++; setTimeout(() => { if (alive()) buildRound(); }, 450); }
+        }});
+      } else {
+        MV.MusicCore.sfx('wrong');
+        wrong++;
+        const stumble = wrong >= 2;
+        if (stumble) wrong = 0;
+        MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.stavenote) + ' ' : '') + pick(MV.lines.stavenote.wrong), { done: () => {
+          if (!alive()) return;
+          setTimeout(() => { if (alive()) buildRound(); }, 400);
+        }});
+      }
+    }
+
+    renderProgress();
+    buildRound();
+  };
+
   /* —— 关卡：走走停停（时值听辨 · 叔叔大纲第 2 阶：四分/二分/全音符 = 走/走——/走————） —— */
   runners.walkstop = function (lv, body) {
     // 播放顺序：先最长(4)→最短(1)→中间(2)，先两极后中间（先宽后严）
