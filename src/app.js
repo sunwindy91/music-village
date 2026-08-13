@@ -208,7 +208,8 @@
       });
       for (let i = 0; i < pts.length - 1; i++) {
         // 沿节点下缘弧线走（不斜穿画面中央），淡细虚线不破坏水彩主画面
-        const x1 = pts[i][0], y1 = pts[i][1] + 38, x2 = pts[i + 1][0], y2 = pts[i + 1][1] + 38;
+        const off = i === pts.length - 2 ? 18 : 38; // 末段靠底部，偏移收小
+        const x1 = pts[i][0], y1 = pts[i][1] + off, x2 = pts[i + 1][0], y2 = pts[i + 1][1] + off;
         const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 + 22;
         const d = 'M' + x1 + ' ' + y1 + ' Q' + mx + ' ' + my + ' ' + x2 + ' ' + y2;
         const toLoc = MV.locations.find(x => x.id === ORDER[i + 1]);
@@ -2388,13 +2389,17 @@
     if (!q) return;
     addQa('me', q);
     inp.value = '';
-    // ① 真实 AI（Cloudflare Worker 代理；失败/未配 key 自动回落本地规则）
+    // ① 真实 AI（Cloudflare Worker 代理；超时/失败/未配 key 自动回落本地规则）
     try {
+      const ctl = new AbortController();
+      const to = setTimeout(() => ctl.abort(), 8000);
       const r = await fetch('https://music-village-chat.2301740254.workers.dev', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: q, history: qaHistory.slice(-6) })
+        body: JSON.stringify({ message: q, history: qaHistory.slice(-6) }),
+        signal: ctl.signal
       });
+      clearTimeout(to);
       if (r.ok) {
         const j = await r.json();
         if (j.reply) {
