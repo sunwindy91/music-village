@@ -21,7 +21,7 @@ MV.locations = [
     name: '音阶山谷',
     subtitle: '认一认 · 音符的名字',
     memory: '晓声的歌喉',
-    pos: [56, 52],
+    pos: [20, 38],       // 第二站（先乐理主课，再节奏进阶）
     levels: ['notes', 'stavenote', 'walkstop', 'fillgap', 'sightread', 'rhythmchain', 'interval', 'quiz1']
   },
   {
@@ -37,7 +37,7 @@ MV.locations = [
     name: '节奏小路',
     subtitle: '动一动 · 身体打节奏',
     memory: '晓声的脚步声',
-    pos: [20, 38],
+    pos: [56, 52],       // 第三站（时值课之后，十六分进阶）
     levels: ['echo', 'sixteenth', 'quizr']
   },
   {
@@ -129,7 +129,8 @@ MV.levels = [
     icon: 'staff',
     brief: '看五线谱上的音符，把它弹出来',
     lesson: '乐理课 第 5 课',
-    theory: '视谱 · 弹奏'
+    theory: '视谱 · 弹奏',
+    prereq: ['notes', 'stavenote', 'walkstop']   // 知识诅咒防护：看谱弹奏需先认音符+住址+时值
   },
   {
     id: 'rhythmchain',
@@ -169,7 +170,8 @@ MV.levels = [
     icon: 'run2',
     brief: '走、跑、快快跑，选对节奏',
     lesson: '节奏课 第 2 课',
-    theory: '十六分 · 更快'
+    theory: '十六分 · 更快',
+    prereq: ['walkstop', 'rhythmchain']   // 先懂四分/二分时值与八分，再学十六分
   },
   {
     id: 'quizr',
@@ -200,7 +202,8 @@ MV.levels = [
     icon: 'friends',
     brief: '三个音手拉手，找到它们',
     lesson: '和声课 第 2 课',
-    theory: '三和弦 · 音群'
+    theory: '三和弦 · 音群',
+    prereq: ['rainbow', 'interval']   // 三和弦需先懂叠音与音程
   },
   {
     id: 'quizc',

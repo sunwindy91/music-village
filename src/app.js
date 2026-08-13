@@ -224,7 +224,7 @@
     const wrap = $('#map-locs');
     wrap.innerHTML = '';
     // 流程动线：实线把 5 站串起来，通关逐段点亮（金=已通/浅金=已解锁/灰=未解锁）
-    const ORDER = ['valley', 'rhythm', 'scale', 'chord', 'meadow']; // 主线流程顺序
+    const ORDER = ['valley', 'scale', 'rhythm', 'chord', 'meadow']; // 主线学习流程顺序（序号徽章+连线动线）
     const links = $('#map-links');
     if (links) {
       links.innerHTML = '';
@@ -381,7 +381,7 @@
   }
 
   /* —— 主线解锁链（聚类链沿 S 形动线 + 聚类内关卡链 + 演示全开） —— */
-  const CLUSTER_CHAIN = ['valley', 'rhythm', 'scale', 'chord', 'meadow'];
+  const CLUSTER_CHAIN = ['valley', 'scale', 'rhythm', 'chord', 'meadow']; // 学习顺序：先乐理主课(认谱/时值/音程) 再节奏进阶(十六分) 再和声 再创造
   function allUnlocked() {
     try { return localStorage.getItem('mv-unlock-all') === '1'; } catch (e) { return false; }
   }
@@ -452,7 +452,13 @@
     MV.VoiceCore.applyGrowth(stageNum());
     showView('stage');
     refreshPoints();
-    MV.VoiceCore.say(MV.lines.levelIntro[lv.type] || '准备好了吗？', { done: () => startLevel(lv) });
+    // 知识诅咒防护：重依赖关卡若前置课没学完，先说一句温习提示（不阻止进入）
+    let intro = MV.lines.levelIntro[lv.type] || '准备好了吗？';
+    const pre = lv.prereq || [];
+    const missPre = pre.filter(id => !App.state.completed[id]);
+    if (pre.length && missPre.length >= pre.length) intro = '前面的小知识还没学完，我们先温习一下，学起来更轻松哦。' + intro;
+    else if (missPre.length) intro = '我们先温习一下前面的小知识，很快的～' + intro;
+    MV.VoiceCore.say(intro, { done: () => startLevel(lv) });
   }
 
   /* 关卡执行器注册表（各模块按块注册） */
