@@ -150,8 +150,8 @@
 
   /* ---------------- 山谷地图 ---------------- */
   function stageNum() {
-    // 主线成长：每点亮 3 关，晓声进阶一档（0种子→1小芽→2开花→3星光→4初鹿→5鹿全盛）
-    const done = Math.min(5, Math.floor(Object.keys(App.state.completed).length / 3));
+    // 主线成长：每过 1 关，晓声进阶一档（0种子→1小芽→2开花→3星光→4初鹿→5鹿）
+    const done = Math.min(5, Object.keys(App.state.completed).length);
     // 皮肤切换：已解锁形态可任选（演示模式全开）
     try {
       const s = parseInt(localStorage.getItem('mv-skin'), 10);
@@ -163,7 +163,7 @@
   function openSkin() {
     const ov = $('#skin-overlay');
     if (!ov) return;
-    const base = Math.min(5, Math.floor(Object.keys(App.state.completed).length / 3));
+    const base = Math.min(5, Object.keys(App.state.completed).length); // 每关解锁下一个形态
     const box = $('#skin-options');
     box.innerHTML = '';
     MV.VoiceCore.allForms().forEach((f, i) => {
@@ -197,7 +197,7 @@
       tag.className = 'xs-form-tag';
       holder.appendChild(tag);
     }
-    tag.textContent = f.name + ' · 点亮 ' + Math.min(5, Math.floor(Object.keys(App.state.completed).length / 3)) + '/5';
+    tag.textContent = f.name + ' · 点亮 ' + Math.min(5, Object.keys(App.state.completed).length) + '/5';
     tag.dataset.stage = String(stageNum());
     tag.onclick = () => openSkin(); // 全通关后点标签换皮肤；未全通关晓声会提示
     // 小鹿乱撞故事线：消费通关时挂起的故事标记（晓声在地图上说出，形态已更新为初鹿/鹿）
