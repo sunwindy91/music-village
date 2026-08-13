@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet"></noscript>
-  <link rel="stylesheet" href="styles/main_c20260812h.css?v=20260813h">
+  <link rel="stylesheet" href="styles/main_c20260812h.css?v=20260813i">
   <!-- 音乐引擎 / 乐理引擎 / 记谱引擎（本地优先，离线可用） -->
   <script src="vendor/tonal.min.js?v=1"></script>
   <script src="vendor/tone.js?v=1"></script>
@@ -286,6 +286,10 @@
     .map-node.locked .step-num { background:#c7cfc6; color:#3f4c42; }
     .map-node.completed .step-num { background:#f6d693; color:#5b3a10; }
     .map-node .step-lock { position:absolute; top:-4px; right:-4px; width:26px; height:26px; background:#fff8ec; border-radius:50%; font-size:15px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(93,74,50,.3); z-index:2; }
+    /* 连线流动闪动（已通/解锁段提示前进方向） */
+    .map-links path.link-on { animation: linkFlow 1.4s linear infinite; }
+    @keyframes linkFlow { to { stroke-dashoffset: -24; } }
+    @media (prefers-reduced-motion: reduce) { .map-links path.link-on { animation: none; } }
     /* 鼓励语 overlay（作品播放完 · 晓声对山里孩子说话） */
     .encourage-overlay { background: rgba(31,74,55,.45); display: flex; align-items: center; justify-content: center; z-index: 60; padding: 20px; }
     .encourage-card { width: min(88vw, 420px); background: linear-gradient(165deg,#fffdf7,#f1f7e9); border-radius: 22px; padding: 20px 20px 18px; text-align: center; box-shadow: 0 16px 40px rgba(31,74,55,.35); }
@@ -316,13 +320,13 @@
     @media (prefers-reduced-motion: reduce) { .map-node, .nf { animation: none; } }
   </style>
 
-  <script src="config.js?v=20260813h"></script>
-  <script src="shared/lines.js?v=20260813h"></script>
-  <script src="shared/levels.js?v=20260813h"></script>
-  <script src="modules/audio/music-core.js?v=20260813h"></script>
-  <script src="modules/voice/voice-core.js?v=20260813h"></script>
-  <script src="modules/notation/staff.js?v=20260813h"></script>
-  <script src="app.js?v=20260813h"></script>
+  <script src="config.js?v=20260813i"></script>
+  <script src="shared/lines.js?v=20260813i"></script>
+  <script src="shared/levels.js?v=20260813i"></script>
+  <script src="modules/audio/music-core.js?v=20260813i"></script>
+  <script src="modules/voice/voice-core.js?v=20260813i"></script>
+  <script src="modules/notation/staff.js?v=20260813i"></script>
+  <script src="app.js?v=20260813i"></script>
 </body>
 </html>
 

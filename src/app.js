@@ -208,7 +208,7 @@
         return l ? [l.pos[0] / 100 * sr.width, l.pos[1] / 100 * sr.height] : [0, 0];
       });
       for (let i = 0; i < pts.length - 1; i++) {
-        // 沿节点下缘弧线走（不斜穿画面中央），淡细虚线不破坏水彩主画面
+        // 沿节点下缘弧线走（不斜穿画面中央），亮段加虚线流动动画提示前进方向
         const off = i === pts.length - 2 ? 18 : 38; // 末段靠底部，偏移收小
         const x1 = pts[i][0], y1 = pts[i][1] + off, x2 = pts[i + 1][0], y2 = pts[i + 1][1] + off;
         const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 + 22;
@@ -219,11 +219,12 @@
         const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         p.setAttribute('d', d);
         p.setAttribute('fill', 'none');
-        p.setAttribute('stroke', toDone ? '#d9ae62' : (toOpen ? '#e3cfa4' : '#c9d3cc'));
-        p.setAttribute('stroke-width', '3');
+        p.setAttribute('stroke', toDone ? '#e6b85c' : (toOpen ? '#e8d3a0' : '#b9c3bb'));
+        p.setAttribute('stroke-width', toDone ? '4' : '3.5');
         p.setAttribute('stroke-linecap', 'round');
         p.setAttribute('stroke-dasharray', '2 10');
-        p.setAttribute('opacity', toDone ? '.6' : (toOpen ? '.45' : '.28'));
+        p.setAttribute('opacity', toDone ? '.9' : (toOpen ? '.7' : '.55')); // 亮度提高：四段全程可见
+        if (toDone || toOpen) p.setAttribute('class', 'link-on'); // 流动闪动：前进方向提示
         links.appendChild(p);
       }
     }
