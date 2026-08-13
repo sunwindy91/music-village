@@ -165,6 +165,7 @@
   }
   function bootMap() {
     mountXs('map-xs', { exp: 'calm', float: true, breathe: true });
+    enableDrag($('#map-xs')); // 晓声可拖拽桌宠（白小纯式）
     updateXsForm();
     MV.VoiceCore.fireflies($('#map-fireflies'), 14);
     renderLocs();
@@ -180,22 +181,47 @@
     updateXsForm(); // 每次回到地图都刷新晓声形态
     const wrap = $('#map-locs');
     wrap.innerHTML = '';
+    // —— 连线层：S 形动线（valley→rhythm→scale→chord→meadow），通关点亮 ——
+    const links = $('#map-links');
+    if (links) {
+      links.innerHTML = '';
+      const order = ['valley', 'rhythm', 'scale', 'chord', 'meadow'];
+      const pts = order.map(id => {
+        const l = MV.locations.find(x => x.id === id);
+        return l ? [l.pos[0] * 4, l.pos[1] * 6.4] : [0, 0];
+      });
+      for (let i = 0; i < pts.length - 1; i++) {
+        const x1 = pts[i][0], y1 = pts[i][1], x2 = pts[i + 1][0], y2 = pts[i + 1][1];
+        const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+        const d = 'M' + x1 + ' ' + y1 + ' Q' + cx + ' ' + y1 + ' ' + cx + ' ' + cy + ' T' + x2 + ' ' + y2;
+        const lit = !!(App.state.completed[order[i]] && App.state.completed[order[i + 1]]);
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', d);
+        p.setAttribute('fill', 'none');
+        p.setAttribute('stroke', lit ? '#e8b04b' : '#f3d9a4');
+        p.setAttribute('stroke-width', lit ? '4' : '3');
+        p.setAttribute('stroke-dasharray', '2 12');
+        p.setAttribute('stroke-linecap', 'round');
+        p.setAttribute('opacity', lit ? '.95' : '.5');
+        links.appendChild(p);
+      }
+    }
+    // —— 圆形节点按钮（画布式布局：山谷背景上散布 + 线穿着） ——
     MV.locations.forEach(loc => {
       const allDone = loc.levels.every(id => App.state.completed[id]);
-      const doneCount = loc.levels.filter(id => App.state.completed[id]).length;
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = 'cluster-card' + (allDone ? ' completed' : '');
-      card.setAttribute('aria-label', loc.name + (allDone ? '（已全部点亮）' : ''));
-      card.innerHTML =
-        '<img src="assets/cluster_' + loc.id + '.webp" alt="" loading="lazy" onerror="this.style.display=\'none\'" style="width:100%;height:112px;object-fit:cover;display:block">' +
-        '<div style="padding:10px 14px 12px;display:flex;flex-direction:column;gap:2px">' +
-          '<b style="font-size:19px;color:#5b4632">' + loc.name + '</b>' +
-          '<small style="font-size:13px;color:#8a7a63">' + loc.subtitle + '</small>' +
-          '<span style="font-size:12px;color:#9a5718;font-weight:bold;margin-top:4px">' + (allDone ? '✓ 已全部点亮' : '点亮 ' + doneCount + ' / ' + loc.levels.length) + '</span>' +
-        '</div>';
-      card.addEventListener('pointerdown', () => openLocation(loc.id));
-      wrap.appendChild(card);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'map-node' + (allDone ? ' completed' : '');
+      btn.style.left = loc.pos[0] + '%';
+      btn.style.top = loc.pos[1] + '%';
+      btn.style.position = 'absolute';
+      btn.style.transform = 'translate(-50%, -50%)';
+      btn.setAttribute('aria-label', loc.name + (allDone ? '（已全部点亮）' : ''));
+      btn.innerHTML =
+        '<img src="assets/cluster_' + loc.id + '.webp" alt="" loading="lazy" onerror="this.style.display=\'none\'" style="width:100%;height:100%;object-fit:cover;display:block">' +
+        '<span style="position:absolute;left:0;right:0;bottom:0;padding:3px 0;font-size:12px;font-weight:bold;color:#5b4632;background:rgba(255,253,247,.88);text-align:center">' + loc.name + '</span>';
+      btn.addEventListener('pointerdown', () => openLocation(loc.id));
+      wrap.appendChild(btn);
     });
 
     // 底部：我的音乐会入口
@@ -207,6 +233,33 @@
     concertBtn.textContent = App.state.works.length ? '我的音乐会（' + App.state.works.length + ' 首）' : '我的音乐会';
     concertBtn.addEventListener('pointerdown', () => openConcert());
     footer.appendChild(concertBtn);
+  }
+
+  /* —— 晓声可拖拽桌宠（白小纯式：拖拽 + 范围限制 + 挣扎态） —— */
+  function enableDrag(el) {
+    if (!el) return;
+    let sx = 0, sy = 0, dragging = false;
+    const scene = el.parentElement;
+    el.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      const r = el.getBoundingClientRect();
+      sx = e.clientX - r.left;
+      sy = e.clientY - r.top;
+      dragging = true;
+      if (el.setPointerCapture) { try { el.setPointerCapture(e.pointerId); } catch (err) { /* noop */ } }
+    });
+    el.addEventListener('pointermove', e => {
+      if (!dragging || !scene) return;
+      const sr = scene.getBoundingClientRect();
+      const nx = e.clientX - sr.left - sx;
+      const ny = e.clientY - sr.top - sy;
+      el.style.left = Math.max(0, Math.min(sr.width - 30, nx)) + 'px';
+      el.style.top = Math.max(0, Math.min(sr.height - 30, ny)) + 'px';
+      el.classList.add('xs-dragging');
+    });
+    const end = () => { dragging = false; el.classList.remove('xs-dragging'); };
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
   }
 
   /* ---------------- 地点总览（关卡 chips） ---------------- */

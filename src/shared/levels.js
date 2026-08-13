@@ -13,7 +13,7 @@ MV.locations = [
     name: '声音山谷',
     subtitle: '先听一听 · 声音的高低长短',
     memory: '晓声最初的听觉',
-    pos: [50, 21],          // 在地图场景中的百分比位置 [x%, y%]
+    pos: [52, 16],          // 画布式节点：山顶起点（S 形动线第一站）
     levels: ['highlow', 'drum', 'same', 'quiz0']
   },
   {
@@ -21,7 +21,7 @@ MV.locations = [
     name: '音阶山谷',
     subtitle: '认一认 · 音符的名字',
     memory: '晓声的歌喉',
-    pos: [50, 56],
+    pos: [56, 52],
     levels: ['notes', 'walkstop', 'fillgap', 'sightread', 'rhythmchain', 'interval', 'quiz1']
   },
   {
@@ -29,7 +29,7 @@ MV.locations = [
     name: '旋律草原',
     subtitle: '做一做 · 种出你自己的歌',
     memory: '晓声的梦',
-    pos: [50, 84],
+    pos: [46, 84],
     levels: ['compose', 'timbre', 'quiz2']
   },
   {
@@ -37,7 +37,7 @@ MV.locations = [
     name: '节奏小路',
     subtitle: '动一动 · 身体打节奏',
     memory: '晓声的脚步声',
-    pos: [18, 40],
+    pos: [20, 38],
     levels: ['echo', 'sixteenth', 'quizr']
   },
   {
@@ -45,7 +45,7 @@ MV.locations = [
     name: '和弦花园',
     subtitle: '听一听 · 声音的手拉手',
     memory: '晓声的梦之桥',
-    pos: [82, 62],
+    pos: [80, 66],
     levels: ['rainbow', 'chordbud', 'quizc']
   }
 ];

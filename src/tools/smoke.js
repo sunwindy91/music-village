@@ -89,10 +89,10 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelector('.splash-go'));
   await sleep(150);
   ok(window.MV.App.state.view === 'map', '点击开始后进入地图');
-  ok(document.querySelectorAll('.cluster-card').length === 5, '首页有 5 个聚类卡');
+  ok(document.querySelectorAll('.map-node').length === 5, '首页有 5 个聚类卡');
 
   console.log('== 2. 声音山谷 · 谁更高 ==');
-  click(document.querySelector('.cluster-card'));
+  click(document.querySelector('.map-node'));
   await sleep(80);
   const tGo0 = document.querySelector('#theory-go');
   ok(!!tGo0, '声音山谷：理论导入卡先出现（教学闭环第一步）');
@@ -115,7 +115,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   ok(window.MV.App.state.view === 'map', '返回地图');
 
   console.log('== 3. 小鼓手（渲染不崩溃） ==');
-  click(document.querySelector('.cluster-card'));
+  click(document.querySelector('.map-node'));
   await sleep(80);
   click(document.querySelectorAll('.loc-level')[1]);
   await sleep(650);
@@ -124,7 +124,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 4. 听音找家 ==');
-  click(document.querySelector('.cluster-card'));
+  click(document.querySelector('.map-node'));
   await sleep(80);
   click(document.querySelectorAll('.loc-level')[2]);
   await sleep(500);
@@ -133,7 +133,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 5. 音阶山谷 · 认识音符 ==');
-  click(document.querySelectorAll('.cluster-card')[1]);
+  click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const tGo1 = document.querySelector('#theory-go');
   if (tGo1) { click(tGo1); await sleep(80); }
@@ -150,7 +150,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 5b. 音阶山谷 · 走走停停（时值听辨） ==');
-  click(document.querySelectorAll('.cluster-card')[1]);
+  click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const wsChips = document.querySelectorAll('.loc-level');
   ok(wsChips.length === 7, '音阶山谷有 7 个关卡入口（乐理课 6 课 + 复习小测）');
@@ -166,7 +166,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 5b2. 音阶山谷 · 旋律填空（听→补全） ==');
-  click(document.querySelectorAll('.cluster-card')[1]);
+  click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const fgChips = document.querySelectorAll('.loc-level');
   click(fgChips[2]);
@@ -178,7 +178,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 5b3. 音阶山谷 · 看谱弹奏（视谱启蒙） ==');
-  click(document.querySelectorAll('.cluster-card')[1]);
+  click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const srChips = document.querySelectorAll('.loc-level');
   click(srChips[3]);
@@ -190,7 +190,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 5b4. 音阶山谷 · 节奏接龙（八分音符走/跑） ==');
-  click(document.querySelectorAll('.cluster-card')[1]);
+  click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const rcChips = document.querySelectorAll('.loc-level');
   click(rcChips[4]);
@@ -201,7 +201,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 5b5. 音阶山谷 · 音程梯子（两音距离） ==');
-  click(document.querySelectorAll('.cluster-card')[1]);
+  click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const ivChips = document.querySelectorAll('.loc-level');
   click(ivChips[5]);
@@ -212,7 +212,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 5c. 音阶山谷 · 乐理小测（聚类评估） ==');
-  click(document.querySelectorAll('.cluster-card')[1]);
+  click(document.querySelectorAll('.map-node')[1]);
   await sleep(80);
   const qzChips = document.querySelectorAll('.loc-level');
   click(qzChips[6]);
@@ -223,7 +223,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelector('#stage-back'));
   await sleep(120);
   console.log('== 6c. 节奏小路 · 新聚类（回声谷 + 十六分 + 小测） ==');
-  click(document.querySelectorAll('.cluster-card')[3]);
+  click(document.querySelectorAll('.map-node')[3]);
   await sleep(80);
   const rtGo = document.querySelector('#theory-go');
   ok(!!rtGo, '节奏小路：理论卡出现');
@@ -237,7 +237,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   ok(!!ecPad, '回声谷：鼓面渲染');
   click(document.querySelector('#stage-back'));
   await sleep(120);
-  click(document.querySelectorAll('.cluster-card')[3]);
+  click(document.querySelectorAll('.map-node')[3]);
   await sleep(80);
   click(document.querySelectorAll('.loc-level')[1]);
   let stOpts = [];
@@ -247,7 +247,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   await sleep(120);
 
   console.log('== 6d. 和弦花园 · 新聚类（彩虹和声 + 和声找朋友 + 小测） ==');
-  click(document.querySelectorAll('.cluster-card')[4]);
+  click(document.querySelectorAll('.map-node')[4]);
   await sleep(80);
   const cdGo = document.querySelector('#theory-go');
   ok(!!cdGo, '和弦花园：理论卡出现');
@@ -261,7 +261,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   ok(rbOpts.length === 2, '彩虹和声：单音/和弦 2 选项就绪');
   click(document.querySelector('#stage-back'));
   await sleep(120);
-  click(document.querySelectorAll('.cluster-card')[4]);
+  click(document.querySelectorAll('.map-node')[4]);
   await sleep(80);
   click(document.querySelectorAll('.loc-level')[1]);
   let cbOpts = [];
@@ -270,7 +270,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   click(document.querySelector('#stage-back'));
   await sleep(120);
   console.log('== 6. 旋律草原 · 网格作曲 + 五线谱出口 ==');
-  click(document.querySelectorAll('.cluster-card')[2]);
+  click(document.querySelectorAll('.map-node')[2]);
   await sleep(80);
   const tGo2 = document.querySelector('#theory-go');
   if (tGo2) { click(tGo2); await sleep(80); }
@@ -298,7 +298,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   ok(document.querySelector('#staff-overlay').hidden === false, '五线谱出口覆盖层可见');
 
   console.log('== 6b. 旋律草原 · 音色捉迷藏（听音色辨乐器） ==');
-  click(document.querySelectorAll('.cluster-card')[2]);
+  click(document.querySelectorAll('.map-node')[2]);
   await sleep(80);
   const tbChips = document.querySelectorAll('.loc-level');
   ok(tbChips.length === 3, '旋律草原有 3 个关卡入口（旋律田+音色捉迷藏+乐理小测）');
