@@ -2236,9 +2236,11 @@
       MV.MusicCore.start();
       if (cell.classList.toggle('on')) {
         cell.setAttribute('aria-pressed', 'true');
+        cell.dataset.inst = inst; // 记住填这格时的音色（换音色不影响已填格子）
         MV.MusicCore.playMidi(pitches[rows - 1 - r], { dur: .3, inst });
       } else {
         cell.setAttribute('aria-pressed', 'false');
+        delete cell.dataset.inst;
       }
     }
 
@@ -2246,7 +2248,7 @@
       const out = [];
       cells.forEach((rowArr, r) => rowArr.forEach((cell, c) => {
         if (cell.classList.contains('on')) {
-          out.push({ midi: pitches[rows - 1 - r], start: c, dur: 1 });
+          out.push({ midi: pitches[rows - 1 - r], start: c, dur: 1, inst: cell.dataset.inst || inst });
         }
       }));
       return out;
@@ -2266,8 +2268,7 @@
     function play() {
       const notes = collectNotes();
       if (!notes.length) { MV.VoiceCore.say(MV.lines.compose.empty); return; }
-      MV.MusicCore.start();
-      MV.MusicCore.playSequence(notes, { bpm: C.gridBpm, inst, onNote: n => pulseCell(n.start) });
+      playPieceNotes(notes, C.gridBpm, n => pulseCell(n.start));
       MV.VoiceCore.say(MV.lines.compose.play);
     }
 
@@ -2327,6 +2328,19 @@
     });
     $('#cz-staff').addEventListener('pointerdown', toStaff);
   };
+
+  /* 逐音播放（支持每格独立音色 · 真编曲多音色混排） */
+  function playPieceNotes(notes, bpm, onNote) {
+    try { MV.MusicCore.start(); } catch (e) { /* noop */ }
+    const spb = 60 / (bpm || 90); // 每拍秒数
+    (notes || []).forEach(n => {
+      const delayMs = Math.round((n.start || 0) * spb * 1000);
+      setTimeout(() => {
+        try { MV.MusicCore.playMidi(n.midi, { dur: spb, inst: n.inst || 'bird' }); } catch (e) { /* noop */ }
+        if (onNote) onNote(n);
+      }, delayMs);
+    });
+  }
 
   /* ---------------- 通关庆祝 ---------------- */
   function celebrate(lv, extra) {
@@ -2572,10 +2586,9 @@
       const staffBox = $('[data-work="' + i + '"]', card);
       MV.Staff.render(w.notes, staffBox, { bpm: w.bpm, compact: true });
       $('[data-play="' + i + '"]', card).addEventListener('pointerdown', () => {
-        MV.MusicCore.start();
-        MV.MusicCore.playSequence(w.notes, { bpm: w.bpm, inst: w.inst, onEnd: () => {
-          setTimeout(() => showEncourage(), 350); // 播完晓声说鼓励话
-        } });
+        playPieceNotes(w.notes, w.bpm);
+        const lastN = w.notes.length ? w.notes[w.notes.length - 1] : null;
+        if (lastN) setTimeout(() => showEncourage(), 400 + Math.round((lastN.start + 1) * 60 / (w.bpm || 90) * 1000)); // 播完晓声说鼓励话
       });
       $('[data-staff="' + i + '"]', card).addEventListener('pointerdown', () => openStaff(w));
       $('[data-save="' + i + '"]', card).addEventListener('pointerdown', () => MV.Staff.exportPNG($('[data-work="' + i + '"]', card), w.name || '我的小曲'));
@@ -2590,8 +2603,9 @@
     MV.Staff.render(piece.notes, $('#staff-canvas'), { bpm: piece.bpm });
     MV.VoiceCore.say(MV.lines.staffReady);
     $('#staff-play').onclick = () => {
-      MV.MusicCore.start();
-      MV.MusicCore.playSequence(piece.notes, { bpm: piece.bpm, inst: piece.inst });
+      const last = piece.notes.length ? piece.notes[piece.notes.length - 1] : null;
+      playPieceNotes(piece.notes, piece.bpm);
+      if (last) setTimeout(() => showEncourage(), 400 + Math.round((last.start + 1) * 60 / piece.bpm * 1000)); // 播完晓声鼓励
     };
     $('#staff-save').onclick = () => MV.Staff.exportPNG($('#staff-canvas'), piece.name || '我的小曲');
     $('#staff-midi').onclick = () => MV.Staff.exportMIDI(piece.notes, piece.bpm, piece.name || '我的小曲');
