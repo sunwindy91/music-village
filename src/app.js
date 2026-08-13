@@ -106,10 +106,10 @@
     refreshPoints();
     mountXs('splash-xs', { exp: had ? 'happy' : 'calm', breathe: true, pose: had ? 'idle' : 'welcome' });
 
-    // 浏览器自动播放策略：首次交互解锁音频，并补播欢迎语音（自动播被拦时保证有声音）
+    // 浏览器自动播放策略：首次交互解锁音频；仅当自动播放被拦截时才补播欢迎（避免重复）
     const unlock = () => {
       try { MV.MusicCore.start(); } catch (e) { /* noop */ }
-      if (App.state.view === 'splash') speakWelcome();
+      if (App.state.view === 'splash' && window.__voiceBlocked !== false) speakWelcome();
       document.removeEventListener('pointerdown', unlock, true);
     };
     document.addEventListener('pointerdown', unlock, true);

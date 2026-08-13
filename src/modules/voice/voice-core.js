@@ -372,7 +372,11 @@ MV.VoiceCore = (() => {
       a.volume = 0.9;
       a.onended = () => { activeVoice = null; finish(); };
       a.onerror = () => { activeVoice = null; setTimeout(finish, 900 + currentText.length * 90); };
-      a.play().catch(() => { activeVoice = null; setTimeout(finish, 900 + currentText.length * 90); }); // 浏览器自动播放拦截：模拟语音时长
+      a.play().then(() => { window.__voiceBlocked = false; }).catch(() => {
+        window.__voiceBlocked = true;
+        activeVoice = null;
+        setTimeout(finish, 900 + currentText.length * 90); // 浏览器自动播放拦截：模拟语音时长
+      });
     } catch (e) { setTimeout(finish, 900 + currentText.length * 90); }
   }
 
