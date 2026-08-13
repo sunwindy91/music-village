@@ -177,6 +177,7 @@
         if (!unlocked) { MV.VoiceCore.say('再点亮几关，这个形态就解锁啦！'); return; }
         try { localStorage.setItem('mv-skin', String(i)); } catch (e) { /* noop */ }
         MV.VoiceCore.applyGrowth(stageNum());
+        syncXsForm(); // 同步所有视图晓声（地图等）
         updateXsForm();
         ov.hidden = true;
       });
@@ -185,9 +186,21 @@
     ov.hidden = false;
     $('#skin-close').onclick = () => { ov.hidden = true; };
   }
+  /* 同步所有视图的晓声形态图（地图/对话盘/关卡/庆祝等全部 .xs-png） */
+  function syncXsForm() {
+    const form = MV.VoiceCore.allForms()[stageNum()];
+    if (!form) return;
+    document.querySelectorAll('.xs-png').forEach(img => {
+      if (img.dataset.form !== form.key) {
+        img.src = form.src;
+        img.dataset.form = form.key;
+      }
+    });
+  }
   /* 地图晓声脚下：当前成长形态小标签 */
   function updateXsForm() {
     MV.VoiceCore.applyGrowth(stageNum());
+    syncXsForm(); // 同步所有视图晓声形态（含地图）
     const holder = $('#map-xs');
     if (!holder) return;
     const f = MV.VoiceCore.currentForm();
