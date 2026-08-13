@@ -13,7 +13,7 @@ MV.locations = [
     name: '声音山谷',
     subtitle: '先听一听 · 声音的高低长短',
     memory: '晓声最初的听觉',
-    pos: [52, 16],          // 画布式节点：山顶起点（S 形动线第一站）
+    pos: [52, 84],          // 山脚起点（从山脚往上爬）
     levels: ['highlow', 'drum', 'same', 'quiz0']
   },
   {
@@ -21,7 +21,7 @@ MV.locations = [
     name: '音阶山谷',
     subtitle: '认一认 · 音符的名字',
     memory: '晓声的歌喉',
-    pos: [20, 38],       // 第二站（先乐理主课，再节奏进阶）
+    pos: [20, 66],       // 第二站（山脚往上，先乐理主课）
     levels: ['notes', 'stavenote', 'walkstop', 'fillgap', 'sightread', 'rhythmchain', 'interval', 'quiz1']
   },
   {
@@ -29,7 +29,7 @@ MV.locations = [
     name: '旋律草原',
     subtitle: '做一做 · 种出你自己的歌',
     memory: '晓声的梦',
-    pos: [46, 84],
+    pos: [46, 16],       // 山顶终点（爬到最高处唱歌）
     levels: ['compose', 'timbre', 'quiz2']
   },
   {
@@ -45,7 +45,7 @@ MV.locations = [
     name: '和弦花园',
     subtitle: '听一听 · 声音的手拉手',
     memory: '晓声的梦之桥',
-    pos: [80, 66],
+    pos: [80, 38],       // 第四站（中上部）
     levels: ['rainbow', 'chordbud', 'quizc']
   }
 ];
@@ -306,7 +306,7 @@ MV.theories = {
   },
   rhythm: {
     title: '节奏小路',
-    body: '节奏就是声音走路的样子：走（四分）是一拍一步，跑（八分）快一倍，快快跑（十六分）再快一倍！身体跟得上节拍，就是最好的节拍器。',
+    body: '节奏就是声音走路的样子：走（四分）是一拍一步，跑（八分）快一倍，快快跑（十六分）再快一倍！音乐分成一格一格的小节，开头写着「几几拍」，告诉我们每格走几步。停下来不出声的音符叫休止符——休息，也是音乐的一部分。',
     img: 'assets/theory_rhythm.webp'
   },
   chord: {

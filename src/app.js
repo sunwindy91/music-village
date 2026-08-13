@@ -117,14 +117,14 @@
 
     if (had) {
       // 老朋友：简短招呼，等点击进入
-      MV.VoiceCore.sayVoice('back1', '欢迎回来，音乐寻宝家。');
+      MV.VoiceCore.sayVoice('back1', '欢迎回来，音乐寻宝家。', { typeSpeed: 55 });
     } else {
-      // 新朋友：开场白播完停在首屏，点击「开始寻宝」进入（不自动跳转）
+      // 新朋友：开场白播完停在首屏（慢速打字 + 长间隔，避免字幕太快/声音重叠）
       let i = 0;
       const lines = MV.lines.splash;
       const next = () => {
         if (i < lines.length && App.state.view === 'splash') {
-          MV.VoiceCore.sayVoice('welcome' + (i + 1), lines[i], { done: () => setTimeout(() => { i++; next(); }, 420) });
+          MV.VoiceCore.sayVoice('welcome' + (i + 1), lines[i], { typeSpeed: 55, done: () => setTimeout(() => { i++; next(); }, 1000) });
         }
       };
       setTimeout(next, 600);
@@ -448,17 +448,43 @@
     App.state.currentLevel = lv;
     const ov = $('#loc-overlay'); if (ov) ov.remove();
     $('#stage-title').textContent = lv.title;
+    // 关卡加载页：先清空上一关画面，播加载进度，再完整呈现新关卡（避免上一关画面闪现）
+    const body = $('#stage-body');
+    if (body) body.innerHTML = '';
     mountXs('stage-xs', { exp: 'calm', breathe: true });
     MV.VoiceCore.applyGrowth(stageNum());
     showView('stage');
     refreshPoints();
-    // 知识诅咒防护：重依赖关卡若前置课没学完，先说一句温习提示（不阻止进入）
-    let intro = MV.lines.levelIntro[lv.type] || '准备好了吗？';
-    const pre = lv.prereq || [];
-    const missPre = pre.filter(id => !App.state.completed[id]);
-    if (pre.length && missPre.length >= pre.length) intro = '前面的小知识还没学完，我们先温习一下，学起来更轻松哦。' + intro;
-    else if (missPre.length) intro = '我们先温习一下前面的小知识，很快的～' + intro;
-    MV.VoiceCore.say(intro, { done: () => startLevel(lv) });
+    showLevelLoading();
+    setTimeout(() => {
+      hideLevelLoading();
+      // 知识诅咒防护：重依赖关卡若前置课没学完，先说一句温习提示（不阻止进入）
+      let intro = MV.lines.levelIntro[lv.type] || '准备好了吗？';
+      const pre = lv.prereq || [];
+      const missPre = pre.filter(id => !App.state.completed[id]);
+      if (pre.length && missPre.length >= pre.length) intro = '前面的小知识还没学完，我们先温习一下，学起来更轻松哦。' + intro;
+      else if (missPre.length) intro = '我们先温习一下前面的小知识，很快的～' + intro;
+      MV.VoiceCore.say(intro, { done: () => startLevel(lv) });
+    }, (MV.config.levelLoadMs !== undefined ? MV.config.levelLoadMs : 800));
+  }
+
+  /* 关卡加载页：晓声 + 进度条（让下一关有足够时间完整呈现） */
+  function showLevelLoading() {
+    const el = $('#level-loading');
+    if (!el) return;
+    el.hidden = false;
+    const fill = $('#load-fill');
+    if (fill) {
+      fill.style.transition = 'none';
+      fill.style.width = '0%';
+      void fill.offsetWidth;
+      fill.style.transition = 'width .75s ease';
+      fill.style.width = '100%';
+    }
+  }
+  function hideLevelLoading() {
+    const el = $('#level-loading');
+    if (el) el.hidden = true;
   }
 
   /* 关卡执行器注册表（各模块按块注册） */
@@ -2319,7 +2345,7 @@
         MV.VoiceCore.applyGrowth(afterStage, { evolve: true });
         try {
           MV.MusicCore.start();
-          [60, 62, 64, 65, 67].forEach((m, i) => setTimeout(() => { try { MV.MusicCore.playMidi(m, { dur: .3, inst: 'bell' }); } catch (e) { /* noop */ } }, 500 + i * 95));
+          App._evolveTimers = [60, 62, 64, 65, 67].map((m, i) => setTimeout(() => { try { MV.MusicCore.playMidi(m, { dur: .3, inst: 'bell' }); } catch (e) { /* noop */ } }, 500 + i * 95));
         } catch (e) { /* 音效失败不阻塞 */ }
       }, 420);
     }
@@ -2345,7 +2371,14 @@
         songBox.classList.add('hidden');
       }
     }
-    $('#celebrate-next').onclick = () => { showView('map'); renderLocs(); };
+    $('#celebrate-next').onclick = () => {
+      // 离开庆祝页：停掉残留声音（气泡打字机/语音播报/进化音阶）
+      MV.VoiceCore.stopTyping();
+      try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* noop */ }
+      if (App._evolveTimers) { App._evolveTimers.forEach(t => clearTimeout(t)); App._evolveTimers = null; }
+      try { MV.MusicCore.stopAll(); } catch (e) { /* noop */ }
+      showView('map'); renderLocs();
+    };
   }
 
   function spawnConfetti(n) {

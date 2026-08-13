@@ -69,6 +69,7 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
 (async () => {
   console.log('== 启动（内联脚本执行） ==');
   window.MV.config.typeSpeed = 1;
+  window.MV.config.levelLoadMs = 1; // 关卡加载页缩短，冒烟不等 800ms
   window.localStorage.setItem('mv-unlock-all', '1'); // 演示全开模式：冒烟需访问全部关卡
 
   // 追踪：startLevel 分派

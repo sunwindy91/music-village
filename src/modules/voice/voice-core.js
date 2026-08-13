@@ -171,7 +171,7 @@ MV.VoiceCore = (() => {
         if (bubble) bubble.classList.add('done'); // 打完隐藏光标，避免一直闪烁
         if (onDone) { const cb = onDone; onDone = null; cb(); }
       }
-    }, C().typeSpeed);
+    }, (opts.typeSpeed !== undefined ? opts.typeSpeed : C().typeSpeed));
   }
 
   function finish() {
