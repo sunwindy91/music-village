@@ -499,8 +499,9 @@ img, svg { display: block; }
 }
 /* 旧 SVG 只保留寻宝小路，其余视觉元素隐藏（水彩画接管场景）
    注意：SVG 本身就带 class="map-bg"（<svg class="map-bg">），选择器必须是 svg.map-bg */
+/* 背景旧寻宝小路隐藏（节点连线层已接管流程动线） */
 svg.map-bg #trail,
-svg.map-bg #trail-core { display: block; }
+svg.map-bg #trail-core { display: none; }
 svg.map-bg > *:not(#trail):not(#trail-core) { display: none; }
 .map-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; }
 .map-scene .map-bg .map-clouds { animation: cloudPuff 12s ease-in-out infinite alternate; }

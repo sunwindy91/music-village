@@ -147,6 +147,9 @@
           <span class="nf" style="left:64%;top:38%;animation-delay:2.6s;font-size:15px">♪</span>
         </div>
 
+        <!-- 节点连线层（流程动线：通关逐段点亮，金=已通/浅金=解锁/灰=未解锁） -->
+        <svg class="map-links" id="map-links" viewBox="0 0 400 640" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;z-index:10;pointer-events:none"></svg>
+
         <!-- 地点节点（JS 按 MV.locations 生成画布式圆形节点 · 序号徽章=流程模式） -->
         <div class="locs" id="map-locs"></div>
 
@@ -248,6 +251,23 @@
     </div>
   </div>
 
+  <!-- 问问晓声（本地规则问答 · 乐理与陪伴） -->
+  <div id="qa-overlay" class="overlay qa-overlay" hidden>
+    <div class="qa-panel">
+      <div class="qa-head">
+        <h2>问问晓声</h2>
+        <button class="icon-btn" id="qa-close" type="button" aria-label="关闭">✕</button>
+      </div>
+      <div class="xs-holder qa-xs" id="qa-xs"></div>
+      <div class="qa-chat" id="qa-chat"></div>
+      <div class="qa-hints">可以问：音高 · 节奏 · 五线谱 · 下一关去哪</div>
+      <div class="qa-input">
+        <input id="qa-input" type="text" placeholder="问问我，比如：什么是音高？" aria-label="问晓声问题">
+        <button class="btn btn-gold" id="qa-send" type="button">问</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 积分飘字 -->
   <div id="points-toast" class="points-toast" aria-hidden="true"></div>
 
@@ -270,6 +290,21 @@
     .encourage-card { width: min(88vw, 420px); background: linear-gradient(165deg,#fffdf7,#f1f7e9); border-radius: 22px; padding: 20px 20px 18px; text-align: center; box-shadow: 0 16px 40px rgba(31,74,55,.35); }
     .encourage-xs { width: 42%; margin: 0 auto; }
     .encourage-text { font-size: 16.5px; line-height: 1.8; color: #2f5d47; font-weight: 600; margin: 4px 0 16px; }
+    /* 问问晓声（问答面板） */
+    .qa-overlay { background: rgba(31,74,55,.45); display: flex; align-items: flex-end; justify-content: center; z-index: 60; padding: 16px; }
+    .qa-panel { width: min(92vw, 460px); background: #fffdf7; border-radius: 22px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 -8px 30px rgba(31,74,55,.3); }
+    .qa-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid #efe6d2; }
+    .qa-head h2 { margin: 0; font-size: 18px; color: #2f5d47; }
+    .qa-xs { width: 30%; margin: 0 auto; }
+    .qa-chat { flex: 1; overflow-y: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; min-height: 110px; max-height: 34vh; }
+    .qa-bubble { max-width: 78%; padding: 8px 12px; border-radius: 14px; font-size: 14.5px; line-height: 1.6; word-break: break-word; }
+    .qa-bubble.xs { align-self: flex-start; background: #f1f7e9; color: #2f5d47; border-bottom-left-radius: 4px; }
+    .qa-bubble.me { align-self: flex-end; background: #e8f0fb; color: #33527a; border-bottom-right-radius: 4px; }
+    .qa-hints { font-size: 12px; color: #8a7a5f; text-align: center; padding: 0 12px 8px; }
+    .qa-input { display: flex; gap: 8px; padding: 10px 12px 14px; border-top: 1px solid #efe6d2; }
+    .qa-input input { flex: 1; min-width: 0; border: 2px solid #e3d9c2; border-radius: 12px; padding: 10px 12px; font-size: 15px; background: #fffdf7; }
+    .qa-input input:focus { outline: none; border-color: #e8b04b; }
+    #map-footer { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
     @keyframes ccFloat { 0%,100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.03); } }
     .xs-dragging { animation: none !important; }
     @media (max-width: 640px) { .map-node { width: 76px; height: 76px; } }

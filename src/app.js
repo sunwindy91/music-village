@@ -143,13 +143,9 @@
 
   /* ---------------- 山谷地图 ---------------- */
   function stageNum() {
-    // 主线成长：每完成一个聚类，晓声进阶一档（0 种子 → 5 鹿全盛）
-    // 修复：原按累计关卡数，5 关即满级导致第二关就全盛；改为按聚类完成数，里程碑式成长
-    let done = 0;
-    for (const loc of MV.locations) {
-      if (loc.levels.every(id => !!App.state.completed[id])) done++;
-    }
-    return Math.min(5, done);
+    // 主线成长：每点亮 3 关，晓声进阶一档（0种子→1小芽→2开花→3星光→4初鹿→5鹿全盛）
+    // 修复：避免 5 关即满级过早全盛，也避免过一关毫无变化——每 3 关就有一次可见成长
+    return Math.min(5, Math.floor(Object.keys(App.state.completed).length / 3));
   }
   /* 地图晓声脚下：当前成长形态小标签 */
   function updateXsForm() {
@@ -197,10 +193,35 @@
     }
     const wrap = $('#map-locs');
     wrap.innerHTML = '';
-    // 流程模式：去掉虚线连线层，节点用序号徽章①→⑤沿主线流程走（见下方 .step-num）
-    const links = $('#map-links');
-    if (links) links.innerHTML = '';
+    // 流程动线：实线把 5 站串起来，通关逐段点亮（金=已通/浅金=已解锁/灰=未解锁）
     const ORDER = ['valley', 'rhythm', 'scale', 'chord', 'meadow']; // 主线流程顺序
+    const links = $('#map-links');
+    if (links) {
+      links.innerHTML = '';
+      const sceneEl = $('#map-scene');
+      const sr = sceneEl ? sceneEl.getBoundingClientRect() : { width: 400, height: 640 };
+      links.setAttribute('viewBox', '0 0 ' + sr.width + ' ' + sr.height);
+      links.setAttribute('preserveAspectRatio', 'none');
+      const pts = ORDER.map(id => {
+        const l = MV.locations.find(x => x.id === id);
+        return l ? [l.pos[0] / 100 * sr.width, l.pos[1] / 100 * sr.height] : [0, 0];
+      });
+      for (let i = 0; i < pts.length - 1; i++) {
+        const x1 = pts[i][0], y1 = pts[i][1], x2 = pts[i + 1][0], y2 = pts[i + 1][1];
+        const d = 'M' + x1 + ' ' + y1 + ' L' + x2 + ' ' + y2; // 直线串联（流程感）
+        const toLoc = MV.locations.find(x => x.id === ORDER[i + 1]);
+        const toDone = toLoc && toLoc.levels.every(id => App.state.completed[id]);   // 下一站已通关 → 金色
+        const toOpen = clusterUnlocked(ORDER[i + 1]);                                 // 下一站已解锁 → 浅金
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', d);
+        p.setAttribute('fill', 'none');
+        p.setAttribute('stroke', toDone ? '#e8b04b' : (toOpen ? '#f3d9a4' : '#c9d3cc'));
+        p.setAttribute('stroke-width', toDone ? '8' : '6');
+        p.setAttribute('stroke-linecap', 'round');
+        p.setAttribute('opacity', toDone ? '.95' : (toOpen ? '.8' : '.35'));
+        links.appendChild(p);
+      }
+    }
     // —— 圆形节点按钮（画布式布局：山谷背景上散布 + 线穿着） ——
     MV.locations.forEach(loc => {
       const allDone = loc.levels.every(id => App.state.completed[id]);
@@ -236,6 +257,13 @@
     concertBtn.textContent = App.state.works.length ? '我的音乐会（' + App.state.works.length + ' 首）' : '我的音乐会';
     concertBtn.addEventListener('pointerdown', () => openConcert());
     footer.appendChild(concertBtn);
+
+    const qaBtn = document.createElement('button');
+    qaBtn.type = 'button';
+    qaBtn.className = 'btn btn-ghost map-qa-btn';
+    qaBtn.textContent = '问问晓声';
+    qaBtn.addEventListener('pointerdown', () => openQa());
+    footer.appendChild(qaBtn);
   }
 
   /* —— 晓声可拖拽桌宠（白小纯式：拖拽 + 范围限制 + 挣扎态） —— */
@@ -2286,6 +2314,44 @@
     MV.VoiceCore.sayVoice('enc' + (1 + Math.floor(Math.random() * 3)), encText);
     ov.hidden = false;
     $('#encourage-close').onclick = () => { ov.hidden = true; };
+  }
+
+  /* ---------------- 问问晓声（本地规则问答 · 乐理与陪伴） ---------------- */
+  function openQa() {
+    const ov = $('#qa-overlay');
+    if (!ov) return;
+    if (!ov.dataset.booted) {
+      ov.dataset.booted = '1';
+      mountXs('qa-xs', { exp: 'happy', breathe: true });
+      $('#qa-close').onclick = () => { ov.hidden = true; };
+      $('#qa-send').addEventListener('pointerdown', sendQa);
+      $('#qa-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendQa(); });
+      addQa('晓声', '你好呀！问我音高、节奏、五线谱，或者下一步去哪，都可以～');
+    }
+    ov.hidden = false;
+    setTimeout(() => { const inp = $('#qa-input'); if (inp) inp.focus(); }, 60);
+  }
+  function addQa(who, text) {
+    const chat = $('#qa-chat');
+    if (!chat) return;
+    const b = document.createElement('div');
+    b.className = 'qa-bubble ' + (who === '晓声' ? 'xs' : 'me');
+    b.textContent = text;
+    chat.appendChild(b);
+    chat.scrollTop = chat.scrollHeight;
+  }
+  function sendQa() {
+    const inp = $('#qa-input');
+    const q = (inp.value || '').trim();
+    if (!q) return;
+    addQa('me', q);
+    inp.value = '';
+    let ans = null;
+    for (const item of (MV.lines.qa || [])) {
+      if (item.keys.some(k => q.indexOf(k) >= 0)) { ans = item.a; break; }
+    }
+    if (!ans) ans = '这个问题我还不会呢。试试问我：音高、节奏、五线谱，或者“下一关去哪”。';
+    setTimeout(() => { addQa('晓声', ans); MV.VoiceCore.say(ans); }, 350);
   }
 
   function openConcert() {
