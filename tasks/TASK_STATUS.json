@@ -143,10 +143,10 @@
                       "review":  null,
                       "defOfDone":  "21张姿态盘点+主体确认+交互姿态→关卡事件映射+比例规范+voice-core姿态层设计",
                       "title":  "晓声 3D 素材接入与交互姿态映射方案",
-                      "status":  "pending",
-                      "note":  "08-13 导演已派活(信封B存档 tasks/envelope-B-F07.md)：导演已定6张主体并完成抠图webp接入；变体图交互映射待 F-07",
+                      "status":  "review",
+                      "note":  "08-13 Cursor 完成接入方案→review：21张姿态盘点+6主体确认/备用+变体→celebrate/stumble/答对答错/欢迎/蜕变/小测映射；姿态层=data-pose换src（不叠图），与applyGrowth共存；.xs-png用contain禁cover。分支cursor/f-07",
                       "branch":  "cursor/f-07"
                   }
               ],
-    "updated":  "2026-08-12"
+    "updated":  "2026-08-13"
 }

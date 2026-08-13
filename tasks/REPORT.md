@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-08-13 · [cursor] F-07 晓声 3D 素材接入方案完成（→ review）
+
+- **分支**：`cursor/f-07`（从 main 新建；未 push）
+- **输入**：`素材工作台\06_待生成图放这里\` 21 张手办文件名（逐一 listing，未编造）；`voice-core.js` FORMS/applyGrowth/pngTpl/setExpression；`app.js` celebrate/stumble/答题/quiz/splash；线上 CSS `main_c20260812h.css` `.xs-png`；`docs/DESIGN.md`、`docs/晓声6阶段_3D立体化Prompt.md`
+- **产出**：`docs/晓声3D素材接入方案.md`（新建）
+- **步骤**：checkout cursor/f-07 → 只读核验 21 文件名 + voice-core/app.js 触发点 → 写方案六章对齐 DoD → TASK_STATUS F-07 pending→review → 本条 REPORT
+- **关键设计决策**：
+  1. **主体 6 张**：确认导演已定（种子=迷你单叶招手踮脚 / 小芽=治愈微笑 / 开花=花开心举手 / 星光=花环微笑 / 初鹿=温柔歪头 / 鹿=治愈歪头），每形态给 1 个同族备用（种子无备用）
+  2. **姿态层最简方案**：单 img 换 `src`，不叠第二张、不在 3D 上叠 SVG 脸。`data-form` 定 base（applyGrowth），`data-pose` 定覆盖变体；缺姿态回落本族 idle，禁止跨族
+  3. **contain vs cover**：现行 `.xs-png` 无 object-fit，但 cover/圆角卡片会切角与脚。角色图 `object-fit:contain` + `object-position:center bottom` + 取消 border-radius/box-shadow；封面/理论卡继续 cover
+  4. **celebrate 缺口**：`mountXs('celebrate-xs')` 后未 `applyGrowth`，通关页会回到种子——接入时必须 mount→applyGrowth→setPose('celebrate')
+- **红线自查**：只改 `docs/晓声3D素材接入方案.md` + `tasks/TASK_STATUS.json` + `tasks/REPORT.md`；src/ 零改动；未生图；不 push、不部署
+- **状态**：F-07 pending → **review**（待导演验收执行，不改 done）
+
+---
+
 ## 2026-08-13 · [cursor] F-05 答辩材料 v4 完成（→ review）
 
 - **分支**：`cursor/f-05`（从 main 新建；工作区 6 张未跟踪素材 png 与 docs 草稿属导演域，未纳入提交）
