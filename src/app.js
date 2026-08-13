@@ -207,18 +207,21 @@
         return l ? [l.pos[0] / 100 * sr.width, l.pos[1] / 100 * sr.height] : [0, 0];
       });
       for (let i = 0; i < pts.length - 1; i++) {
-        const x1 = pts[i][0], y1 = pts[i][1], x2 = pts[i + 1][0], y2 = pts[i + 1][1];
-        const d = 'M' + x1 + ' ' + y1 + ' L' + x2 + ' ' + y2; // 直线串联（流程感）
+        // 沿节点下缘弧线走（不斜穿画面中央），淡细虚线不破坏水彩主画面
+        const x1 = pts[i][0], y1 = pts[i][1] + 38, x2 = pts[i + 1][0], y2 = pts[i + 1][1] + 38;
+        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 + 22;
+        const d = 'M' + x1 + ' ' + y1 + ' Q' + mx + ' ' + my + ' ' + x2 + ' ' + y2;
         const toLoc = MV.locations.find(x => x.id === ORDER[i + 1]);
-        const toDone = toLoc && toLoc.levels.every(id => App.state.completed[id]);   // 下一站已通关 → 金色
-        const toOpen = clusterUnlocked(ORDER[i + 1]);                                 // 下一站已解锁 → 浅金
+        const toDone = toLoc && toLoc.levels.every(id => App.state.completed[id]);   // 下一站已通关
+        const toOpen = clusterUnlocked(ORDER[i + 1]);                                 // 下一站已解锁
         const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         p.setAttribute('d', d);
         p.setAttribute('fill', 'none');
-        p.setAttribute('stroke', toDone ? '#e8b04b' : (toOpen ? '#f3d9a4' : '#c9d3cc'));
-        p.setAttribute('stroke-width', toDone ? '8' : '6');
+        p.setAttribute('stroke', toDone ? '#d9ae62' : (toOpen ? '#e3cfa4' : '#c9d3cc'));
+        p.setAttribute('stroke-width', '3');
         p.setAttribute('stroke-linecap', 'round');
-        p.setAttribute('opacity', toDone ? '.95' : (toOpen ? '.8' : '.35'));
+        p.setAttribute('stroke-dasharray', '2 10');
+        p.setAttribute('opacity', toDone ? '.6' : (toOpen ? '.45' : '.28'));
         links.appendChild(p);
       }
     }
