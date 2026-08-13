@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>「大山里的音乐课」AI 乐理寻宝启蒙 · 项目说明文档</title>
+<style>
+  :root{
+    --ink:#2f3b33; --ink-soft:#5a6a5f; --green:#4d7c5f; --green-deep:#356147;
+    --gold:#c99a3d; --cream:#faf7f0; --card:#ffffff; --line:#e6dfd0;
+    --accent:#7a9e6f; --sky:#eef4ee;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif;
+    color:var(--ink); background:var(--cream); line-height:1.85; font-size:15px;
+  }
+  .page{max-width:860px; margin:0 auto; padding:48px 56px;}
+  /* ===== 封面 ===== */
+  .cover{
+    background:linear-gradient(160deg,#f4f8f0 0%, #eaf2e6 55%, #e3edde 100%);
+    border:1px solid var(--line); border-radius:18px; padding:64px 56px 56px;
+    text-align:center; margin-bottom:40px; position:relative; overflow:hidden;
+  }
+  .cover::before{
+    content:"🎵"; position:absolute; font-size:60px; opacity:.12; top:28px; left:34px; transform:rotate(-12deg);
+  }
+  .cover::after{
+    content:"🌄"; position:absolute; font-size:60px; opacity:.12; bottom:28px; right:34px; transform:rotate(10deg);
+  }
+  .cover .tag{
+    display:inline-block; background:var(--green); color:#fff; font-size:12.5px;
+    padding:4px 14px; border-radius:20px; letter-spacing:2px; margin-bottom:22px;
+  }
+  .cover h1{font-size:30px; color:var(--green-deep); letter-spacing:1px; margin-bottom:12px;}
+  .cover .sub{font-size:16px; color:var(--ink-soft); margin-bottom:28px;}
+  .cover .pill{
+    display:inline-block; border:1.5px solid var(--gold); color:var(--gold);
+    border-radius:20px; padding:5px 18px; font-size:13px; margin:4px; background:#fffdf7;
+  }
+  .cover .meta{margin-top:26px; font-size:13px; color:var(--ink-soft);}
+  .cover .link{color:var(--green-deep); font-weight:600; text-decoration:none; border-bottom:1px dashed var(--green);}
+  /* ===== 章节 ===== */
+  h2{
+    font-size:21px; color:var(--green-deep); margin:44px 0 6px;
+    padding-left:14px; border-left:5px solid var(--green);
+  }
+  h2 .no{color:var(--gold); font-size:14px; vertical-align:middle; margin-right:4px; letter-spacing:1px;}
+  h3{font-size:16.5px; color:var(--green-deep); margin:26px 0 10px;}
+  p{margin:10px 0;}
+  .lead{font-size:16px; color:var(--ink); background:var(--sky); border-radius:10px; padding:14px 18px; border-left:4px solid var(--accent);}
+  ul{margin:8px 0 12px 22px;} li{margin:6px 0;}
+  strong{color:var(--green-deep);}
+  /* ===== 表格 ===== */
+  table{width:100%; border-collapse:collapse; margin:14px 0 20px; background:var(--card);}
+  th{background:var(--green); color:#fff; font-weight:600; font-size:14px; padding:10px 12px; text-align:left;}
+  td{border:1px solid var(--line); padding:10px 12px; font-size:13.8px; vertical-align:top;}
+  tr:nth-child(even) td{background:#faf9f4;}
+  /* ===== 卡片 ===== */
+  .cards{display:flex; flex-wrap:wrap; gap:14px; margin:16px 0;}
+  .card{flex:1 1 180px; min-width:180px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 16px 14px;}
+  .card .ic{font-size:24px;} .card .t{font-weight:700; color:var(--green-deep); font-size:14.5px; margin:6px 0 4px;}
+  .card .d{font-size:12.8px; color:var(--ink-soft); line-height:1.6;}
+  /* ===== 引文/祝愿 ===== */
+  blockquote{
+    background:linear-gradient(160deg,#fffdf5,#f7f2e4); border-left:5px solid var(--gold);
+    border-radius:10px; padding:18px 22px; margin:24px 0; color:var(--ink); font-size:15px;
+  }
+  blockquote p{margin:6px 0;}
+  .quote-mark{color:var(--gold); font-size:18px;}
+  .footer{
+    text-align:center; color:var(--ink-soft); font-size:13px; margin-top:44px;
+    border-top:1px solid var(--line); padding-top:20px;
+  }
+  .foot-wish{font-size:15px; color:var(--green-deep); margin-bottom:10px;}
+  /* ===== 打印 ===== */
+  @media print{
+    body{background:#fff;}
+    .page{padding:20px 8px; max-width:100%;}
+    .cover{border-radius:0; page-break-inside:avoid;}
+    h2{page-break-after:avoid;}
+    table,.card,blockquote{page-break-inside:avoid;}
+    a{color:var(--green-deep); text-decoration:none;}
+  }
+  @media (max-width:600px){
+    .page{padding:24px 18px;}
+    .cover{padding:40px 24px;}
+    .cover h1{font-size:23px;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ================= 封面 ================= -->
+  <div class="cover">
+    <div class="tag">2026「小有可为」AI 向善创新挑战赛 · 乡村教育赛道</div>
+    <h1>大山里的音乐课</h1>
+    <div class="sub">AI 乐理寻宝启蒙 · 项目说明文档</div>
+    <div>
+      <span class="pill">🎮 5 大聚类 · 21 关</span>
+      <span class="pill">🤖 晓声 AI 山灵陪伴</span>
+      <span class="pill">🎼 真五线谱 · MIDI 导出</span>
+      <span class="pill">📴 零账号 · 零收集 · 离线可玩</span>
+    </div>
+    <div class="meta">
+      提交人：邹翔 ｜ 版本 v1.0（2026-08-13 初赛提交版）<br>
+      可玩原型：<a class="link" href="https://music-village-app.pages.dev" target="_blank">https://music-village-app.pages.dev</a>
+    </div>
+  </div>
+
+  <!-- ================= 一、产品简介 ================= -->
+  <h2><span class="no">01</span>产品简介</h2>
+
+  <p class="lead">给山区音乐零基础的孩子，一个 AI 陪伴的「乐理寻宝」游戏——把抽象的音高、节奏、和声、创作，变成大山世界里看得见、摸得着、玩得懂的规则。孩子玩着，就把真乐理学会了。</p>
+
+  <h3>我们解决的真实问题</h3>
+  <table>
+    <tr><th style="width:34%">现实痛点</th><th>具体表现</th></tr>
+    <tr><td>乡村学校普遍缺专职音乐教师</td><td>乐理对零基础孩子是"看不见、摸不着"的抽象符号，没人教、没处学</td></tr>
+    <tr><td>音乐启蒙产品不接地气</td><td>多数 App 需账号、需联网、需付费、需高配设备，山区孩子用不上</td></tr>
+    <tr><td>儿童三分钟热度、怕失败</td><td>传统教学"答错=挫败"，孩子一错就放弃，音乐之门就此关上</td></tr>
+    <tr><td>教育公平的隐性缺口</td><td>音乐常被当成"城里孩子的特长"，而不是每个孩子都拥有的权利</td></tr>
+  </table>
+
+  <h3>核心理念</h3>
+  <blockquote>
+    <p><span class="quote-mark">「</span>音乐是权利，不是天赋的恩赐。<span class="quote-mark">」</span></p>
+    <p>教育的公平，应该包括"每个孩子都值得被音乐照亮"。</p>
+  </blockquote>
+
+  <p><strong>目标用户</strong>：6–9 岁、音乐零基础、设备普通的山区儿童。产品坚持：纯网页、零安装、零账号、零收集、离线可玩，低配手机也能跑。</p>
+
+  <!-- ================= 二、产品功能 ================= -->
+  <h2><span class="no">02</span>产品功能</h2>
+
+  <h3>世界观（情感入口）</h3>
+  <blockquote>
+    <p>大山被"静默"封印了。晓声——住在晨雾山谷里的小山灵——<strong>忘记了自己会唱歌</strong>，请孩子陪她一起把声音找回来。孩子每点亮一座山，山谷就重新唱响一分；晓声也在陪伴中一步步长大，直到蜕变成一头会发光的小鹿。</p>
+  </blockquote>
+
+  <h3>山路寻宝地图（5 大聚类 · 21 关 · 全部真实乐理判题）</h3>
+  <p>5 个聚类串成完整课程主线，严格按<strong>知识依赖</strong>排布（先听觉、再认谱与时值、后十六分与和声、最后创作），杜绝"知识的诅咒"（跳级学不会）。</p>
+  <table>
+    <tr><th>聚类</th><th>课程定位</th><th>玩法关卡</th><th>小测</th></tr>
+    <tr><td>🌄 声音山谷</td><td>L0 听觉启蒙</td><td>谁更高（音高听辨）· 小鼓手（节奏感知）· 听音找家（音高辨识）</td><td>✅</td></tr>
+    <tr><td>🎵 音阶山谷</td><td>L1 乐理主课<br><small>（对齐专业吉他老师大纲）</small></td><td>认识音符（唱名简谱）· 走走停停（时值）· 旋律填空（音高序列）· 看谱弹奏（视谱）· 节奏接龙（八分）· 音程梯子（音程）</td><td>✅</td></tr>
+    <tr><td>🛤️ 节奏小路</td><td>节奏进阶</td><td>回声谷（节奏模仿）· 十六分赛跑（十六分音符）</td><td>✅</td></tr>
+    <tr><td>🌈 和弦花园</td><td>和声启蒙</td><td>彩虹和声（听音程/和弦）· 和声找朋友（三和弦）</td><td>✅</td></tr>
+    <tr><td>🌾 旋律草原</td><td>L2 创造表达</td><td>旋律田（网格作曲 7×8）· 音色捉迷藏（听音色）</td><td>✅</td></tr>
+  </table>
+  <p><strong>合计：16 个玩法关卡 + 5 个乐理小测 = 21 个入口</strong>，每个聚类都是「📖 理论导入 → 🎮 关卡练习 → ✏️ 乐理小测」教学闭环。</p>
+
+  <h3>晓声 · AI 山灵（陪伴核心）</h3>
+  <ul>
+    <li><strong>3D 立体手办角色</strong>：21 张多姿态素材，答对开心、答错安抚、卡关好奇、通关庆祝，情绪姿态自动换图 + 萤火粒子</li>
+    <li><strong>真实语音</strong>：edge-tts 生成的温柔女声语音包（欢迎 / 下一站引导 / 鼓励语），晓声会"开口说话"并主动引导孩子去下一关</li>
+    <li><strong>6 阶段成长进化</strong>：种子→小芽→开花→星光→初鹿→鹿，由主线进度驱动，每次蜕变带金色粒子爆发动画——<strong>孩子看见自己陪晓声一起长大</strong></li>
+    <li><strong>卡关不判死</strong>：连续错 2 次，晓声主动安抚 + 降难度重播；没有"答错"，只有"再听一次"；认识音符答错即报正确答案并重播该音（认全机制）</li>
+    <li><strong>积分闭环</strong>：答对 +10 / 通关 +50 / 作曲 +30，顶栏积分飘字 + 「我的音乐会」作品墙</li>
+  </ul>
+
+  <h3>创作出口（成品感震惊点）</h3>
+  <ul>
+    <li>旋律田：7×8=56 格网格作曲，每格可独立选择音色（小鸟/风铃/溪水/木琴），一键 <strong>VexFlow 渲染真实五线谱</strong></li>
+    <li>支持 <strong>PNG 保存 + 手写 MIDI 导出</strong>，"我写的曲子变成真谱子"</li>
+    <li>作品自动存进「我的音乐会」作品墙，长期收藏孩子的第一首歌</li>
+  </ul>
+
+  <h3>隐私与可及性（默认做对）</h3>
+  <ul>
+    <li>无登录、无后端账号、零个人信息；进度仅存本机 <code>localStorage</code></li>
+    <li>核心库与音色全部本地化，离线可玩；素材全量 webp（18MB→1.2MB）</li>
+    <li>触控 ≥44px、对比度达标、无纯黑纯白，写进设计宪法</li>
+  </ul>
+
+  <!-- ================= 三、产品亮点 ================= -->
+  <h2><span class="no">03</span>产品亮点（评委视角 5 条）</h2>
+
+  <div class="cards">
+    <div class="card"><div class="ic">📚</div><div class="t">教学闭环</div><div class="d">理论导入→关卡练习→乐理小测，一条链证明「教得会」，路由级实现+冒烟断言背书</div></div>
+    <div class="card"><div class="ic">🎯</div><div class="t">真实判题</div><div class="d">tonal MIDI 零误差判音高；±400ms 儿童容差窗口判节奏；难度先宽后严渐进</div></div>
+    <div class="card"><div class="ic">🎼</div><div class="t">五线谱出口</div><div class="d">网格作曲一键生成真实五线谱，PNG/MIDI 可导出——孩子第一首歌变成真谱子</div></div>
+    <div class="card"><div class="ic">🦌</div><div class="t">晓声陪伴</div><div class="d">3D 手办+情绪姿态+真语音+6 阶成长，卡关不判死，陪孩子一起长大</div></div>
+    <div class="card"><div class="ic">🛡️</div><div class="t">隐私与可及性</div><div class="d">零收集、离线可玩、低配可跑；冒烟 54 断言全 PASS、零运行时错误</div></div>
+  </div>
+
+  <h3>1. 教学闭环：理论 → 练习 → 评估，一条链证明「教得会」</h3>
+  <p>每个聚类 = 理论导入（晓声小课堂，先行组织者）→ 关卡练习（渐进+纠错+不判死）→ 乐理小测（形成性评估，答错报正确答案）。这是<strong>路由级的实现</strong>，不是口号——冒烟测试直接断言"理论导入卡先出现"。全关卡带课程编号（第 N 课 / 复习课），课程感落在 UI 上。</p>
+
+  <h3>2. 真实乐理判题，不是"图形配对"</h3>
+  <ul>
+    <li>听辨关用 <strong>tonal MIDI 比较</strong>，音高判定零误差</li>
+    <li>节奏关用 <strong>Tone Transport 绝对时间 + ±400ms 儿童容差窗口</strong>，命中 ≥60% 过关，失败自动降速（bpm 88→76→72）再拍</li>
+    <li>难度先宽后严：两音跨度 7→5→3 半音渐进</li>
+    <li>孩子听到、拍到、认到的都是<strong>真音符</strong></li>
+  </ul>
+
+  <h3>3. 五线谱出口 = 成品感</h3>
+  <p>网格作曲一键生成<strong>真实五线谱</strong>（VexFlow），可存 PNG、导出 MIDI。孩子"写的歌变成真谱子"，是孩子与家长共同的成就锚点。</p>
+
+  <h3>4. 晓声 6 阶成长 + 情绪姿态 + 真语音陪伴（课堂理念）</h3>
+  <p>不是冰冷的"闯关打分器"，而是一个会陪着孩子长大的伙伴：3D 手办、情绪换图、TTS 开口说话、卡关降难度、通关庆祝。孩子感到"晓声在等我、在陪我"。</p>
+
+  <h3>5. 儿童隐私与山区可及性默认做对 + 可冒烟验收</h3>
+  <p>零收集、离线可玩、低配可跑；工程质量有 <code>node tools/smoke.js</code> <strong>54 项断言全 PASS、零运行时错误</strong> 自动化背书。</p>
+
+  <!-- ================= 四、技术方案特色 ================= -->
+  <h2><span class="no">04</span>技术方案特色</h2>
+
+  <h3>1. 真实乐理引擎"三件套"（全部浏览器端运行）</h3>
+  <table>
+    <tr><th style="width:20%">引擎</th><th style="width:30%">职责</th><th>特色</th></tr>
+    <tr><td><strong>tonal</strong></td><td>乐理计算与判题</td><td>MIDI 数值比较，听辨判题零误差</td></tr>
+    <tr><td><strong>Tone.js</strong></td><td>发声与节奏调度</td><td>4 种温和音色（小鸟/风铃/溪水/木琴）+ 真实节拍器</td></tr>
+    <tr><td><strong>VexFlow</strong></td><td>专业记谱渲染</td><td>孩子创作的旋律渲染成真实五线谱</td></tr>
+  </table>
+
+  <h3>2. 纯前端零构建架构</h3>
+  <p>Vanilla JS + SVG，无构建链、无框架依赖、无安装，手机浏览器直接打开即玩——对山区低配设备与弱网环境极度友好。</p>
+
+  <h3>3. 全量本地化 + 极致体积</h3>
+  <p>Tone / tonal / VexFlow 全部本地 vendor（无业务 CDN）；素材全量转 webp，整站从 18MB 压缩到 <strong>1.2MB</strong>，离线可用。</p>
+
+  <h3>4. 数据隐私合规</h3>
+  <p>零账号、零个人信息收集，进度/积分/作品仅存本机 <code>localStorage</code>，一键可清空，符合儿童产品"最少必要"原则。</p>
+
+  <h3>5. AI 分层策略（稳定与智能兼顾）</h3>
+  <ul>
+    <li><strong>初赛</strong>：规则化山灵陪伴（台词、情绪姿态、卡关降难度、成长反馈）——稳定、可离线，山区弱网不依赖云端</li>
+    <li><strong>决赛预留</strong>：大模型对话架构已预留（config 开关），可随时接入 AI 问答与个性化引导</li>
+  </ul>
+
+  <h3>6. 工程质量可验收</h3>
+  <p><code>node tools/smoke.js</code> <strong>54 项断言全 PASS</strong>（覆盖理论卡弹出、小测渲染、全关卡 startLevel、姿态层、语音层、五线谱 SVG、会话令牌、事件兼容层），并有全流程走查脚本。冒烟测试 + 版本号缓存策略保证每次上线"改了必验"。</p>
+
+  <h3>7. 部署与分发</h3>
+  <p>Cloudflare Pages 全球 CDN，国内可访问；一次部署，扫码即玩，无需应用商店审核。</p>
+
+  <!-- ================= 五、成果与验收 ================= -->
+  <h2><span class="no">05</span>成果与验收</h2>
+  <table>
+    <tr><th style="width:30%">项目</th><th>现状</th></tr>
+    <tr><td>可玩原型</td><td>https://music-village-app.pages.dev（5 聚类 21 关全量上线）</td></tr>
+    <tr><td>课程体系</td><td>5 聚类 21 关 + 5 张理论卡 + 5 组小测，对齐专业吉他老师 4 阶段大纲</td></tr>
+    <tr><td>工程验收</td><td>冒烟 54 断言全 PASS，零运行时错误</td></tr>
+    <tr><td>内容资产</td><td>3D 晓声 21 姿态素材、16 条真语音、水彩风格化 5 聚类封面</td></tr>
+    <tr><td>8/13 黑客松双线交付</td><td>300 人 / 155 作品 · 最佳设计奖（产品方法论已验证）</td></tr>
+  </table>
+
+  <!-- ================= 六、未来规划 ================= -->
+  <h2><span class="no">06</span>未来规划</h2>
+  <ul>
+    <li><strong>决赛</strong>：节奏小路 / 和弦花园扩展、麦克风音准（跟唱检测）、晓声大模型真对话</li>
+    <li><strong>落地</strong>：接入乡村学校试点，获取真实使用数据；主题曲由老师与孩子共同谱写</li>
+    <li><strong>开源可复刻</strong>：开发手册 + 关卡模板（填配置即新增关卡），任何团队可复制</li>
+  </ul>
+
+  <!-- ================= 七、联系方式 ================= -->
+  <h2><span class="no">07</span>联系方式</h2>
+  <ul>
+    <li>提交人：邹翔</li>
+    <li>可玩原型：https://music-village-app.pages.dev</li>
+    <li>项目仓库：https://github.com/sunwindy91/music-village</li>
+  </ul>
+
+  <!-- ================= 结尾祝愿 ================= -->
+  <blockquote>
+    <p class="foot-wish">🌄 结尾祝愿</p>
+    <p>愿每一个山里的孩子，都能像晓声一样——从一粒种子出发，长成会唱歌的鹿，让家乡的山谷，也响起自己的歌。</p>
+  </blockquote>
+
+  <div class="footer">
+    「大山里的音乐课」项目说明文档 v1.0 · 2026-08-13 · 提交人：邹翔<br>
+    2026「小有可为」AI 向善创新挑战赛 · 乡村教育赛道
+  </div>
+
+</div>
+</body>
+</html>
