@@ -2388,9 +2388,9 @@
     if (!q) return;
     addQa('me', q);
     inp.value = '';
-    // ① 真实 AI（Cloudflare 函数代理；未配 key 返回 null → 回落本地规则）
+    // ① 真实 AI（Cloudflare Worker 代理；失败/未配 key 自动回落本地规则）
     try {
-      const r = await fetch('/api/chat', {
+      const r = await fetch('https://music-village-chat.2301740254.workers.dev', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: q, history: qaHistory.slice(-6) })

@@ -92,6 +92,14 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   ok(window.MV.App.state.view === 'map', '点击开始后进入地图');
   ok(document.querySelectorAll('.map-node').length === 5, '首页有 5 个聚类卡');
 
+  console.log('== 1.5 问问晓声 ==');
+  click(document.querySelector('.map-qa-btn'));
+  await sleep(100);
+  const qaOv = document.querySelector('#qa-overlay');
+  ok(!!qaOv && !qaOv.hidden, '点「问问晓声」打开对话盘');
+  ok(document.querySelectorAll('#qa-chat .qa-bubble').length >= 1, '晓声欢迎气泡出现');
+  click(document.querySelector('#qa-close'));
+
   console.log('== 2. 声音山谷 · 谁更高 ==');
   click(document.querySelector('.map-node'));
   await sleep(80);
