@@ -86,7 +86,8 @@
     if (opts.breathe) el.classList.add('xs-breathe');
     if (opts.float) el.classList.add('xs-float');
     // F-07：mount 后统一 成长形态 + 姿态（修复通关页/各视图回种子的缺口）
-    try { MV.VoiceCore.applyGrowth(stageNum()); } catch (e) { /* noop */ }
+    // formStage：进化仪式需要先显旧形态（celebrate 跨形态首通传入旧档）
+    try { MV.VoiceCore.applyGrowth(opts.formStage !== undefined ? opts.formStage : stageNum()); } catch (e) { /* noop */ }
     try { MV.VoiceCore.setPose(opts.pose || 'idle', opts.poseOpts); } catch (e) { /* noop */ }
     return el;
   }
@@ -2258,11 +2259,10 @@
     MV.MusicCore.sfx('win');
     showView('celebrate');
     const firstClear = !App.state.completed[lv.id];
+    const beforeStage = stageNum(); // 通关前形态档
     if (!App.state.completed[lv.id]) {
-      const beforeStage = stageNum(); // 通关前形态档（聚类进度）
       App.state.completed[lv.id] = true;
       addPoints(C.pointsPerClear);
-      MV.VoiceCore.applyGrowth(stageNum());
       // 主动引导下一站：本聚类全亮后回地图晓声带路
       if (lv.loc) {
         const loc = MV.locations.find(x => x.id === lv.loc);
@@ -2273,7 +2273,20 @@
       if (beforeStage < 4 && afterStage >= 4) App._pendingStory = 'fawn';
       else if (beforeStage < 5 && afterStage >= 5) App._pendingStory = 'deer';
     }
-    mountXs('celebrate-xs', { exp: 'happy', float: true, breathe: true, pose: 'celebrate', poseOpts: { sticky: true } });
+    const afterStage = stageNum();
+    const evolved = firstClear && afterStage > beforeStage; // 本次通关跨形态 → 播进化仪式
+    mountXs('celebrate-xs', { exp: 'happy', float: true, breathe: true, pose: 'celebrate', poseOpts: { sticky: true }, formStage: evolved ? beforeStage : afterStage });
+    MV.VoiceCore.flash(); // 每次通关：金色光爆小动画（成长感）
+    if (evolved) {
+      // 进化仪式：旧形态缩小淡出 → 光爆 → 新形态弹出 + 上行音阶 do-re-mi-fa-sol
+      setTimeout(() => {
+        MV.VoiceCore.applyGrowth(afterStage, { evolve: true });
+        try {
+          MV.MusicCore.start();
+          [60, 62, 64, 65, 67].forEach((m, i) => setTimeout(() => { try { MV.MusicCore.playMidi(m, { dur: .3, inst: 'bell' }); } catch (e) { /* noop */ } }, 500 + i * 95));
+        } catch (e) { /* 音效失败不阻塞 */ }
+      }, 420);
+    }
     $('#celebrate-title').textContent = lv.title + ' · 通关啦！';
     const line = firstClear ? pick(MV.lines.grow.lit)
       : (extra && extra.line ? extra.line : pick(MV.lines.celebrate.clear));

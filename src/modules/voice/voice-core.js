@@ -289,7 +289,7 @@ MV.VoiceCore = (() => {
       setTimeout(() => p.remove(), 1300);
     }
   }
-  function applyGrowth(stage) {
+  function applyGrowth(stage, opts = {}) {
     if (!root) return;
     const img = root.querySelector('.xs-png');
     if (img) {
@@ -299,13 +299,24 @@ MV.VoiceCore = (() => {
         const probe = new Image();
         probe.onload = () => {
           if (img.dataset.form !== want.key) {
-            img.src = resolveSrc(want.key, root.dataset.pose || 'idle'); // F-07：切形态时保持当前姿态族
-            img.dataset.form = want.key;
-            root.dataset.form = want.key;
-            root.classList.remove('form-in');
-            void root.offsetWidth;  // 重新触发形变动画
-            root.classList.add('form-in');
-            if (want.key === 'fawn' || want.key === 'deer') burstParticles(); // 蜕变小鹿的星光爆发
+            const doSwap = () => {
+              img.src = resolveSrc(want.key, root.dataset.pose || 'idle'); // F-07：切形态时保持当前姿态族
+              img.dataset.form = want.key;
+              root.dataset.form = want.key;
+              root.classList.remove('form-in');
+              void root.offsetWidth;  // 重新触发形变动画
+              root.classList.add('form-in');
+              if (want.key === 'fawn' || want.key === 'deer') burstParticles(); // 蜕变小鹿的星光爆发
+            };
+            if (opts.evolve) {
+              // 进化仪式：旧形态缩小淡出 → 金光爆 → 新形态弹出
+              root.classList.add('xs-evolve-out');
+              setTimeout(() => {
+                root.classList.remove('xs-evolve-out');
+                spawnFlash();
+                doSwap();
+              }, 360);
+            } else doSwap();
           }
         };
         probe.onerror = () => {};   // 素材未生成：保持当前形态
@@ -339,8 +350,17 @@ MV.VoiceCore = (() => {
     } catch (e) { /* 语音失败不阻塞 */ }
   }
 
+  /* 金色光爆（进化仪式/通关成长闪光） */
+  function flash() {
+    if (!root) return;
+    const f = document.createElement('span');
+    f.className = 'xs-evolve-flash';
+    root.appendChild(f);
+    setTimeout(() => f.remove(), 800);
+  }
+
   return {
     mount, say, sayVoice, finish, stopTyping, hideBubble, clear,
-    setExpression, fireflies, applyGrowth, setPose, currentForm, isSpeaking
+    setExpression, fireflies, applyGrowth, setPose, flash, currentForm, isSpeaking
   };
 })();

@@ -310,6 +310,14 @@ img, svg { display: block; }
 @keyframes xsBreathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 /* 成长形态：切换动画 + 各形态专属发光（6 阶：种子→小芽→开花→星光→初鹿→鹿） */
 .xs-png-wrap.form-in .xs-png { animation: xsFormIn .65s var(--ease); }
+/* 进化仪式：旧形态缩小淡出 + 金色光爆（通关成长动画） */
+.xs-png-wrap.xs-evolve-out .xs-png { animation: xsEvolveOut .36s var(--ease) both; }
+@keyframes xsEvolveOut { from { transform: scale(1); opacity: 1; } to { transform: scale(.4) rotate(-10deg); opacity: 0; } }
+.xs-evolve-flash { position: absolute; inset: -34%; border-radius: 50%; pointer-events: none; z-index: 4;
+  background: radial-gradient(circle, rgba(255,248,224,.98) 0%, rgba(243,206,126,.75) 42%, rgba(243,206,126,0) 72%);
+  animation: xsFlash .68s var(--ease) both; }
+@keyframes xsFlash { 0% { transform: scale(.25); opacity: 0; } 30% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.7); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .xs-evolve-flash, .xs-png-wrap.xs-evolve-out .xs-png { animation: none; } }
 @keyframes xsFormIn {
   0% { transform: scale(.55) rotate(-6deg); opacity: 0; }
   55% { transform: scale(1.08) rotate(2deg); opacity: 1; }
