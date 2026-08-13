@@ -226,6 +226,56 @@ MV.VoiceCore = (() => {
     { min: 4, key: 'fawn',   name: '初鹿', src: 'assets/xiaosheng_fawn.webp' },
     { min: 5, key: 'deer',   name: '鹿',   src: 'assets/xiaosheng_deer.webp' }
   ];
+  /* ---------- 交互姿态变体（F-07：形态定 base，姿态在族内换图，绝不跨族） ----------
+   * 键：happy 答对 / comfort 答错安抚 / curious 卡关陪伴 / celebrate 通关庆祝
+   * 缺姿态 → 回落本形态主体（form.src）；seed 族仅 1 张，全部回落主体。 */
+  const POSES = {
+    sprout: { happy: 'assets/3d/3D山灵手办开心托腮.webp',
+              comfort: 'assets/3d/3D山灵手办歪头捧脸.webp',
+              curious: 'assets/3d/3D山灵手办好奇探头.webp',
+              celebrate: 'assets/3d/3D山灵手办开心拥抱.webp' },
+    bloom:  { happy: 'assets/3d/3D山灵手办花间起舞.webp',
+              comfort: 'assets/3d/3D山灵手办花朵拥抱.webp',
+              curious: 'assets/3d/3D山灵手办花朵拥抱.webp',
+              celebrate: 'assets/3d/3D山灵手办花朵拥抱.webp' },
+    spark:  { happy: 'assets/3d/3D山灵手办花环起舞.webp',
+              comfort: 'assets/3d/3D山灵手办花环捧脸.webp',
+              curious: 'assets/3d/3D山灵手办花环捧脸.webp',
+              celebrate: 'assets/3d/3D山灵手办花环跳跃.webp' },
+    fawn:   { happy: 'assets/3d/3D鹿宝宝手办开心抬蹄.webp',
+              comfort: 'assets/3d/3D鹿宝宝手办低头害羞.webp',
+              curious: 'assets/3d/3D鹿宝宝手办好奇张望.webp',
+              celebrate: 'assets/3d/3D鹿宝宝手办开心抬蹄.webp' },
+    deer:   { happy: 'assets/3d/3D小鹿手办欢快小跳.webp',
+              comfort: 'assets/3d/3D小鹿手办低头闻花.webp',
+              curious: 'assets/3d/3D小鹿手办仰望星空.webp',
+              celebrate: 'assets/3d/3D小鹿手办欢快小跳.webp' }
+  };
+  function resolveSrc(formKey, poseKey) {
+    const form = FORMS.find(f => f.key === formKey) || FORMS[0];
+    const pose = poseKey || 'idle';
+    if (pose === 'idle') return form.src;                 // idle/welcome → 主体（seed 招手即主体）
+    const table = POSES[form.key];
+    return (table && table[pose]) || form.src;            // 缺姿态回落本族主体
+  }
+  let poseTimer = null;
+  let stickyPose = false;
+  /* 姿态切换（F-07）：短暂覆盖 img.src，holdMs 后回 idle；sticky 不自动回 */
+  function setPose(pose, opts = {}) {
+    if (!root || !root.querySelector('.xs-png')) return;  // SVG 回退 no-op
+    stickyPose = !!opts.sticky;
+    if (poseTimer) { clearTimeout(poseTimer); poseTimer = null; }
+    root.dataset.pose = pose || 'idle';
+    const img = root.querySelector('.xs-png');
+    const want = resolveSrc(root.dataset.form || 'seed', root.dataset.pose);
+    const probe = new Image();
+    probe.onload = () => { if (img && img.src !== want) img.src = want; };
+    probe.onerror = () => {};  // 变体未上线：保持当前图
+    probe.src = want;
+    if (!opts.sticky) {
+      poseTimer = setTimeout(() => { poseTimer = null; setPose('idle'); }, opts.holdMs || 1400);
+    }
+  }
   /* 进化粒子爆发：形态切换到初鹿/鹿时触发（金色星光向外飞散） */
   function burstParticles() {
     if (!root) return;
@@ -249,7 +299,7 @@ MV.VoiceCore = (() => {
         const probe = new Image();
         probe.onload = () => {
           if (img.dataset.form !== want.key) {
-            img.src = want.src;
+            img.src = resolveSrc(want.key, root.dataset.pose || 'idle'); // F-07：切形态时保持当前姿态族
             img.dataset.form = want.key;
             root.dataset.form = want.key;
             root.classList.remove('form-in');
@@ -281,6 +331,6 @@ MV.VoiceCore = (() => {
 
   return {
     mount, say, finish, stopTyping, hideBubble, clear,
-    setExpression, fireflies, applyGrowth, currentForm, isSpeaking
+    setExpression, fireflies, applyGrowth, setPose, currentForm, isSpeaking
   };
 })();

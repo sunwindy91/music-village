@@ -287,17 +287,16 @@ img, svg { display: block; }
 .xs-holder { position: relative; }
 
 /* ===== 晓声 PNG 素材模式（3D 竖版手办：完整显示不裁切） ===== */
-.xs-png-wrap { position: relative; width: 100%; max-width: 190px; margin: 0 auto; }
-.xs-png { height: auto; max-height: 150px; max-width: 100%; width: auto; display: block; margin: 0 auto; border-radius: 14px;
-  box-shadow: 0 14px 34px rgba(56, 94, 74, .24); }
+.xs-png-wrap { position: relative; width: 100%; max-width: 190px; height: 168px; margin: 0 auto;
+  display: flex; align-items: flex-end; justify-content: center; }
+.xs-png { width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; object-position: center bottom;
+  display: block; border-radius: 0; box-shadow: none; }
 .xs-png-halo { position: absolute; top: -18px; left: -18px; right: -18px; bottom: -18px; border-radius: 50%; pointer-events: none;
   background: radial-gradient(circle, rgba(243, 226, 164, .5) 0%, rgba(243, 226, 164, 0) 70%);
   opacity: .5; transition: opacity .6s var(--ease); }
 .xs-png-mark { position: absolute; top: 6%; right: 4%; font-size: 1.5rem; color: #e8b04b; opacity: 0;
   transition: opacity .8s var(--ease); text-shadow: 0 0 10px rgba(232, 176, 75, .7); }
-.xs-png-wrap[data-exp="thinking"] .xs-png { transform: rotate(-4deg); }
-.xs-png-wrap[data-exp="surprised"] .xs-png { transform: scale(1.06); }
-.xs-png-wrap[data-exp="encourage"] .xs-png { transform: translateY(-3px); }
+/* F-07：3D 手办姿态由 data-pose 换图实现，不用 transform 扭曲（与 breathe 抢 transform） */
 .xs-png-wrap.breathe .xs-png { animation: xsBreathe 3.4s ease-in-out infinite; }
 @keyframes xsBreathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 /* 成长形态：切换动画 + 各形态专属发光（6 阶：种子→小芽→开花→星光→初鹿→鹿） */

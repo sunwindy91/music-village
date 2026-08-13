@@ -85,6 +85,9 @@
     MV.VoiceCore.mount(el, opts);
     if (opts.breathe) el.classList.add('xs-breathe');
     if (opts.float) el.classList.add('xs-float');
+    // F-07：mount 后统一 成长形态 + 姿态（修复通关页/各视图回种子的缺口）
+    try { MV.VoiceCore.applyGrowth(stageNum()); } catch (e) { /* noop */ }
+    try { MV.VoiceCore.setPose(opts.pose || 'idle', opts.poseOpts); } catch (e) { /* noop */ }
     return el;
   }
   const xsStage = () => $('#stage-xs');
@@ -100,7 +103,7 @@
     splashBooted = true;
     const had = loadProgress();
     refreshPoints();
-    mountXs('splash-xs', { exp: had ? 'happy' : 'calm', breathe: true });
+    mountXs('splash-xs', { exp: had ? 'happy' : 'calm', breathe: true, pose: had ? 'idle' : 'welcome' });
 
     const go = () => {
       if (App.state.view !== 'splash') return; // 防重复触发
@@ -507,6 +510,7 @@
       const ok = dir === (isUp ? 'up' : 'down');
       if (ok) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         correct++;
         wrong = 0;
         renderProgress();
@@ -521,9 +525,11 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         if (wrong >= 2) { // 卡关陪伴：连续错 2 次，降难度 + 换话术重播（不判死）
           wrong = 0;
+          MV.VoiceCore.setPose('curious');
           MV.VoiceCore.say(pick(MV.lines.stumble.highlow), { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(false); }, 450); } });
         } else {
           MV.VoiceCore.say(pick(MV.lines.highlow.wrong), { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(false); }, 400); } });
@@ -618,6 +624,7 @@
         MV.VoiceCore.say(MV.lines.drum.pass, { done: () => { if (!alive()) return; setTimeout(() => celebrate(lv), 350); } });
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         MV.VoiceCore.say(MV.lines.drum.fail, { done: () => {
           if (alive()) {
             $('#drum-replay').disabled = false;
@@ -755,6 +762,7 @@
       const ok = dir === (same ? 'same' : 'diff');
       if (ok) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         correct++;
         wrong = 0;
         renderProgress();
@@ -769,9 +777,11 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         if (wrong >= 2) { // 卡关陪伴：连续错 2 次，换话术重播（不判死）
           wrong = 0;
+          MV.VoiceCore.setPose('curious');
           MV.VoiceCore.say(pick(MV.lines.stumble.same), { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(false); }, 450); } });
         } else {
           MV.VoiceCore.say(pick(MV.lines.same.wrong), { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(false); }, 400); } });
@@ -865,6 +875,7 @@
       const s = solfa[target];
       if (idx === target) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         fruits[idx].classList.add('correct');
         addPoints(C.pointsPerCorrect);
         correct++;
@@ -891,10 +902,12 @@
           }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         fruits[idx].classList.add('wrong');
         wrong++;
         const stumble = wrong >= 2;   // 卡关陪伴：连续错 2 次，先安抚再进学习闭环
         if (stumble) wrong = 0;
+        if (stumble) MV.VoiceCore.setPose('curious');
         MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.notes) + ' ' : '') + pick(MV.lines.notes.wrong), { done: () => {
           if (!alive()) return;
           // 学习闭环：报出正确答案 + 再播一次该音
@@ -989,6 +1002,7 @@
       answered = true;
       if (idx === target) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         MV.MusicCore.playMidi(solfa[idx].midi, { dur: .5, inst: 'piano' });
         correct++; wrong = 0;
         renderProgress();
@@ -1000,9 +1014,11 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         const stumble = wrong >= 2;
         if (stumble) wrong = 0;
+        if (stumble) MV.VoiceCore.setPose('curious');
         MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.stavenote) + ' ' : '') + pick(MV.lines.stavenote.wrong), { done: () => {
           if (!alive()) return;
           setTimeout(() => { if (alive()) buildRound(); }, 400);
@@ -1066,6 +1082,7 @@
       const ok = dur === order[Math.min(round, order.length - 1)];
       if (ok) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         correct++;
         wrong = 0;
         renderProgress();
@@ -1080,9 +1097,11 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         if (wrong >= 2) { // 卡关陪伴：连续错 2 次降难度重播，不判死
           wrong = 0;
+          MV.VoiceCore.setPose('curious');
           MV.VoiceCore.say(pick(MV.lines.stumble.walkstop), { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(); }, 450); } });
         } else {
           MV.VoiceCore.say(pick(MV.lines.walkstop.wrong), { done: () => { if (!alive()) return; setTimeout(() => { if (alive()) playRound(); }, 400); } });
@@ -1146,6 +1165,7 @@
       [...optBox.children].forEach(bt => bt.disabled = true);
       if (ok) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         addPoints(C.pointsPerCorrect);
         correct++; wrong = 0;
         renderProgress();
@@ -1157,6 +1177,7 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         const ansText = item.options[item.ans];
         MV.VoiceCore.say(MV.lines.quiz.wrong.replace('{ans}', ansText), { done: () => {
@@ -1255,6 +1276,7 @@
       cards.forEach(bt => bt.disabled = true);
       if (sIdx === target) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         correct++; wrong = 0;
         renderProgress();
         MV.VoiceCore.say(pick(MV.lines.fillgap.correct), { done: () => {
@@ -1265,9 +1287,11 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         const stumble = wrong >= 2;
         if (stumble) wrong = 0;
+        if (stumble) MV.VoiceCore.setPose('curious');
         MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.fillgap) + ' ' : '') + pick(MV.lines.fillgap.wrong), { done: () => {
           if (!alive()) return;
           setTimeout(() => { if (alive()) buildRound(); }, 400);
@@ -1343,6 +1367,7 @@
       cards.forEach(bt => bt.disabled = true);
       if (i === target) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         correct++; wrong = 0;
         renderProgress();
         MV.VoiceCore.say(pick(MV.lines.timbre.correct), { done: () => {
@@ -1353,9 +1378,11 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         const stumble = wrong >= 2;
         if (stumble) wrong = 0;
+        if (stumble) MV.VoiceCore.setPose('curious');
         MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.timbre) + ' ' : '') + pick(MV.lines.timbre.wrong), { done: () => {
           if (!alive()) return;
           setTimeout(() => { if (alive()) buildRound(); }, 400);
@@ -1429,6 +1456,7 @@
       if (!alive() || pos >= seq.length) return;
       if (sIdx === seq[pos]) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         MV.MusicCore.playMidi(solfa[sIdx].midi, { dur: .4, inst: 'piano' });
         pos++;
         if (pos >= seq.length) {
@@ -1448,9 +1476,11 @@
         }
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         const stumble = wrong >= 2;
         if (stumble) wrong = 0;
+        if (stumble) MV.VoiceCore.setPose('curious');
         MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.sightread) + ' ' : '') + pick(MV.lines.sightread.wrong), {});
       }
     }
@@ -1523,6 +1553,7 @@
       cards.forEach(bt => bt.disabled = true);
       if (i === target) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         correct++; wrong = 0;
         renderProgress();
         MV.VoiceCore.say(pick(MV.lines.rhythmchain.correct), { done: () => {
@@ -1533,9 +1564,11 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         const stumble = wrong >= 2;
         if (stumble) wrong = 0;
+        if (stumble) MV.VoiceCore.setPose('curious');
         MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.rhythmchain) + ' ' : '') + pick(MV.lines.rhythmchain.wrong), { done: () => {
           if (!alive()) return;
           setTimeout(() => { if (alive()) buildRound(); }, 400);
@@ -1616,6 +1649,7 @@
       cards.forEach(bt => bt.disabled = true);
       if (g === pairs[target].gap) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         correct++; wrong = 0;
         renderProgress();
         MV.VoiceCore.say(pick(MV.lines.interval.correct), { done: () => {
@@ -1626,9 +1660,11 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         const stumble = wrong >= 2;
         if (stumble) wrong = 0;
+        if (stumble) MV.VoiceCore.setPose('curious');
         MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.interval) + ' ' : '') + pick(MV.lines.interval.wrong), { done: () => {
           if (!alive()) return;
           setTimeout(() => { if (alive()) buildRound(); }, 400);
@@ -1722,9 +1758,11 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         const stumble = wrong >= 2;
         if (stumble) wrong = 0;
+        if (stumble) MV.VoiceCore.setPose('curious');
         MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.echo) + ' ' : '') + pick(MV.lines.echo.wrong), { done: () => {
           if (!alive()) return;
           $('#ec-start').disabled = false;
@@ -1803,6 +1841,7 @@
       cards.forEach(bt => bt.disabled = true);
       if (i === target) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         correct++; wrong = 0;
         renderProgress();
         MV.VoiceCore.say(pick(MV.lines.sixteenth.correct), { done: () => {
@@ -1813,9 +1852,11 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         const stumble = wrong >= 2;
         if (stumble) wrong = 0;
+        if (stumble) MV.VoiceCore.setPose('curious');
         MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.sixteenth) + ' ' : '') + pick(MV.lines.sixteenth.wrong), { done: () => {
           if (!alive()) return;
           setTimeout(() => { if (alive()) buildRound(); }, 400);
@@ -1891,6 +1932,7 @@
       cards.forEach(bt => bt.disabled = true);
       if (v === target) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         correct++; wrong = 0;
         renderProgress();
         MV.VoiceCore.say(pick(MV.lines.rainbow.correct), { done: () => {
@@ -1901,9 +1943,11 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         const stumble = wrong >= 2;
         if (stumble) wrong = 0;
+        if (stumble) MV.VoiceCore.setPose('curious');
         MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.rainbow) + ' ' : '') + pick(MV.lines.rainbow.wrong), { done: () => {
           if (!alive()) return;
           setTimeout(() => { if (alive()) buildRound(); }, 400);
@@ -1981,6 +2025,7 @@
       cards.forEach(bt => bt.disabled = true);
       if (i === target) {
         MV.MusicCore.sfx('correct');
+        MV.VoiceCore.setPose('happy');
         correct++; wrong = 0;
         renderProgress();
         MV.VoiceCore.say(pick(MV.lines.chordbud.correct), { done: () => {
@@ -1991,9 +2036,11 @@
         }});
       } else {
         MV.MusicCore.sfx('wrong');
+        MV.VoiceCore.setPose('comfort');
         wrong++;
         const stumble = wrong >= 2;
         if (stumble) wrong = 0;
+        if (stumble) MV.VoiceCore.setPose('curious');
         MV.VoiceCore.say((stumble ? pick(MV.lines.stumble.chordbud) + ' ' : '') + pick(MV.lines.chordbud.wrong), { done: () => {
           if (!alive()) return;
           setTimeout(() => { if (alive()) buildRound(); }, 400);
@@ -2132,6 +2179,7 @@
       if (first) {
         App.state.completed['compose'] = true;
         MV.VoiceCore.applyGrowth(stageNum());
+        MV.VoiceCore.setPose('happy'); // F-07：旋律田首通开心
       }
       showPersonality(personality);
       MV.VoiceCore.say(first ? MV.lines.compose.first : MV.lines.compose.saved, {
@@ -2174,7 +2222,7 @@
       if (beforeStage < 4 && afterStage >= 4) App._pendingStory = 'fawn';
       else if (beforeStage < 5 && afterStage >= 5) App._pendingStory = 'deer';
     }
-    mountXs('celebrate-xs', { exp: 'happy', float: true, breathe: true });
+    mountXs('celebrate-xs', { exp: 'happy', float: true, breathe: true, pose: 'celebrate', poseOpts: { sticky: true } });
     $('#celebrate-title').textContent = lv.title + ' · 通关啦！';
     const line = firstClear ? pick(MV.lines.grow.lit)
       : (extra && extra.line ? extra.line : pick(MV.lines.celebrate.clear));
@@ -2258,7 +2306,7 @@
   function openStaff(piece) {
     const overlay = $('#staff-overlay');
     overlay.hidden = false;
-    mountXs('staff-xs', { exp: 'happy', breathe: true });
+    mountXs('staff-xs', { exp: 'happy', breathe: true, pose: 'happy' });
     MV.Staff.render(piece.notes, $('#staff-canvas'), { bpm: piece.bpm });
     MV.VoiceCore.say(MV.lines.staffReady);
     $('#staff-play').onclick = () => {
