@@ -39,14 +39,14 @@ MV.MusicCore = (() => {
     }));
     if (mainSynth) { try { mainSynth.connect(chain); } catch (e) { /* noop */ } }
 
-    // 创作四音色（贴近自然：FM鸟鸣 / 金属风铃 / 水滴 / 木琴）
+    // 创作四音色（温和自然：鸟鸣柔化 / 清亮风铃 / 水滴 / 木琴——教学音必须柔和不刺耳）
     instruments.bird = guard('bird', () => new Tone.PolySynth(Tone.FMSynth, {
-      harmonicity: 4.4, modulationIndex: 24,
-      envelope: { attack: .004, decay: .14, sustain: 0, release: .22 }
+      harmonicity: 3.2, modulationIndex: 10,
+      envelope: { attack: .006, decay: .18, sustain: .02, release: .25 }
     }));
-    instruments.bell = guard('bell', () => new Tone.PolySynth(Tone.MetalSynth, {
-      harmonicity: 5.2, modulationIndex: 26, resonance: 2400, octaves: 1.2,
-      envelope: { attack: .002, decay: .7, sustain: 0, release: 1.1 }
+    instruments.bell = guard('bell', () => new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine' },
+      envelope: { attack: .008, decay: .45, sustain: .12, release: .5 }   // 清亮柔和（认识音符等教学音用它）
     }));
     instruments.water = guard('water', () => new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: 'sine' },
