@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet"></noscript>
-  <link rel="stylesheet" href="styles/main_c20260812h.css?v=20260813i">
+  <link rel="stylesheet" href="styles/main_c20260812h.css?v=20260813j">
   <!-- 音乐引擎 / 乐理引擎 / 记谱引擎（本地优先，离线可用） -->
   <script src="vendor/tonal.min.js?v=1"></script>
   <script src="vendor/tone.js?v=1"></script>
@@ -269,6 +269,17 @@
     </div>
   </div>
 
+  <!-- 形态皮肤（全通关后可换） -->
+  <div id="skin-overlay" class="overlay skin-overlay" hidden>
+    <div class="skin-panel">
+      <div class="skin-head">
+        <h2>给晓声换衣服</h2>
+        <button class="icon-btn" id="skin-close" type="button" aria-label="关闭">✕</button>
+      </div>
+      <div class="skin-options" id="skin-options"></div>
+    </div>
+  </div>
+
   <!-- 积分飘字 -->
   <div id="points-toast" class="points-toast" aria-hidden="true"></div>
 
@@ -311,6 +322,23 @@
     .qa-input input:focus { outline: none; border-color: #e8b04b; }
     .qa-input .qa-mic { flex: 0 0 auto; width: 46px; height: 46px; font-size: 20px; border-radius: 12px; }
     #map-footer { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    /* 无变体形态的情绪动效（种子阶段） */
+    .xs-png-wrap.pose-happy .xs-png { animation: poseBounce .5s var(--ease); }
+    .xs-png-wrap.pose-celebrate .xs-png { animation: poseBounce .5s var(--ease) 2; }
+    @keyframes poseBounce { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 70% { transform: translateY(0); } }
+    .xs-png-wrap.pose-comfort .xs-png { animation: poseSway .8s var(--ease); }
+    @keyframes poseSway { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
+    .xs-png-wrap.pose-curious .xs-png { animation: poseTilt 1.8s var(--ease) both; }
+    @keyframes poseTilt { from { transform: rotate(0); } to { transform: rotate(9deg); } }
+    @media (prefers-reduced-motion: reduce) { .xs-png-wrap[class*='pose-'] .xs-png { animation: none; } }
+    /* 形态皮肤面板 */
+    .skin-overlay { background: rgba(31,74,55,.45); display: flex; align-items: center; justify-content: center; z-index: 60; padding: 16px; }
+    .skin-panel { width: min(88vw, 430px); background: #fffdf7; border-radius: 22px; padding: 16px; text-align: center; box-shadow: 0 16px 40px rgba(31,74,55,.35); }
+    .skin-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .skin-head h2 { margin: 0; font-size: 18px; color: #2f5d47; }
+    .skin-options { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .skin-opt { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 88px; padding: 8px 4px; border: 2px solid #e3d9c2; border-radius: 14px; background: #fffdf7; cursor: pointer; font-weight: 700; color: #5b4632; font-size: 13px; }
+    .skin-opt.on { border-color: #e8b04b; background: #fdf6e3; }
     @keyframes ccFloat { 0%,100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.03); } }
     .xs-dragging { animation: none !important; }
     @media (max-width: 640px) { .map-node { width: 76px; height: 76px; } }
@@ -320,13 +348,13 @@
     @media (prefers-reduced-motion: reduce) { .map-node, .nf { animation: none; } }
   </style>
 
-  <script src="config.js?v=20260813i"></script>
-  <script src="shared/lines.js?v=20260813i"></script>
-  <script src="shared/levels.js?v=20260813i"></script>
-  <script src="modules/audio/music-core.js?v=20260813i"></script>
-  <script src="modules/voice/voice-core.js?v=20260813i"></script>
-  <script src="modules/notation/staff.js?v=20260813i"></script>
-  <script src="app.js?v=20260813i"></script>
+  <script src="config.js?v=20260813j"></script>
+  <script src="shared/lines.js?v=20260813j"></script>
+  <script src="shared/levels.js?v=20260813j"></script>
+  <script src="modules/audio/music-core.js?v=20260813j"></script>
+  <script src="modules/voice/voice-core.js?v=20260813j"></script>
+  <script src="modules/notation/staff.js?v=20260813j"></script>
+  <script src="app.js?v=20260813j"></script>
 </body>
 </html>
 

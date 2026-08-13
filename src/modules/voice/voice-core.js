@@ -266,14 +266,22 @@ MV.VoiceCore = (() => {
     stickyPose = !!opts.sticky;
     if (poseTimer) { clearTimeout(poseTimer); poseTimer = null; }
     root.dataset.pose = pose || 'idle';
+    const formKey = root.dataset.form || 'seed';
     const img = root.querySelector('.xs-png');
-    const want = resolveSrc(root.dataset.form || 'seed', root.dataset.pose);
+    const want = resolveSrc(formKey, root.dataset.pose);
+    const form = FORMS.find(f => f.key === formKey) || FORMS[0];
+    const isBase = want === form.src; // 本族无变体图（如种子）→ 用动效表达情绪
+    root.classList.remove('pose-happy', 'pose-comfort', 'pose-curious', 'pose-celebrate');
+    if (isBase && root.dataset.pose !== 'idle') {
+      void root.offsetWidth;
+      root.classList.add('pose-' + root.dataset.pose); // 开心跳/安抚摇/好奇歪头/庆祝连跳
+    }
     const probe = new Image();
     probe.onload = () => { if (img && img.src !== want) img.src = want; };
     probe.onerror = () => {};  // 变体未上线：保持当前图
     probe.src = want;
     if (!opts.sticky) {
-      poseTimer = setTimeout(() => { poseTimer = null; setPose('idle'); }, opts.holdMs || 1400);
+      poseTimer = setTimeout(() => { poseTimer = null; setPose('idle'); }, opts.holdMs || 2000);
     }
   }
   /* 进化粒子爆发：形态切换到初鹿/鹿时触发（金色星光向外飞散） */
@@ -359,8 +367,10 @@ MV.VoiceCore = (() => {
     setTimeout(() => f.remove(), 800);
   }
 
+  function allForms() { return FORMS.map(f => ({ key: f.key, name: f.name, src: f.src })); }
+
   return {
     mount, say, sayVoice, finish, stopTyping, hideBubble, clear,
-    setExpression, fireflies, applyGrowth, setPose, flash, currentForm, isSpeaking
+    setExpression, fireflies, applyGrowth, setPose, flash, allForms, currentForm, isSpeaking
   };
 })();

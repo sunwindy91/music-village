@@ -116,22 +116,18 @@
     };
 
     if (had) {
-      // 老朋友：简短招呼后进入
-      MV.VoiceCore.sayVoice('back1', '欢迎回来，音乐寻宝家。', { done: () => setTimeout(go, 700) });
-      setTimeout(go, 2200);
+      // 老朋友：简短招呼，等点击进入
+      MV.VoiceCore.sayVoice('back1', '欢迎回来，音乐寻宝家。');
     } else {
-      // 新朋友：开场白 + 手动/自动进入
+      // 新朋友：开场白播完停在首屏，点击「开始寻宝」进入（不自动跳转）
       let i = 0;
       const lines = MV.lines.splash;
       const next = () => {
         if (i < lines.length && App.state.view === 'splash') {
           MV.VoiceCore.sayVoice('welcome' + (i + 1), lines[i], { done: () => setTimeout(() => { i++; next(); }, 420) });
-        } else if (i >= lines.length) {
-          setTimeout(go, 700);
         }
       };
       setTimeout(next, 600);
-      setTimeout(go, 9000); // 兜底自动进入
     }
 
     $('.splash-go').addEventListener('pointerdown', go);
@@ -145,8 +141,40 @@
   /* ---------------- 山谷地图 ---------------- */
   function stageNum() {
     // 主线成长：每点亮 3 关，晓声进阶一档（0种子→1小芽→2开花→3星光→4初鹿→5鹿全盛）
-    // 修复：避免 5 关即满级过早全盛，也避免过一关毫无变化——每 3 关就有一次可见成长
-    return Math.min(5, Math.floor(Object.keys(App.state.completed).length / 3));
+    const done = Math.min(5, Math.floor(Object.keys(App.state.completed).length / 3));
+    // 全通关后可换皮肤：任意切换形态（mv-skin 0-5）
+    if (done >= 5) {
+      try {
+        const s = parseInt(localStorage.getItem('mv-skin'), 10);
+        if (s >= 0 && s <= 5) return s;
+      } catch (e) { /* noop */ }
+    }
+    return done;
+  }
+  /* 形态皮肤：全通关后点晓声标签可任意切换形态（像换皮肤） */
+  function openSkin() {
+    const base = Math.min(5, Math.floor(Object.keys(App.state.completed).length / 3));
+    if (base < 5) { MV.VoiceCore.say('把五片山谷全点亮，就能给我换新衣服啦！'); return; }
+    const ov = $('#skin-overlay');
+    if (!ov) return;
+    const box = $('#skin-options');
+    box.innerHTML = '';
+    MV.VoiceCore.allForms().forEach((f, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'skin-opt' + (i === stageNum() ? ' on' : '');
+      b.innerHTML = '<img src="' + f.src + '" alt="' + f.name + '" onerror="this.style.display=\'none\'" style="width:64px;height:64px;object-fit:contain">' +
+        '<span>' + f.name + '</span>';
+      b.addEventListener('pointerdown', () => {
+        try { localStorage.setItem('mv-skin', String(i)); } catch (e) { /* noop */ }
+        MV.VoiceCore.applyGrowth(stageNum());
+        updateXsForm();
+        ov.hidden = true;
+      });
+      box.appendChild(b);
+    });
+    ov.hidden = false;
+    $('#skin-close').onclick = () => { ov.hidden = true; };
   }
   /* 地图晓声脚下：当前成长形态小标签 */
   function updateXsForm() {
@@ -160,8 +188,9 @@
       tag.className = 'xs-form-tag';
       holder.appendChild(tag);
     }
-    tag.textContent = f.name + ' · 点亮 ' + stageNum() + '/5';
+    tag.textContent = f.name + ' · 点亮 ' + Math.min(5, Math.floor(Object.keys(App.state.completed).length / 3)) + '/5';
     tag.dataset.stage = String(stageNum());
+    tag.onclick = () => openSkin(); // 全通关后点标签换皮肤；未全通关晓声会提示
     // 小鹿乱撞故事线：消费通关时挂起的故事标记（晓声在地图上说出，形态已更新为初鹿/鹿）
     if (App._pendingStory && MV.lines.story && MV.lines.story[App._pendingStory]) {
       const key = App._pendingStory;
