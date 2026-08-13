@@ -150,8 +150,14 @@
 
   /* ---------------- 山谷地图 ---------------- */
   function stageNum() {
-    // 主线成长：每过 1 关，晓声进阶一档（0种子→1小芽→2开花→3星光→4初鹿→5鹿）
-    const done = Math.min(5, Object.keys(App.state.completed).length);
+    // 真实进度：每过 1 关，晓声进阶一档（0种子→1小芽→2开花→3星光→4初鹿→5鹿）
+    let done = Math.min(5, Object.keys(App.state.completed).length);
+    // 演示模式：形态跟随已解锁的聚类进度（解锁越多越高级，配合皮肤可切回任意形态）
+    if (allUnlocked()) {
+      let n = 0;
+      try { for (const loc of MV.locations) if (clusterUnlocked(loc.id)) n++; } catch (e) { /* noop */ }
+      done = Math.max(done, n);
+    }
     // 皮肤切换：已解锁形态可任选（演示模式全开）
     try {
       const s = parseInt(localStorage.getItem('mv-skin'), 10);
