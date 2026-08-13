@@ -185,10 +185,15 @@
     const links = $('#map-links');
     if (links) {
       links.innerHTML = '';
+      // 动态 viewBox：与画布实际尺寸 1:1 对齐（修复 meet 留边导致的连线错位）
+      const sceneEl = $('#map-scene');
+      const sr = sceneEl ? sceneEl.getBoundingClientRect() : { width: 400, height: 640 };
+      links.setAttribute('viewBox', '0 0 ' + sr.width + ' ' + sr.height);
+      links.setAttribute('preserveAspectRatio', 'none');
       const order = ['valley', 'rhythm', 'scale', 'chord', 'meadow'];
       const pts = order.map(id => {
         const l = MV.locations.find(x => x.id === id);
-        return l ? [l.pos[0] * 4, l.pos[1] * 6.4] : [0, 0];
+        return l ? [l.pos[0] / 100 * sr.width, l.pos[1] / 100 * sr.height] : [0, 0];
       });
       for (let i = 0; i < pts.length - 1; i++) {
         const x1 = pts[i][0], y1 = pts[i][1], x2 = pts[i + 1][0], y2 = pts[i + 1][1];
@@ -200,10 +205,10 @@
         p.setAttribute('d', d);
         p.setAttribute('fill', 'none');
         p.setAttribute('stroke', lit ? '#e8b04b' : (reachable ? '#f3d9a4' : '#d8d2c8'));
-        p.setAttribute('stroke-width', lit ? '4' : '3');
-        p.setAttribute('stroke-dasharray', lit ? '1 0' : '2 12');
+        p.setAttribute('stroke-width', lit ? '5' : '4');
+        p.setAttribute('stroke-dasharray', lit ? '1 0' : '3 14');
         p.setAttribute('stroke-linecap', 'round');
-        p.setAttribute('opacity', lit ? '.95' : (reachable ? '.5' : '.18'));
+        p.setAttribute('opacity', lit ? '.95' : (reachable ? '.6' : '.2'));
         links.appendChild(p);
       }
     }
