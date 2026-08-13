@@ -239,6 +239,15 @@
     </div>
   </div>
 
+  <!-- 作品播放完 · 晓声给山里小朋友的鼓励 -->
+  <div id="encourage-overlay" class="overlay encourage-overlay" hidden>
+    <div class="encourage-card">
+      <div class="xs-holder encourage-xs" id="encourage-xs"></div>
+      <p class="encourage-text" id="encourage-text"></p>
+      <button class="btn btn-gold" id="encourage-close" type="button">收下啦！</button>
+    </div>
+  </div>
+
   <!-- 积分飘字 -->
   <div id="points-toast" class="points-toast" aria-hidden="true"></div>
 
@@ -256,6 +265,11 @@
     .map-node.locked .step-num { background:#c7cfc6; color:#3f4c42; }
     .map-node.completed .step-num { background:#f6d693; color:#5b3a10; }
     .map-node .step-lock { position:absolute; top:-4px; right:-4px; width:26px; height:26px; background:#fff8ec; border-radius:50%; font-size:15px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(93,74,50,.3); z-index:2; }
+    /* 鼓励语 overlay（作品播放完 · 晓声对山里孩子说话） */
+    .encourage-overlay { background: rgba(31,74,55,.45); display: flex; align-items: center; justify-content: center; z-index: 60; padding: 20px; }
+    .encourage-card { width: min(88vw, 420px); background: linear-gradient(165deg,#fffdf7,#f1f7e9); border-radius: 22px; padding: 20px 20px 18px; text-align: center; box-shadow: 0 16px 40px rgba(31,74,55,.35); }
+    .encourage-xs { width: 42%; margin: 0 auto; }
+    .encourage-text { font-size: 16.5px; line-height: 1.8; color: #2f5d47; font-weight: 600; margin: 4px 0 16px; }
     @keyframes ccFloat { 0%,100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.03); } }
     .xs-dragging { animation: none !important; }
     @media (max-width: 640px) { .map-node { width: 76px; height: 76px; } }

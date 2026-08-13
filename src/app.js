@@ -188,6 +188,12 @@
 
   function renderLocs() {
     updateXsForm(); // 每次回到地图都刷新晓声形态
+    // 通关聚类后回地图：晓声主动引导去下一站
+    if (App._pendingNext && MV.lines.nextStop[App._pendingNext]) {
+      const nextKey = App._pendingNext;
+      App._pendingNext = null;
+      MV.VoiceCore.say(pick(MV.lines.nextStop[nextKey]));
+    }
     const wrap = $('#map-locs');
     wrap.innerHTML = '';
     // 流程模式：去掉虚线连线层，节点用序号徽章①→⑤沿主线流程走（见下方 .step-num）
@@ -2217,6 +2223,11 @@
       App.state.completed[lv.id] = true;
       addPoints(C.pointsPerClear);
       MV.VoiceCore.applyGrowth(stageNum());
+      // 主动引导下一站：本聚类全亮后回地图晓声带路
+      if (lv.loc) {
+        const loc = MV.locations.find(x => x.id === lv.loc);
+        if (loc && loc.levels.every(id => App.state.completed[id])) App._pendingNext = lv.loc;
+      }
       // 小鹿乱撞故事线：跨过形态阈值时挂起标记，回地图由晓声说出（仅通关瞬间触发一次，刷新不重放）
       const afterStage = stageNum();
       if (beforeStage < 4 && afterStage >= 4) App._pendingStory = 'fawn';
@@ -2264,6 +2275,16 @@
   MV.App.celebrate = celebrate;
 
   /* ---------------- 我的音乐会 ---------------- */
+  /* 作品播放完 → 晓声鼓励语（给山里小朋友） */
+  function showEncourage() {
+    const ov = $('#encourage-overlay');
+    if (!ov) return;
+    mountXs('encourage-xs', { exp: 'happy', breathe: true, pose: 'happy' });
+    $('#encourage-text').textContent = pick(MV.lines.encourage);
+    ov.hidden = false;
+    $('#encourage-close').onclick = () => { ov.hidden = true; };
+  }
+
   function openConcert() {
     invalidateSession();
     showView('concert');
@@ -2295,7 +2316,9 @@
       MV.Staff.render(w.notes, staffBox, { bpm: w.bpm, compact: true });
       $('[data-play="' + i + '"]', card).addEventListener('pointerdown', () => {
         MV.MusicCore.start();
-        MV.MusicCore.playSequence(w.notes, { bpm: w.bpm, inst: w.inst });
+        MV.MusicCore.playSequence(w.notes, { bpm: w.bpm, inst: w.inst, onEnd: () => {
+          setTimeout(() => showEncourage(), 350); // 播完晓声说鼓励话
+        } });
       });
       $('[data-staff="' + i + '"]', card).addEventListener('pointerdown', () => openStaff(w));
       $('[data-save="' + i + '"]', card).addEventListener('pointerdown', () => MV.Staff.exportPNG($('[data-work="' + i + '"]', card), w.name || '我的小曲'));
