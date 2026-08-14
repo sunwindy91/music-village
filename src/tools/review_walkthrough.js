@@ -66,8 +66,8 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
   ok(!!document.querySelector('.map-qa-btn'), '问问晓声按钮');
   ok(!!document.querySelector('#map-xs .xs-png-wrap'), '地图晓声挂载');
 
-  console.log('═══ ③④ 问答盘/换形态（本轮跳过，隔离问题） ═══');
-  const SKIP_QA_SKIN = true;
+  console.log('═══ ③④ 问答盘/换形态 ═══');
+  const SKIP_QA_SKIN = false;
   if (!SKIP_QA_SKIN) {
     tap(document.querySelector('#map-xs'));
     await sleep(140);
@@ -83,6 +83,12 @@ const ok = (cond, msg) => { notes.push((cond ? 'PASS' : 'FAIL') + '  ' + msg); i
     const skinOpts = document.querySelectorAll('#skin-options .skin-opt');
     ok(skinOpts.length === 6, '6 个形态选项');
     ok(document.querySelectorAll('#skin-options .skin-opt.locked').length === 0, '演示模式全部可选（无锁）');
+    // 选小芽（选项2）→ 地图晓声应同步
+    const opt2 = document.querySelectorAll('#skin-options .skin-opt')[1];
+    click(opt2);
+    await sleep(200);
+    const mapImg = document.querySelector('#map-xs .xs-png');
+    ok(!!mapImg && mapImg.getAttribute('src') && mapImg.getAttribute('src').indexOf('sprout') >= 0, '切形态后地图晓声同步为小芽');
     click(document.querySelector('#skin-close'));
     click(document.querySelector('#qa-close'));
     await sleep(80);

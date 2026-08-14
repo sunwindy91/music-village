@@ -23,6 +23,23 @@
   };
   MV.App = App;
 
+  /* ---------------- 全链路演示入口：?allclear=1 打开即真实通关全部 21 关 ---------------- */
+  try {
+    const sp = new URLSearchParams(location.search);
+    if (sp.get('allclear') === '1') {
+      const ids = ['highlow','drum','same','notes','stavenote','walkstop','fillgap','sightread','rhythmchain','interval','echo','sixteenth','quizr','rainbow','chordbud','quizc','compose','quiz0','quiz1','quiz2','timbre'];
+      const c = {}; ids.forEach(i => { c[i] = true; });
+      const melody = [0,2,4,5,7,9,12,7]; // do-re-mi-fa-sol-la-do-sol 上行小曲
+      const insts  = ['bell','bird','water','bell','bird','bell','piano','bird'];
+      const demoWorks = [{ name: '山谷之歌', bpm: 80, inst: 'bell', personality: 'star',
+        notes: melody.map((m, s) => ({ midi: 60 + m, start: s, dur: 1, inst: insts[s] })), ts: Date.now() }];
+      localStorage.setItem(C.storageKey, JSON.stringify({ points: 999, completed: c, works: demoWorks }));
+      const th = {}; ['valley','scale','meadow','rhythm','chord'].forEach(i => { th[i] = 1; });
+      localStorage.setItem('mv-theory-seen', JSON.stringify(th));
+      history.replaceState(null, '', location.pathname); // 清掉参数，URL 保持干净
+    }
+  } catch (e) { /* 隐私模式忽略 */ }
+
   /* ---------------- 进度存取 ---------------- */
   function loadProgress() {
     try {
