@@ -53,3 +53,16 @@ docs/项目说明文档_完整版.html
 docs/项目说明文档_完整版.pdf
 docs/images/
 docs/社媒发布文案_分平台定制.md
+
+# ===== 思考过程/内部文档（docs 已整体迁移 Gitee 私有仓）=====
+docs/
+
+# ===== src 旧版备份文件 =====
+src/*_c20260812*
+src/styles/*_c20260812*
+src/config_c20260812.js
+src/shared/*_c20260812.js
+src/modules/*/*_c20260812.js
+
+# ===== 临时脚本（已备份至本地，不入仓库）=====
+tools/

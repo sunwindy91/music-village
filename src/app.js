@@ -1201,7 +1201,7 @@
     buildRound();
   };
 
-  /* —— 关卡：走走停停（时值听辨 · 叔叔大纲第 2 阶：四分/二分/全音符 = 走/走——/走————） —— */
+  /* —— 关卡：走走停停（时值听辨 · 进阶第 2 阶：四分/二分/全音符 = 走/走——/走————） —— */
   runners.walkstop = function (lv, body) {
     // 播放顺序：先最长(4)→最短(1)→中间(2)，先两极后中间（先宽后严）
     const order = [4, 1, 2];
@@ -1575,7 +1575,7 @@
     setTimeout(() => { if (alive()) buildRound(); }, 600);
   };
 
-  /* —— 关卡：看谱弹奏（视谱启蒙 · 叔叔大纲第 3 阶：VexFlow 真实五线谱 → 按序点唱名） —— */
+  /* —— 关卡：看谱弹奏（视谱启蒙 · 进阶第 3 阶：VexFlow 真实五线谱 → 按序点唱名） —— */
   runners.sightread = function (lv, body) {
     const solfa = MV.solfa;
     const pool = [
@@ -1669,7 +1669,7 @@
     buildRound();
   };
 
-  /* —— 关卡：节奏接龙（走=四分/跑=八分 · 叔叔大纲第 4 阶） —— */
+  /* —— 关卡：节奏接龙（走=四分/跑=八分 · 进阶第 4 阶） —— */
   runners.rhythmchain = function (lv, body) {
     const patterns = [
       { id: 'walk',    label: '走 · 走 · 走',      notes: [{ midi: 60, start: 0, dur: 1 }, { midi: 60, start: 1, dur: 1 }, { midi: 60, start: 2, dur: 1 }] },
@@ -1761,7 +1761,7 @@
     setTimeout(() => { if (alive()) buildRound(); }, 600);
   };
 
-  /* —— 关卡：音程梯子（两音距离=台阶 · 叔叔大纲第 5 阶） —— */
+  /* —— 关卡：音程梯子（两音距离=台阶 · 进阶第 5 阶） —— */
   runners.interval = function (lv, body) {
     const pairs = [
       { a: 60, b: 67, gap: 5 },   // do→sol 5 级
